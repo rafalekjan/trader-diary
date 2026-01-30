@@ -11,7 +11,15 @@
     <div class="stat-card">
         <h3>Account Balance</h3>
         <div class="stat-value">${{ account.balance | format_decimal }}</div>
-        <p class="stat-label">Aktualny stan konta</p>
+        <p class="stat-label">Kapitał początkowy</p>
+    </div>
+
+    <div class="stat-card">
+        <h3>Closed P&L</h3>
+        <div class="stat-value {% if closed_pnl > 0 %}positive{% elif closed_pnl < 0 %}negative{% endif %}">
+            ${{ closed_pnl | format_decimal }}
+        </div>
+        <p class="stat-label">Zrealizowany zysk/strata</p>
     </div>
 
     <div class="stat-card">
@@ -25,7 +33,7 @@
     <div class="stat-card highlight">
         <h3>Equity</h3>
         <div class="stat-value">${{ equity | format_decimal }}</div>
-        <p class="stat-label">Balance + Open P&L</p>
+        <p class="stat-label">Balance + Closed P&L + Open P&L</p>
     </div>
 </div>
 
@@ -39,8 +47,9 @@
         <button type="submit" class="btn btn-primary">💾 Zapisz Balance</button>
     </form>
     <p class="help-text">
-        <strong>Uwaga:</strong> Zmiana balance nie wpływa na P&L z tradów. 
-        Użyj tej opcji do ręcznej korekty stanu konta (np. po wpłacie/wypłacie środków).
+        <strong>Uwaga:</strong> Balance to Twój kapitał początkowy. 
+        Equity automatycznie uwzględnia wszystkie zamknięte i otwarte trady.
+        Zmień balance tylko gdy wpłacasz/wypłacasz środki z konta.
     </p>
 </div>
 

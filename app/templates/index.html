@@ -10,29 +10,50 @@
 <div class="card">
     <form method="POST" action="{% if edit_mode %}/trades/{{ trade.id }}/update{% else %}/trades/create{% endif %}" id="tradeForm">
         <div class="form-grid">
-            <div class="form-group">
-                <label for="status">Status *</label>
-                <select name="status" id="status" required>
-                    <option value="idea" {% if edit_mode and trade.status.value == 'idea' %}selected{% endif %}>Idea (Pomysł)</option>
-                    <option value="entered" {% if edit_mode and trade.status.value == 'entered' %}selected{% elif not edit_mode %}selected{% endif %}>Entered (Weszłem)</option>
-                    <option value="closed" {% if edit_mode and trade.status.value == 'closed' %}selected{% endif %}>Closed (Zamknięty)</option>
-                </select>
+            <div class="form-group status-checkboxes">
+                <label>Status *</label>
+                <div class="checkbox-group">
+                    <label class="checkbox-label">
+                        <input type="radio" name="status" value="idea" id="status_idea" {% if edit_mode and trade.status.value == 'idea' %}checked{% endif %} required>
+                        <span class="checkbox-text">Idea (Pomysł)</span>
+                    </label>
+                    <label class="checkbox-label">
+                        <input type="radio" name="status" value="entered" id="status_entered" {% if edit_mode and trade.status.value == 'entered' %}checked{% elif not edit_mode %}checked{% endif %} required>
+                        <span class="checkbox-text">Entered (Weszłem w trade)</span>
+                    </label>
+                    <label class="checkbox-label">
+                        <input type="radio" name="status" value="closed" id="status_closed" {% if edit_mode and trade.status.value == 'closed' %}checked{% endif %} required>
+                        <span class="checkbox-text">Closed (Zamknięty)</span>
+                    </label>
+                </div>
             </div>
 
-            <div class="form-group">
-                <label for="trading_style">Styl Tradingu *</label>
-                <select name="trading_style" id="trading_style" required>
-                    <option value="swing" {% if edit_mode and trade.trading_style.value == 'swing' %}selected{% endif %}>Swing</option>
-                    <option value="daytrading" {% if edit_mode and trade.trading_style.value == 'daytrading' %}selected{% endif %}>Daytrading</option>
-                </select>
+            <div class="form-group status-checkboxes">
+                <label>Styl Tradingu *</label>
+                <div class="checkbox-group">
+                    <label class="checkbox-label">
+                        <input type="radio" name="trading_style" value="swing" {% if edit_mode and trade.trading_style.value == 'swing' %}checked{% elif not edit_mode %}checked{% endif %} required>
+                        <span class="checkbox-text">Swing</span>
+                    </label>
+                    <label class="checkbox-label">
+                        <input type="radio" name="trading_style" value="daytrading" {% if edit_mode and trade.trading_style.value == 'daytrading' %}checked{% endif %} required>
+                        <span class="checkbox-text">Daytrading</span>
+                    </label>
+                </div>
             </div>
 
-            <div class="form-group">
-                <label for="instrument_type">Typ Instrumentu *</label>
-                <select name="instrument_type" id="instrument_type" required onchange="toggleOptionFields()">
-                    <option value="stock" {% if edit_mode and trade.instrument_type.value == 'stock' %}selected{% endif %}>Stock (Akcje)</option>
-                    <option value="option" {% if edit_mode and trade.instrument_type.value == 'option' %}selected{% endif %}>Option (Opcje)</option>
-                </select>
+            <div class="form-group status-checkboxes">
+                <label>Typ Instrumentu *</label>
+                <div class="checkbox-group">
+                    <label class="checkbox-label">
+                        <input type="radio" name="instrument_type" value="stock" {% if edit_mode and trade.instrument_type.value == 'stock' %}checked{% elif not edit_mode %}checked{% endif %} required onchange="toggleOptionFields()">
+                        <span class="checkbox-text">Stock (Akcje)</span>
+                    </label>
+                    <label class="checkbox-label">
+                        <input type="radio" name="instrument_type" value="option" {% if edit_mode and trade.instrument_type.value == 'option' %}checked{% endif %} required onchange="toggleOptionFields()">
+                        <span class="checkbox-text">Option (Opcje)</span>
+                    </label>
+                </div>
             </div>
 
             <div class="form-group">
@@ -40,12 +61,18 @@
                 <input type="text" name="ticker" id="ticker" value="{% if edit_mode %}{{ trade.ticker }}{% endif %}" placeholder="np. AAPL" required style="text-transform: uppercase;">
             </div>
 
-            <div class="form-group">
-                <label for="direction">Kierunek *</label>
-                <select name="direction" id="direction" required>
-                    <option value="long" {% if edit_mode and trade.direction.value == 'long' %}selected{% elif not edit_mode %}selected{% endif %}>Long</option>
-                    <option value="short" {% if edit_mode and trade.direction.value == 'short' %}selected{% endif %}>Short</option>
-                </select>
+            <div class="form-group status-checkboxes">
+                <label>Kierunek *</label>
+                <div class="checkbox-group">
+                    <label class="checkbox-label">
+                        <input type="radio" name="direction" value="long" {% if edit_mode and trade.direction.value == 'long' %}checked{% elif not edit_mode %}checked{% endif %} required>
+                        <span class="checkbox-text">Long</span>
+                    </label>
+                    <label class="checkbox-label">
+                        <input type="radio" name="direction" value="short" {% if edit_mode and trade.direction.value == 'short' %}checked{% endif %} required>
+                        <span class="checkbox-text">Short</span>
+                    </label>
+                </div>
             </div>
 
             <div class="form-group" id="option_type_group" style="display: none;">
@@ -68,17 +95,17 @@
             </div>
 
             <div class="form-group">
-                <label for="entry_price">Cena Wejścia *</label>
+                <label for="entry_price" id="entry_price_label">Cena Wejścia *</label>
                 <input type="number" name="entry_price" id="entry_price" value="{% if edit_mode %}{{ trade.entry_price }}{% endif %}" step="0.01" placeholder="0.00" required>
             </div>
 
             <div class="form-group">
-                <label for="exit_price">Cena Wyjścia</label>
-                <input type="number" name="exit_price" id="exit_price" value="{% if edit_mode and trade.exit_price %}{{ trade.exit_price }}{% endif %}" step="0.01" placeholder="0.00">
+                <label for="exit_price" id="exit_price_label">Cena Wyjścia</label>
+                <input type="number" name="exit_price" id="exit_price" value="{% if edit_mode and trade.exit_price %}{{ trade.exit_price }}{% endif %}" step="0.01" placeholder="0.00" oninput="handleExitPriceChange()">
             </div>
 
             <div class="form-group">
-                <label for="quantity">Ilość *</label>
+                <label for="quantity" id="quantity_label">Ilość *</label>
                 <input type="number" name="quantity" id="quantity" value="{% if edit_mode %}{{ trade.quantity }}{% else %}1{% endif %}" min="1" required>
             </div>
 
@@ -104,8 +131,20 @@
 
 <script>
     function toggleOptionFields() {
-        const instrumentType = document.getElementById('instrument_type').value;
+        const instrumentTypeRadios = document.querySelectorAll('input[name="instrument_type"]');
+        let instrumentType = '';
+        instrumentTypeRadios.forEach(radio => {
+            if (radio.checked) {
+                instrumentType = radio.value;
+            }
+        });
+        
         const optionFields = ['option_type_group', 'expiration_group', 'strike_group'];
+        const entryPriceLabel = document.getElementById('entry_price_label');
+        const exitPriceLabel = document.getElementById('exit_price_label');
+        const quantityLabel = document.getElementById('quantity_label');
+        const entryPriceInput = document.getElementById('entry_price');
+        const exitPriceInput = document.getElementById('exit_price');
         
         optionFields.forEach(fieldId => {
             const field = document.getElementById(fieldId);
@@ -115,9 +154,36 @@
                 field.style.display = 'none';
             }
         });
+        
+        if (instrumentType === 'option') {
+            entryPriceLabel.textContent = 'Cena Kontraktu (Premium) *';
+            exitPriceLabel.textContent = 'Cena Zamknięcia Kontraktu';
+            quantityLabel.textContent = 'Liczba Kontraktów *';
+            entryPriceInput.placeholder = 'np. 2.50';
+            exitPriceInput.placeholder = 'np. 3.20';
+        } else {
+            entryPriceLabel.textContent = 'Cena Wejścia *';
+            exitPriceLabel.textContent = 'Cena Wyjścia';
+            quantityLabel.textContent = 'Ilość *';
+            entryPriceInput.placeholder = 'np. 150.00';
+            exitPriceInput.placeholder = 'np. 155.00';
+        }
     }
     
-    // Initialize on page load
+    function handleExitPriceChange() {
+        const exitPriceInput = document.getElementById('exit_price');
+        const statusClosedRadio = document.getElementById('status_closed');
+        const statusEnteredRadio = document.getElementById('status_entered');
+        
+        if (exitPriceInput.value && parseFloat(exitPriceInput.value) > 0) {
+            statusClosedRadio.checked = true;
+        } else {
+            if (statusClosedRadio.checked) {
+                statusEnteredRadio.checked = true;
+            }
+        }
+    }
+    
     toggleOptionFields();
 </script>
 {% endblock %}

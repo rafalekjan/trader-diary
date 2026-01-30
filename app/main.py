@@ -9,16 +9,13 @@ from decimal import Decimal
 from app.database import get_db, engine, Base
 from app import models, schemas, crud
 
-# Create tables
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Dziennik Tradera")
 
-# Mount static files and templates
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 templates = Jinja2Templates(directory="app/templates")
 
-# Custom filter for Jinja2
 def format_decimal(value):
     if value is None:
         return "-"
@@ -84,7 +81,6 @@ async def list_trades(
     trades = crud.get_trades(db, status=status, ticker=ticker)
     account = crud.get_account(db)
     
-    # Calculate P&L for each trade
     trades_with_pnl = []
     total_pnl = Decimal("0.0")
     
@@ -195,7 +191,13 @@ async def account_page(request: Request, db: Session = Depends(get_db)):
     account = crud.get_account(db)
     trades = crud.get_trades(db)
     
-    # Calculate open P&L
+    closed_pnl = Decimal("0.0")
+    for trade in trades:
+        if trade.status == models.TradeStatus.CLOSED and trade.exit_price:
+            pnl = crud.calculate_pnl(trade)
+            if pnl:
+                closed_pnl += pnl
+    
     open_pnl = Decimal("0.0")
     for trade in trades:
         if trade.status != models.TradeStatus.CLOSED and trade.exit_price:
@@ -203,11 +205,12 @@ async def account_page(request: Request, db: Session = Depends(get_db)):
             if pnl:
                 open_pnl += pnl
     
-    equity = account.balance + open_pnl
+    equity = account.balance + closed_pnl + open_pnl
     
     return templates.TemplateResponse("account.html", {
         "request": request,
         "account": account,
+        "closed_pnl": closed_pnl,
         "open_pnl": open_pnl,
         "equity": equity
     })
@@ -233,7 +236,6 @@ async def statistics_page(request: Request, db: Session = Depends(get_db)):
         "stats": stats
     })
 
-# API Endpoints (optional, for future use)
 @app.get("/api/trades", response_model=list[schemas.TradeResponse])
 async def api_list_trades(db: Session = Depends(get_db)):
     trades = crud.get_trades(db)

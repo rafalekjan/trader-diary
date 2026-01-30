@@ -12,15 +12,27 @@
 
 <div class="card">
     <div class="filters">
-        <form method="GET" action="/trades" class="filter-form">
-            <div class="filter-group">
-                <label for="status">Status:</label>
-                <select name="status" id="status" onchange="this.form.submit()">
-                    <option value="">Wszystkie</option>
-                    <option value="idea" {% if current_status == 'idea' %}selected{% endif %}>Idea</option>
-                    <option value="entered" {% if current_status == 'entered' %}selected{% endif %}>Entered</option>
-                    <option value="closed" {% if current_status == 'closed' %}selected{% endif %}>Closed</option>
-                </select>
+        <form method="GET" action="/trades" class="filter-form" id="filterForm">
+            <div class="filter-group status-filter">
+                <label>Status:</label>
+                <div class="checkbox-group-filter">
+                    <label class="checkbox-label-filter">
+                        <input type="radio" name="status" value="" {% if not current_status %}checked{% endif %}>
+                        <span class="checkbox-text">Wszystkie</span>
+                    </label>
+                    <label class="checkbox-label-filter">
+                        <input type="radio" name="status" value="idea" {% if current_status == 'idea' %}checked{% endif %}>
+                        <span class="checkbox-text">Idea</span>
+                    </label>
+                    <label class="checkbox-label-filter">
+                        <input type="radio" name="status" value="entered" {% if current_status == 'entered' %}checked{% endif %}>
+                        <span class="checkbox-text">Entered</span>
+                    </label>
+                    <label class="checkbox-label-filter">
+                        <input type="radio" name="status" value="closed" {% if current_status == 'closed' %}checked{% endif %}>
+                        <span class="checkbox-text">Closed</span>
+                    </label>
+                </div>
             </div>
             <div class="filter-group">
                 <label for="ticker">Ticker:</label>
@@ -102,4 +114,17 @@
     </div>
     {% endif %}
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const filterForm = document.getElementById('filterForm');
+        const statusRadios = filterForm.querySelectorAll('input[name="status"]');
+        
+        statusRadios.forEach(radio => {
+            radio.addEventListener('change', function() {
+                filterForm.submit();
+            });
+        });
+    });
+</script>
 {% endblock %}
