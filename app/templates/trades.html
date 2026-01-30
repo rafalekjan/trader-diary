@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+
+{% block title %}Moje Setupy - Dziennik Tradera{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>📋 Moje Setupy</h2>
+    <div class="total-pnl {% if total_pnl > 0 %}positive{% elif total_pnl < 0 %}negative{% endif %}">
+        Total P&L: <strong>${{ total_pnl | format_decimal }}</strong>
+    </div>
+</div>
+
+<div class="card">
+    <div class="filters">
+        <form method="GET" action="/trades" class="filter-form">
+            <div class="filter-group">
+                <label for="status">Status:</label>
+                <select name="status" id="status" onchange="this.form.submit()">
+                    <option value="">Wszystkie</option>
+                    <option value="idea" {% if current_status == 'idea' %}selected{% endif %}>Idea</option>
+                    <option value="entered" {% if current_status == 'entered' %}selected{% endif %}>Entered</option>
+                    <option value="closed" {% if current_status == 'closed' %}selected{% endif %}>Closed</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="ticker">Ticker:</label>
+                <input type="text" name="ticker" id="ticker" value="{{ current_ticker or '' }}" placeholder="np. AAPL" style="text-transform: uppercase;">
+            </div>
+            <button type="submit" class="btn btn-secondary">Filtruj</button>
+            <a href="/trades" class="btn btn-secondary">Wyczyść</a>
+        </form>
+    </div>
+
+    {% if trades %}
+    <div class="table-responsive">
+        <table class="trades-table">
+            <thead>
+                <tr>
+                    <th>Data</th>
+                    <th>Status</th>
+                    <th>Styl</th>
+                    <th>Typ</th>
+                    <th>Ticker</th>
+                    <th>Kierunek</th>
+                    <th>Entry</th>
+                    <th>Exit</th>
+                    <th>Qty</th>
+                    <th>P&L</th>
+                    <th>Akcje</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in trades %}
+                <tr>
+                    <td>{{ item.trade.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+                    <td><span class="badge badge-{{ item.trade.status.value }}">{{ item.trade.status.value }}</span></td>
+                    <td>{{ item.trade.trading_style.value }}</td>
+                    <td>{{ item.trade.instrument_type.value }}{% if item.trade.option_type %} ({{ item.trade.option_type.value }}){% endif %}</td>
+                    <td><strong>{{ item.trade.ticker }}</strong></td>
+                    <td><span class="badge badge-{{ item.trade.direction.value }}">{{ item.trade.direction.value }}</span></td>
+                    <td>${{ item.trade.entry_price | format_decimal }}</td>
+                    <td>
+                        {% if item.trade.exit_price %}
+                            ${{ item.trade.exit_price | format_decimal }}
+                        {% else %}
+                            <form method="POST" action="/trades/{{ item.trade.id }}/close" style="display: inline;">
+                                <input type="number" name="exit_price" step="0.01" placeholder="Exit" style="width: 80px;" required>
+                                <button type="submit" class="btn-small btn-primary">✓</button>
+                            </form>
+                        {% endif %}
+                    </td>
+                    <td>{{ item.trade.quantity }}</td>
+                    <td class="{% if item.pnl %}{% if item.pnl > 0 %}positive{% elif item.pnl < 0 %}negative{% endif %}{% endif %}">
+                        {% if item.pnl %}
+                            ${{ item.pnl | format_decimal }}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                    <td class="actions">
+                        <a href="/trades/{{ item.trade.id }}/edit" class="btn-small btn-secondary" title="Edytuj">✏️</a>
+                        <form method="POST" action="/trades/{{ item.trade.id }}/delete" style="display: inline;" onsubmit="return confirm('Czy na pewno chcesz usunąć ten trade?');">
+                            <button type="submit" class="btn-small btn-danger" title="Usuń">🗑️</button>
+                        </form>
+                    </td>
+                </tr>
+                {% if item.trade.notes %}
+                <tr class="notes-row">
+                    <td colspan="11">
+                        <strong>Notatki:</strong> {{ item.trade.notes }}
+                    </td>
+                </tr>
+                {% endif %}
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+        <p>Brak tradów do wyświetlenia.</p>
+        <a href="/" class="btn btn-primary">Dodaj pierwszy trade</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block title %}Statystyki - Dziennik Tradera{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>📊 Statystyki Tradingowe</h2>
+</div>
+
+<div class="stats-grid">
+    <div class="stat-card">
+        <h3>Total Trades</h3>
+        <div class="stat-value">{{ stats.total_trades }}</div>
+        <p class="stat-label">Wszystkie trady</p>
+    </div>
+
+    <div class="stat-card">
+        <h3>Closed Trades</h3>
+        <div class="stat-value">{{ stats.closed_trades }}</div>
+        <p class="stat-label">Zamknięte pozycje</p>
+    </div>
+
+    <div class="stat-card">
+        <h3>Open Trades</h3>
+        <div class="stat-value">{{ stats.open_trades }}</div>
+        <p class="stat-label">Otwarte pozycje</p>
+    </div>
+
+    <div class="stat-card highlight">
+        <h3>Total P&L</h3>
+        <div class="stat-value {% if stats.total_pnl > 0 %}positive{% elif stats.total_pnl < 0 %}negative{% endif %}">
+            ${{ stats.total_pnl | format_decimal }}
+        </div>
+        <p class="stat-label">Całkowity zysk/strata</p>
+    </div>
+</div>
+
+<div class="stats-grid">
+    <div class="stat-card success">
+        <h3>Winning Trades</h3>
+        <div class="stat-value">{{ stats.winning_trades }}</div>
+        <p class="stat-label">Zyskowne trady</p>
+    </div>
+
+    <div class="stat-card danger">
+        <h3>Losing Trades</h3>
+        <div class="stat-value">{{ stats.losing_trades }}</div>
+        <p class="stat-label">Stratne trady</p>
+    </div>
+
+    <div class="stat-card highlight">
+        <h3>Win Rate</h3>
+        <div class="stat-value">{{ stats.winrate }}%</div>
+        <p class="stat-label">Procent wygranych</p>
+    </div>
+</div>
+
+<div class="card">
+    <h3>Analiza</h3>
+    <div class="analysis">
+        {% if stats.closed_trades > 0 %}
+            <p>
+                Z <strong>{{ stats.closed_trades }}</strong> zamkniętych tradów, 
+                <strong>{{ stats.winning_trades }}</strong> zakończyło się zyskiem, 
+                a <strong>{{ stats.losing_trades }}</strong> stratą.
+            </p>
+            <p>
+                Twój win rate wynosi <strong>{{ stats.winrate }}%</strong>.
+                {% if stats.winrate >= 50 %}
+                    Świetna robota! 🎉
+                {% else %}
+                    Pracuj nad strategią! 💪
+                {% endif %}
+            </p>
+            <p>
+                Całkowity P&L: 
+                <strong class="{% if stats.total_pnl > 0 %}positive{% elif stats.total_pnl < 0 %}negative{% endif %}">
+                    ${{ stats.total_pnl | format_decimal }}
+                </strong>
+            </p>
+        {% else %}
+            <p>Brak zamkniętych tradów do analizy. Rozpocznij trading i wróć tutaj po pierwszych wynikach!</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

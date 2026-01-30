@@ -1,0 +1,123 @@
+{% extends "base.html" %}
+
+{% block title %}{% if edit_mode %}Edytuj Trade{% else %}Dodaj Trade{% endif %} - Dziennik Tradera{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>{% if edit_mode %}✏️ Edytuj Trade{% else %}➕ Dodaj Nowy Trade{% endif %}</h2>
+</div>
+
+<div class="card">
+    <form method="POST" action="{% if edit_mode %}/trades/{{ trade.id }}/update{% else %}/trades/create{% endif %}" id="tradeForm">
+        <div class="form-grid">
+            <div class="form-group">
+                <label for="status">Status *</label>
+                <select name="status" id="status" required>
+                    <option value="idea" {% if edit_mode and trade.status.value == 'idea' %}selected{% endif %}>Idea (Pomysł)</option>
+                    <option value="entered" {% if edit_mode and trade.status.value == 'entered' %}selected{% elif not edit_mode %}selected{% endif %}>Entered (Weszłem)</option>
+                    <option value="closed" {% if edit_mode and trade.status.value == 'closed' %}selected{% endif %}>Closed (Zamknięty)</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="trading_style">Styl Tradingu *</label>
+                <select name="trading_style" id="trading_style" required>
+                    <option value="swing" {% if edit_mode and trade.trading_style.value == 'swing' %}selected{% endif %}>Swing</option>
+                    <option value="daytrading" {% if edit_mode and trade.trading_style.value == 'daytrading' %}selected{% endif %}>Daytrading</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="instrument_type">Typ Instrumentu *</label>
+                <select name="instrument_type" id="instrument_type" required onchange="toggleOptionFields()">
+                    <option value="stock" {% if edit_mode and trade.instrument_type.value == 'stock' %}selected{% endif %}>Stock (Akcje)</option>
+                    <option value="option" {% if edit_mode and trade.instrument_type.value == 'option' %}selected{% endif %}>Option (Opcje)</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label for="ticker">Ticker *</label>
+                <input type="text" name="ticker" id="ticker" value="{% if edit_mode %}{{ trade.ticker }}{% endif %}" placeholder="np. AAPL" required style="text-transform: uppercase;">
+            </div>
+
+            <div class="form-group">
+                <label for="direction">Kierunek *</label>
+                <select name="direction" id="direction" required>
+                    <option value="long" {% if edit_mode and trade.direction.value == 'long' %}selected{% elif not edit_mode %}selected{% endif %}>Long</option>
+                    <option value="short" {% if edit_mode and trade.direction.value == 'short' %}selected{% endif %}>Short</option>
+                </select>
+            </div>
+
+            <div class="form-group" id="option_type_group" style="display: none;">
+                <label for="option_type">Typ Opcji</label>
+                <select name="option_type" id="option_type">
+                    <option value="">-- Wybierz --</option>
+                    <option value="CALL" {% if edit_mode and trade.option_type and trade.option_type.value == 'CALL' %}selected{% endif %}>CALL</option>
+                    <option value="PUT" {% if edit_mode and trade.option_type and trade.option_type.value == 'PUT' %}selected{% endif %}>PUT</option>
+                </select>
+            </div>
+
+            <div class="form-group" id="expiration_group" style="display: none;">
+                <label for="expiration_date">Data Wygaśnięcia</label>
+                <input type="text" name="expiration_date" id="expiration_date" value="{% if edit_mode and trade.expiration_date %}{{ trade.expiration_date }}{% endif %}" placeholder="YYYY-MM-DD">
+            </div>
+
+            <div class="form-group" id="strike_group" style="display: none;">
+                <label for="strike">Strike</label>
+                <input type="number" name="strike" id="strike" value="{% if edit_mode and trade.strike %}{{ trade.strike }}{% endif %}" step="0.01" placeholder="0.00">
+            </div>
+
+            <div class="form-group">
+                <label for="entry_price">Cena Wejścia *</label>
+                <input type="number" name="entry_price" id="entry_price" value="{% if edit_mode %}{{ trade.entry_price }}{% endif %}" step="0.01" placeholder="0.00" required>
+            </div>
+
+            <div class="form-group">
+                <label for="exit_price">Cena Wyjścia</label>
+                <input type="number" name="exit_price" id="exit_price" value="{% if edit_mode and trade.exit_price %}{{ trade.exit_price }}{% endif %}" step="0.01" placeholder="0.00">
+            </div>
+
+            <div class="form-group">
+                <label for="quantity">Ilość *</label>
+                <input type="number" name="quantity" id="quantity" value="{% if edit_mode %}{{ trade.quantity }}{% else %}1{% endif %}" min="1" required>
+            </div>
+
+            <div class="form-group">
+                <label for="fees">Prowizje</label>
+                <input type="number" name="fees" id="fees" value="{% if edit_mode %}{{ trade.fees }}{% else %}0.00{% endif %}" step="0.01" placeholder="0.00">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label for="notes">Notatki</label>
+            <textarea name="notes" id="notes" rows="4" placeholder="Twoje przemyślenia, strategia, powód wejścia...">{% if edit_mode and trade.notes %}{{ trade.notes }}{% endif %}</textarea>
+        </div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">{% if edit_mode %}💾 Zapisz Zmiany{% else %}➕ Dodaj Trade{% endif %}</button>
+            {% if edit_mode %}
+            <a href="/trades" class="btn btn-secondary">Anuluj</a>
+            {% endif %}
+        </div>
+    </form>
+</div>
+
+<script>
+    function toggleOptionFields() {
+        const instrumentType = document.getElementById('instrument_type').value;
+        const optionFields = ['option_type_group', 'expiration_group', 'strike_group'];
+        
+        optionFields.forEach(fieldId => {
+            const field = document.getElementById(fieldId);
+            if (instrumentType === 'option') {
+                field.style.display = 'block';
+            } else {
+                field.style.display = 'none';
+            }
+        });
+    }
+    
+    // Initialize on page load
+    toggleOptionFields();
+</script>
+{% endblock %}

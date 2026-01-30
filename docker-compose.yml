@@ -1,0 +1,39 @@
+version: '3.8'
+
+services:
+  db:
+    image: postgres:15-alpine
+    container_name: trader_db
+    environment:
+      POSTGRES_USER: trader
+      POSTGRES_PASSWORD: trader123
+      POSTGRES_DB: trader_journal
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U trader -d trader_journal"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  web:
+    build: .
+    container_name: trader_web
+    ports:
+      - "8001:8000"
+    environment:
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_USER: trader
+      DB_PASSWORD: trader123
+      DB_NAME: trader_journal
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - .:/code
+
+volumes:
+  postgres_data:

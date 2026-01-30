@@ -1,0 +1,52 @@
+{% extends "base.html" %}
+
+{% block title %}Konto - Dziennik Tradera{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h2>💰 Zarządzanie Kontem</h2>
+</div>
+
+<div class="stats-grid">
+    <div class="stat-card">
+        <h3>Account Balance</h3>
+        <div class="stat-value">${{ account.balance | format_decimal }}</div>
+        <p class="stat-label">Aktualny stan konta</p>
+    </div>
+
+    <div class="stat-card">
+        <h3>Open P&L</h3>
+        <div class="stat-value {% if open_pnl > 0 %}positive{% elif open_pnl < 0 %}negative{% endif %}">
+            ${{ open_pnl | format_decimal }}
+        </div>
+        <p class="stat-label">Niezrealizowany zysk/strata</p>
+    </div>
+
+    <div class="stat-card highlight">
+        <h3>Equity</h3>
+        <div class="stat-value">${{ equity | format_decimal }}</div>
+        <p class="stat-label">Balance + Open P&L</p>
+    </div>
+</div>
+
+<div class="card">
+    <h3>Edytuj Balance</h3>
+    <form method="POST" action="/account/update" class="account-form">
+        <div class="form-group">
+            <label for="balance">Nowy Balance *</label>
+            <input type="number" name="balance" id="balance" value="{{ account.balance }}" step="0.01" required>
+        </div>
+        <button type="submit" class="btn btn-primary">💾 Zapisz Balance</button>
+    </form>
+    <p class="help-text">
+        <strong>Uwaga:</strong> Zmiana balance nie wpływa na P&L z tradów. 
+        Użyj tej opcji do ręcznej korekty stanu konta (np. po wpłacie/wypłacie środków).
+    </p>
+</div>
+
+<div class="card">
+    <h3>Informacje</h3>
+    <p><strong>Ostatnia aktualizacja:</strong> {{ account.updated_at.strftime('%Y-%m-%d %H:%M:%S') }}</p>
+    <p><strong>ID Konta:</strong> {{ account.id }}</p>
+</div>
+{% endblock %}
