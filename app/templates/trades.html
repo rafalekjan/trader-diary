@@ -1,12 +1,12 @@
 {% extends "base.html" %}
 
-{% block title %}Moje Setupy - Dziennik Tradera{% endblock %}
+{% block title %}Trades - Trader Journal{% endblock %}
 
 {% block content %}
 <div class="page-header">
-    <h2>📋 Moje Setupy</h2>
+    <h2>Trades</h2>
     <div class="total-pnl {% if total_pnl > 0 %}positive{% elif total_pnl < 0 %}negative{% endif %}">
-        Total P&L: <strong>${{ total_pnl | format_decimal }}</strong>
+        Total P&amp;L: <strong>${{ total_pnl | format_decimal }}</strong>
     </div>
 </div>
 
@@ -18,7 +18,7 @@
                 <div class="checkbox-group-filter">
                     <label class="checkbox-label-filter">
                         <input type="radio" name="status" value="" {% if not current_status %}checked{% endif %}>
-                        <span class="checkbox-text">Wszystkie</span>
+                        <span class="checkbox-text">All</span>
                     </label>
                     <label class="checkbox-label-filter">
                         <input type="radio" name="status" value="idea" {% if current_status == 'idea' %}checked{% endif %}>
@@ -36,10 +36,10 @@
             </div>
             <div class="filter-group">
                 <label for="ticker">Ticker:</label>
-                <input type="text" name="ticker" id="ticker" value="{{ current_ticker or '' }}" placeholder="np. AAPL" style="text-transform: uppercase;">
+                <input type="text" name="ticker" id="ticker" value="{{ current_ticker or '' }}" placeholder="e.g. AAPL" style="text-transform: uppercase;">
             </div>
-            <button type="submit" class="btn btn-secondary">Filtruj</button>
-            <a href="/trades" class="btn btn-secondary">Wyczyść</a>
+            <button type="submit" class="btn btn-secondary">Filter</button>
+            <a href="/trades" class="btn btn-secondary">Clear</a>
         </form>
     </div>
 
@@ -48,17 +48,17 @@
         <table class="trades-table">
             <thead>
                 <tr>
-                    <th>Data</th>
+                    <th>Date</th>
                     <th>Status</th>
-                    <th>Styl</th>
-                    <th>Typ</th>
+                    <th>Style</th>
+                    <th>Type</th>
                     <th>Ticker</th>
-                    <th>Kierunek</th>
+                    <th>Direction</th>
                     <th>Entry</th>
                     <th>Exit</th>
                     <th>Qty</th>
-                    <th>P&L</th>
-                    <th>Akcje</th>
+                    <th>P&amp;L</th>
+                    <th>Actions</th>
                 </tr>
             </thead>
             <tbody>
@@ -77,7 +77,7 @@
                         {% else %}
                             <form method="POST" action="/trades/{{ item.trade.id }}/close" style="display: inline;">
                                 <input type="number" name="exit_price" step="0.01" placeholder="Exit" style="width: 80px;" required>
-                                <button type="submit" class="btn-small btn-primary">✓</button>
+                                <button type="submit" class="btn-small btn-primary">Close</button>
                             </form>
                         {% endif %}
                     </td>
@@ -90,16 +90,16 @@
                         {% endif %}
                     </td>
                     <td class="actions">
-                        <a href="/trades/{{ item.trade.id }}/edit" class="btn-small btn-secondary" title="Edytuj">✏️</a>
-                        <form method="POST" action="/trades/{{ item.trade.id }}/delete" style="display: inline;" onsubmit="return confirm('Czy na pewno chcesz usunąć ten trade?');">
-                            <button type="submit" class="btn-small btn-danger" title="Usuń">🗑️</button>
+                        <a href="/trades/{{ item.trade.id }}/edit" class="btn-small btn-secondary" title="Edit">Edit</a>
+                        <form method="POST" action="/trades/{{ item.trade.id }}/delete" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this trade?');">
+                            <button type="submit" class="btn-small btn-danger" title="Delete">Delete</button>
                         </form>
                     </td>
                 </tr>
                 {% if item.trade.notes %}
                 <tr class="notes-row">
                     <td colspan="11">
-                        <strong>Notatki:</strong> {{ item.trade.notes }}
+                        <strong>Notes:</strong> {{ item.trade.notes }}
                     </td>
                 </tr>
                 {% endif %}
@@ -109,8 +109,8 @@
     </div>
     {% else %}
     <div class="empty-state">
-        <p>Brak tradów do wyświetlenia.</p>
-        <a href="/" class="btn btn-primary">Dodaj pierwszy trade</a>
+        <p>No trades to display.</p>
+        <a href="/" class="btn btn-primary">Add your first trade</a>
     </div>
     {% endif %}
 </div>
@@ -119,7 +119,7 @@
     document.addEventListener('DOMContentLoaded', function() {
         const filterForm = document.getElementById('filterForm');
         const statusRadios = filterForm.querySelectorAll('input[name="status"]');
-        
+
         statusRadios.forEach(radio => {
             radio.addEventListener('change', function() {
                 filterForm.submit();

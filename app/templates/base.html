@@ -1,20 +1,20 @@
 <!DOCTYPE html>
-<html lang="pl">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>{% block title %}Dziennik Tradera{% endblock %}</title>
+    <title>{% block title %}Trader Journal{% endblock %}</title>
     <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
     <nav class="navbar">
         <div class="container">
-            <h1 class="logo">📊 Dziennik Tradera</h1>
+            <h1 class="logo">Trader Journal</h1>
             <div class="nav-links">
-                <a href="/" class="{% if request.url.path == '/' %}active{% endif %}">Dodaj Trade</a>
-                <a href="/trades" class="{% if '/trades' in request.url.path %}active{% endif %}">Moje Setupy</a>
-                <a href="/account" class="{% if request.url.path == '/account' %}active{% endif %}">Konto</a>
-                <a href="/stats" class="{% if request.url.path == '/stats' %}active{% endif %}">Statystyki</a>
+                <a href="/" class="{% if request.url.path == '/' %}active{% endif %}">Add Trade</a>
+                <a href="/trades" class="{% if '/trades' in request.url.path %}active{% endif %}">Trades</a>
+                <a href="/account" class="{% if request.url.path == '/account' %}active{% endif %}">Account</a>
+                <a href="/stats" class="{% if request.url.path == '/stats' %}active{% endif %}">Stats</a>
             </div>
             <div class="account-balance">
                 Balance: <strong>${{ account.balance | format_decimal }}</strong>
@@ -28,7 +28,7 @@
 
     <footer>
         <div class="container">
-            <p>&copy; 2026 Dziennik Tradera | Zarządzaj swoimi tradami profesjonalnie</p>
+            <p>&copy; 2026 Trader Journal | Track your trades professionally</p>
         </div>
     </footer>
 

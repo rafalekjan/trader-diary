@@ -1,61 +1,61 @@
 {% extends "base.html" %}
 
-{% block title %}Konto - Dziennik Tradera{% endblock %}
+{% block title %}Account - Trader Journal{% endblock %}
 
 {% block content %}
 <div class="page-header">
-    <h2>💰 Zarządzanie Kontem</h2>
+    <h2>Account Overview</h2>
 </div>
 
 <div class="stats-grid">
     <div class="stat-card">
         <h3>Account Balance</h3>
         <div class="stat-value">${{ account.balance | format_decimal }}</div>
-        <p class="stat-label">Kapitał początkowy</p>
+        <p class="stat-label">Starting capital</p>
     </div>
 
     <div class="stat-card">
-        <h3>Closed P&L</h3>
+        <h3>Closed P&amp;L</h3>
         <div class="stat-value {% if closed_pnl > 0 %}positive{% elif closed_pnl < 0 %}negative{% endif %}">
             ${{ closed_pnl | format_decimal }}
         </div>
-        <p class="stat-label">Zrealizowany zysk/strata</p>
+        <p class="stat-label">Realized profit/loss</p>
     </div>
 
     <div class="stat-card">
-        <h3>Open P&L</h3>
+        <h3>Open P&amp;L</h3>
         <div class="stat-value {% if open_pnl > 0 %}positive{% elif open_pnl < 0 %}negative{% endif %}">
             ${{ open_pnl | format_decimal }}
         </div>
-        <p class="stat-label">Niezrealizowany zysk/strata</p>
+        <p class="stat-label">Unrealized profit/loss</p>
     </div>
 
     <div class="stat-card highlight">
         <h3>Equity</h3>
         <div class="stat-value">${{ equity | format_decimal }}</div>
-        <p class="stat-label">Balance + Closed P&L + Open P&L</p>
+        <p class="stat-label">Balance + Closed P&amp;L + Open P&amp;L</p>
     </div>
 </div>
 
 <div class="card">
-    <h3>Edytuj Balance</h3>
+    <h3>Update Balance</h3>
     <form method="POST" action="/account/update" class="account-form">
         <div class="form-group">
-            <label for="balance">Nowy Balance *</label>
+            <label for="balance">New Balance *</label>
             <input type="number" name="balance" id="balance" value="{{ account.balance }}" step="0.01" required>
         </div>
-        <button type="submit" class="btn btn-primary">💾 Zapisz Balance</button>
+        <button type="submit" class="btn btn-primary">Save Balance</button>
     </form>
     <p class="help-text">
-        <strong>Uwaga:</strong> Balance to Twój kapitał początkowy. 
-        Equity automatycznie uwzględnia wszystkie zamknięte i otwarte trady.
-        Zmień balance tylko gdy wpłacasz/wypłacasz środki z konta.
+        <strong>Note:</strong> Balance is your starting capital. Equity automatically
+        includes all closed and open trades. Update balance only when you deposit or
+        withdraw funds.
     </p>
 </div>
 
 <div class="card">
-    <h3>Informacje</h3>
-    <p><strong>Ostatnia aktualizacja:</strong> {{ account.updated_at.strftime('%Y-%m-%d %H:%M:%S') }}</p>
-    <p><strong>ID Konta:</strong> {{ account.id }}</p>
+    <h3>Details</h3>
+    <p><strong>Last updated:</strong> {{ account.updated_at.strftime('%Y-%m-%d %H:%M:%S') }}</p>
+    <p><strong>Account ID:</strong> {{ account.id }}</p>
 </div>
 {% endblock %}

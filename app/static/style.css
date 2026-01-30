@@ -87,6 +87,12 @@ main {
     font-size: 2rem;
 }
 
+.page-subtitle {
+    color: rgba(255, 255, 255, 0.75);
+    font-size: 0.95rem;
+    margin-top: 0.35rem;
+}
+
 .total-pnl {
     background: white;
     padding: 1rem 2rem;
@@ -117,12 +123,54 @@ main {
     color: #667eea;
 }
 
+.trade-panel {
+    max-width: 980px;
+    margin: 0 auto 2rem;
+    padding: 1.5rem;
+    border-radius: 16px;
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.12);
+}
+
+.trade-panel-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+}
+
+.trade-panel-header h3 {
+    margin-bottom: 0.25rem;
+    color: #111827;
+}
+
+.trade-panel-subtitle {
+    color: #6b7280;
+    font-size: 0.9rem;
+}
+
+.trade-panel-badge {
+    background: #111827;
+    color: white;
+    font-size: 0.7rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 0.35rem 0.6rem;
+    border-radius: 999px;
+}
+
 /* Forms */
 .form-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
     gap: 1.5rem;
     margin-bottom: 1.5rem;
+}
+
+.trade-form-grid {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+    margin-bottom: 1rem;
 }
 
 .form-group {
@@ -146,6 +194,13 @@ main {
     transition: border-color 0.3s;
 }
 
+.trade-panel .form-group input,
+.trade-panel .form-group select,
+.trade-panel .form-group textarea {
+    padding: 0.65rem 0.75rem;
+    background: #f9fafb;
+}
+
 .form-group input:focus,
 .form-group select:focus,
 .form-group textarea:focus {
@@ -157,6 +212,11 @@ main {
     display: flex;
     gap: 1rem;
     margin-top: 2rem;
+}
+
+.trade-panel .form-actions {
+    justify-content: flex-end;
+    margin-top: 1.25rem;
 }
 
 /* Buttons */
@@ -435,6 +495,11 @@ footer {
     .stats-grid {
         grid-template-columns: 1fr;
     }
+
+    .trade-panel-header {
+        flex-direction: column;
+        align-items: flex-start;
+    }
 }
 /* Status Checkboxes */
 .status-checkboxes {
@@ -447,6 +512,10 @@ footer {
     flex-wrap: wrap;
 }
 
+.trade-panel .checkbox-group {
+    gap: 0.5rem;
+}
+
 .checkbox-label {
     display: flex;
     align-items: center;
@@ -456,6 +525,12 @@ footer {
     border-radius: 8px;
     transition: all 0.3s;
     background: white;
+}
+
+.trade-panel .checkbox-label {
+    padding: 0.45rem 0.9rem;
+    border-radius: 999px;
+    background: #f9fafb;
 }
 
 .checkbox-label:hover {

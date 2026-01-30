@@ -1,37 +1,37 @@
 {% extends "base.html" %}
 
-{% block title %}Statystyki - Dziennik Tradera{% endblock %}
+{% block title %}Stats - Trader Journal{% endblock %}
 
 {% block content %}
 <div class="page-header">
-    <h2>📊 Statystyki Tradingowe</h2>
+    <h2>Trading Stats</h2>
 </div>
 
 <div class="stats-grid">
     <div class="stat-card">
         <h3>Total Trades</h3>
         <div class="stat-value">{{ stats.total_trades }}</div>
-        <p class="stat-label">Wszystkie trady</p>
+        <p class="stat-label">All trades</p>
     </div>
 
     <div class="stat-card">
         <h3>Closed Trades</h3>
         <div class="stat-value">{{ stats.closed_trades }}</div>
-        <p class="stat-label">Zamknięte pozycje</p>
+        <p class="stat-label">Closed positions</p>
     </div>
 
     <div class="stat-card">
         <h3>Open Trades</h3>
         <div class="stat-value">{{ stats.open_trades }}</div>
-        <p class="stat-label">Otwarte pozycje</p>
+        <p class="stat-label">Open positions</p>
     </div>
 
     <div class="stat-card highlight">
-        <h3>Total P&L</h3>
+        <h3>Total P&amp;L</h3>
         <div class="stat-value {% if stats.total_pnl > 0 %}positive{% elif stats.total_pnl < 0 %}negative{% endif %}">
             ${{ stats.total_pnl | format_decimal }}
         </div>
-        <p class="stat-label">Całkowity zysk/strata</p>
+        <p class="stat-label">Net profit/loss</p>
     </div>
 </div>
 
@@ -39,47 +39,47 @@
     <div class="stat-card success">
         <h3>Winning Trades</h3>
         <div class="stat-value">{{ stats.winning_trades }}</div>
-        <p class="stat-label">Zyskowne trady</p>
+        <p class="stat-label">Profitable trades</p>
     </div>
 
     <div class="stat-card danger">
         <h3>Losing Trades</h3>
         <div class="stat-value">{{ stats.losing_trades }}</div>
-        <p class="stat-label">Stratne trady</p>
+        <p class="stat-label">Losing trades</p>
     </div>
 
     <div class="stat-card highlight">
         <h3>Win Rate</h3>
         <div class="stat-value">{{ stats.winrate }}%</div>
-        <p class="stat-label">Procent wygranych</p>
+        <p class="stat-label">Win percentage</p>
     </div>
 </div>
 
 <div class="card">
-    <h3>Analiza</h3>
+    <h3>Analysis</h3>
     <div class="analysis">
         {% if stats.closed_trades > 0 %}
             <p>
-                Z <strong>{{ stats.closed_trades }}</strong> zamkniętych tradów, 
-                <strong>{{ stats.winning_trades }}</strong> zakończyło się zyskiem, 
-                a <strong>{{ stats.losing_trades }}</strong> stratą.
+                Out of <strong>{{ stats.closed_trades }}</strong> closed trades,
+                <strong>{{ stats.winning_trades }}</strong> were winners and
+                <strong>{{ stats.losing_trades }}</strong> were losers.
             </p>
             <p>
-                Twój win rate wynosi <strong>{{ stats.winrate }}%</strong>.
+                Your win rate is <strong>{{ stats.winrate }}%</strong>.
                 {% if stats.winrate >= 50 %}
-                    Świetna robota! 🎉
+                    Keep the edge.
                 {% else %}
-                    Pracuj nad strategią! 💪
+                    Focus on refining your setups.
                 {% endif %}
             </p>
             <p>
-                Całkowity P&L: 
+                Total P&amp;L:
                 <strong class="{% if stats.total_pnl > 0 %}positive{% elif stats.total_pnl < 0 %}negative{% endif %}">
                     ${{ stats.total_pnl | format_decimal }}
                 </strong>
             </p>
         {% else %}
-            <p>Brak zamkniętych tradów do analizy. Rozpocznij trading i wróć tutaj po pierwszych wynikach!</p>
+            <p>No closed trades yet. Log your first trades to see analysis here.</p>
         {% endif %}
     </div>
 </div>
