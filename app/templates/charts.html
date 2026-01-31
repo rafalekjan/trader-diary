@@ -1,0 +1,170 @@
+{% extends "base.html" %}
+
+{% block title %}Charts - Trader Journal{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h2>Charts</h2>
+        <p class="page-subtitle">Build and filter the equity curve or per-trade P&amp;L.</p>
+    </div>
+</div>
+
+<div class="card chart-builder">
+    <form method="GET" action="/charts" class="filter-form">
+        <div class="filter-group">
+            <label for="metric">Metric</label>
+            <select name="metric" id="metric">
+                <option value="equity" {% if current_metric == 'equity' %}selected{% endif %}>Equity curve</option>
+                <option value="pnl" {% if current_metric == 'pnl' %}selected{% endif %}>Per-trade P&amp;L</option>
+                <option value="cumulative_pnl" {% if current_metric == 'cumulative_pnl' %}selected{% endif %}>Cumulative P&amp;L</option>
+            </select>
+        </div>
+        <div class="filter-group">
+            <label for="group_by">Group by</label>
+            <select name="group_by" id="group_by">
+                <option value="day" {% if current_group_by == 'day' %}selected{% endif %}>Day</option>
+                <option value="week" {% if current_group_by == 'week' %}selected{% endif %}>Week</option>
+                <option value="month" {% if current_group_by == 'month' %}selected{% endif %}>Month</option>
+            </select>
+        </div>
+        <div class="filter-group">
+            <label for="instrument">Instrument</label>
+            <select name="instrument" id="instrument">
+                <option value="" {% if not current_instrument %}selected{% endif %}>All</option>
+                <option value="stock" {% if current_instrument == 'stock' %}selected{% endif %}>Stock</option>
+                <option value="option" {% if current_instrument == 'option' %}selected{% endif %}>Option</option>
+            </select>
+        </div>
+        <div class="filter-group">
+            <label for="trader_id">Trader</label>
+            <select name="trader_id" id="trader_id">
+                <option value="">All</option>
+                {% for trader in traders %}
+                    <option value="{{ trader.id }}" {% if current_trader and current_trader == trader.id %}selected{% endif %}>{{ trader.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="filter-group">
+            <label for="date_from">From</label>
+            <input type="date" name="date_from" id="date_from" value="{{ current_date_from }}">
+        </div>
+        <div class="filter-group">
+            <label for="date_to">To</label>
+            <input type="date" name="date_to" id="date_to" value="{{ current_date_to }}">
+        </div>
+        <div class="filter-group chart-range">
+            <label>Quick range</label>
+            <div class="range-buttons">
+                <button type="button" class="btn-small btn-secondary" data-range="7">7D</button>
+                <button type="button" class="btn-small btn-secondary" data-range="30">30D</button>
+                <button type="button" class="btn-small btn-secondary" data-range="90">90D</button>
+                <button type="button" class="btn-small btn-secondary" data-range="ytd">YTD</button>
+                <button type="button" class="btn-small btn-secondary" data-range="all">All</button>
+            </div>
+        </div>
+        <label class="inline-check chart-checkbox">
+            <input type="checkbox" name="entered_only" {% if current_entered_only %}checked{% endif %}>
+            <span>Entered only</span>
+        </label>
+        <button type="submit" class="btn btn-primary">Update</button>
+        <a href="/charts" class="btn btn-secondary">Reset</a>
+    </form>
+</div>
+
+<div class="card">
+    <h3>Chart</h3>
+    <div class="equity-chart chart-output" data-points='{{ points | tojson }}'>
+        <svg viewBox="0 0 1000 260" preserveAspectRatio="none">
+            <polyline class="equity-line" points=""></polyline>
+        </svg>
+        <div class="equity-axis">
+            <span class="equity-min"></span>
+            <span class="equity-max"></span>
+        </div>
+        <div class="equity-dates">
+            <span class="equity-date-start"></span>
+            <span class="equity-date-mid"></span>
+            <span class="equity-date-end"></span>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const chart = document.querySelector('.chart-output');
+        if (!chart) return;
+
+        const data = JSON.parse(chart.dataset.points || '[]');
+        const line = chart.querySelector('.equity-line');
+        const minLabel = chart.querySelector('.equity-min');
+        const maxLabel = chart.querySelector('.equity-max');
+        const dateStart = chart.querySelector('.equity-date-start');
+        const dateMid = chart.querySelector('.equity-date-mid');
+        const dateEnd = chart.querySelector('.equity-date-end');
+
+        if (!data.length) {
+            line.setAttribute('points', '');
+            return;
+        }
+
+        const values = data.map(point => point.value);
+        const min = Math.min(...values);
+        const max = Math.max(...values);
+        const range = max - min || 1;
+
+        const width = 1000;
+        const height = 260;
+        const padding = 20;
+        const innerWidth = width - padding * 2;
+        const innerHeight = height - padding * 2;
+
+        const points = data.map((point, index) => {
+            const x = padding + (innerWidth * (index / Math.max(1, data.length - 1)));
+            const y = padding + (innerHeight * (1 - (point.value - min) / range));
+            return `${x},${y}`;
+        }).join(' ');
+
+        line.setAttribute('points', points);
+        minLabel.textContent = `$${max.toFixed(2)}`;
+        maxLabel.textContent = `$${min.toFixed(2)}`;
+        if (dateStart && dateEnd) {
+            dateStart.textContent = data[0].date || '';
+            dateEnd.textContent = data[data.length - 1].date || '';
+            if (dateMid && data.length > 2) {
+                const midIndex = Math.floor(data.length / 2);
+                dateMid.textContent = data[midIndex].date || '';
+            }
+        }
+
+        const rangeButtons = document.querySelectorAll('.range-buttons button');
+        const fromInput = document.getElementById('date_from');
+        const toInput = document.getElementById('date_to');
+        const form = document.querySelector('.chart-builder form');
+
+        rangeButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const today = new Date();
+                let from = '';
+                let to = today.toISOString().slice(0, 10);
+
+                if (this.dataset.range === 'ytd') {
+                    from = `${today.getFullYear()}-01-01`;
+                } else if (this.dataset.range === 'all') {
+                    from = '';
+                    to = '';
+                } else {
+                    const days = parseInt(this.dataset.range, 10);
+                    const start = new Date(today);
+                    start.setDate(today.getDate() - days);
+                    from = start.toISOString().slice(0, 10);
+                }
+
+                if (fromInput) fromInput.value = from;
+                if (toInput) toInput.value = to;
+                if (form) form.submit();
+            });
+        });
+    });
+</script>
+{% endblock %}

@@ -97,7 +97,7 @@ def get_account(db: Session) -> models.Account:
     account = db.query(models.Account).first()
     if not account:
         # Create default account
-        account = models.Account(balance=Decimal("10000.00"))
+        account = models.Account(balance=Decimal("10000.00"), stock_price_provider="auto")
         db.add(account)
         db.commit()
         db.refresh(account)

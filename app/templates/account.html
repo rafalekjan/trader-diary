@@ -4,55 +4,7 @@
 
 {% block content %}
 <div class="page-header">
-    <h2>Account Overview</h2>
-</div>
-
-<div class="stats-grid">
-    <div class="stat-card">
-        <h3>Account Balance</h3>
-        <div class="stat-value">${{ account.balance | format_decimal }}</div>
-        <p class="stat-label">Starting capital</p>
-    </div>
-
-    <div class="stat-card">
-        <h3>Closed P&amp;L</h3>
-        <div class="stat-value {% if closed_pnl > 0 %}positive{% elif closed_pnl < 0 %}negative{% endif %}">
-            ${{ closed_pnl | format_decimal }}
-        </div>
-        <p class="stat-label">Realized profit/loss</p>
-    </div>
-
-    <div class="stat-card">
-        <h3>Open P&amp;L</h3>
-        <div class="stat-value {% if open_pnl > 0 %}positive{% elif open_pnl < 0 %}negative{% endif %}">
-            ${{ open_pnl | format_decimal }}
-        </div>
-        <p class="stat-label">Unrealized profit/loss</p>
-    </div>
-
-    <div class="stat-card highlight">
-        <h3>Equity</h3>
-        <div class="stat-value">${{ equity | format_decimal }}</div>
-        <p class="stat-label">Balance + Closed P&amp;L + Open P&amp;L</p>
-    </div>
-</div>
-
-<div class="card">
-    <h3>Equity Over Time</h3>
-    <div class="equity-chart" data-points='{{ equity_points | tojson }}'>
-        <svg viewBox="0 0 1000 260" preserveAspectRatio="none">
-            <polyline class="equity-line" points=""></polyline>
-        </svg>
-        <div class="equity-axis">
-            <span class="equity-min"></span>
-            <span class="equity-max"></span>
-        </div>
-        <div class="equity-dates">
-            <span class="equity-date-start"></span>
-            <span class="equity-date-mid"></span>
-            <span class="equity-date-end"></span>
-        </div>
-    </div>
+    <h2>Settings</h2>
 </div>
 
 <div class="card">
@@ -70,6 +22,15 @@
             <div class="form-group">
                 <label for="global_tp">Global Take Profit (TP %)</label>
                 <input type="number" name="global_tp" id="global_tp" value="{% if account.global_tp %}{{ account.global_tp }}{% endif %}" step="0.01" placeholder="0.00">
+            </div>
+            <div class="form-group">
+                <label for="stock_price_provider">Stock Price Source</label>
+                <select name="stock_price_provider" id="stock_price_provider">
+                    <option value="a" {% if account.stock_price_provider == 'a' %}selected{% endif %}>Source A (Stooq)</option>
+                    <option value="b" {% if account.stock_price_provider == 'b' %}selected{% endif %}>Source B (Yahoo)</option>
+                    <option value="auto" {% if account.stock_price_provider == 'auto' or not account.stock_price_provider %}selected{% endif %}>Auto (A then B)</option>
+                    <option value="off" {% if account.stock_price_provider == 'off' %}selected{% endif %}>Off</option>
+                </select>
             </div>
         </div>
         <button type="submit" class="btn btn-primary">Save Settings</button>
@@ -111,52 +72,4 @@
     <p><strong>Account ID:</strong> {{ account.id }}</p>
 </div>
 
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        const chart = document.querySelector('.equity-chart');
-        if (!chart) return;
-
-        const data = JSON.parse(chart.dataset.points || '[]');
-        const line = chart.querySelector('.equity-line');
-        const minLabel = chart.querySelector('.equity-min');
-        const maxLabel = chart.querySelector('.equity-max');
-        const dateStart = chart.querySelector('.equity-date-start');
-        const dateMid = chart.querySelector('.equity-date-mid');
-        const dateEnd = chart.querySelector('.equity-date-end');
-
-        if (!data.length) {
-            line.setAttribute('points', '');
-            return;
-        }
-
-        const values = data.map(point => point.value);
-        const min = Math.min(...values);
-        const max = Math.max(...values);
-        const range = max - min || 1;
-
-        const width = 1000;
-        const height = 260;
-        const padding = 20;
-        const innerWidth = width - padding * 2;
-        const innerHeight = height - padding * 2;
-
-        const points = data.map((point, index) => {
-            const x = padding + (innerWidth * (index / Math.max(1, data.length - 1)));
-            const y = padding + (innerHeight * (1 - (point.value - min) / range));
-            return `${x},${y}`;
-        }).join(' ');
-
-        line.setAttribute('points', points);
-        minLabel.textContent = `$${max.toFixed(2)}`;
-        maxLabel.textContent = `$${min.toFixed(2)}`;
-        if (dateStart && dateEnd) {
-            dateStart.textContent = data[0].date || '';
-            dateEnd.textContent = data[data.length - 1].date || '';
-            if (dateMid && data.length > 2) {
-                const midIndex = Math.floor(data.length / 2);
-                dateMid.textContent = data[midIndex].date || '';
-            }
-        }
-    });
-</script>
 {% endblock %}

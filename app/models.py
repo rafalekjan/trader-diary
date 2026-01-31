@@ -70,4 +70,5 @@ class Account(Base):
     balance = Column(Numeric(12, 2), default=10000.00, nullable=False)
     global_sl = Column(Numeric(10, 2), nullable=True)
     global_tp = Column(Numeric(10, 2), nullable=True)
+    stock_price_provider = Column(String(40), nullable=True)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())

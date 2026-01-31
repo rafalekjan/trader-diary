@@ -5,6 +5,13 @@ from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
 from typing import Optional
 from decimal import Decimal
+from datetime import datetime, timedelta, date
+import csv
+import json
+import time
+import urllib.parse
+import urllib.request
+from sqlalchemy import inspect, text
 
 from app.database import get_db, engine, Base
 from app import models, schemas, crud
@@ -16,12 +23,110 @@ app = FastAPI(title="Dziennik Tradera")
 app.mount("/static", StaticFiles(directory="app/static"), name="static")
 templates = Jinja2Templates(directory="app/templates")
 
+def ensure_account_columns() -> None:
+    try:
+        inspector = inspect(engine)
+        columns = {col["name"] for col in inspector.get_columns("account")}
+    except Exception:
+        return
+
+    if "stock_price_provider" not in columns:
+        try:
+            with engine.begin() as conn:
+                conn.execute(text("ALTER TABLE account ADD COLUMN stock_price_provider VARCHAR(40)"))
+        except Exception:
+            pass
+
+ensure_account_columns()
+
 def format_decimal(value):
     if value is None:
         return "-"
     return f"{value:,.2f}"
 
 templates.env.filters["format_decimal"] = format_decimal
+
+STOCK_PRICE_TTL_SECONDS = 4
+STOCK_PRICE_CACHE: dict[str, dict[str, object]] = {}
+
+def fetch_stock_price_stooq(ticker: str) -> Optional[Decimal]:
+    symbol = (ticker or "").strip().upper()
+    if not symbol:
+        return None
+
+    stooq_symbol = symbol.replace(".", "-").lower() + ".us"
+    now = time.time()
+    cache_key = f"stooq:{stooq_symbol}"
+    cached = STOCK_PRICE_CACHE.get(cache_key)
+    if cached and now - float(cached["ts"]) < STOCK_PRICE_TTL_SECONDS:
+        return cached["price"]  # type: ignore[return-value]
+
+    url = f"https://stooq.pl/q/l/?s={urllib.parse.quote(stooq_symbol)}&f=sd2t2ohlcv&h&e=csv"
+    try:
+        with urllib.request.urlopen(url, timeout=4) as response:
+            payload = response.read().decode("utf-8", errors="ignore")
+    except Exception:
+        return None
+
+    rows = list(csv.reader(payload.splitlines()))
+    if len(rows) < 2:
+        return None
+    if rows[1] and rows[1][0].lower().startswith("no data"):
+        return None
+
+    try:
+        close_str = rows[1][6]
+    except Exception:
+        return None
+    if not close_str or close_str in {"-", "N/D", "n/a"}:
+        return None
+
+    try:
+        price = Decimal(close_str)
+    except Exception:
+        return None
+
+    STOCK_PRICE_CACHE[cache_key] = {"ts": now, "price": price}
+    return price
+
+def fetch_stock_price_yahoo(ticker: str) -> Optional[Decimal]:
+    symbol = (ticker or "").strip().upper()
+    if not symbol:
+        return None
+
+    yahoo_symbol = symbol.replace(".", "-")
+    now = time.time()
+    cache_key = f"yahoo:{yahoo_symbol}"
+    cached = STOCK_PRICE_CACHE.get(cache_key)
+    if cached and now - float(cached["ts"]) < STOCK_PRICE_TTL_SECONDS:
+        return cached["price"]  # type: ignore[return-value]
+
+    url = f"https://query1.finance.yahoo.com/v7/finance/quote?symbols={urllib.parse.quote(yahoo_symbol)}"
+    try:
+        with urllib.request.urlopen(url, timeout=4) as response:
+            payload = response.read().decode("utf-8", errors="ignore")
+    except Exception:
+        return None
+
+    try:
+        data = json.loads(payload)
+        result = (data.get("quoteResponse") or {}).get("result") or []
+        if not result:
+            return None
+        price_value = result[0].get("regularMarketPrice")
+    except Exception:
+        return None
+
+    if price_value is None:
+        return None
+
+    try:
+        price = Decimal(str(price_value))
+    except Exception:
+        return None
+
+    STOCK_PRICE_CACHE[cache_key] = {"ts": now, "price": price}
+    return price
 
 def calculate_total_pnl(db: Session) -> Decimal:
     trades = crud.get_trades(db)
@@ -64,6 +169,28 @@ async def new_option_trade(request: Request, db: Session = Depends(get_db)):
     account = crud.get_account(db)
     traders = crud.get_traders(db)
     return templates.TemplateResponse("index_option.html", {
+        "request": request,
+        "account": account,
+        "equity": calculate_equity(db),
+        "traders": traders
+    })
+
+@app.get("/trades/new/stock/bulk", response_class=HTMLResponse)
+async def bulk_stock_trade(request: Request, db: Session = Depends(get_db)):
+    account = crud.get_account(db)
+    traders = crud.get_traders(db)
+    return templates.TemplateResponse("bulk_stock.html", {
+        "request": request,
+        "account": account,
+        "equity": calculate_equity(db),
+        "traders": traders
+    })
+
+@app.get("/trades/new/option/bulk", response_class=HTMLResponse)
+async def bulk_option_trade(request: Request, db: Session = Depends(get_db)):
+    account = crud.get_account(db)
+    traders = crud.get_traders(db)
+    return templates.TemplateResponse("bulk_option.html", {
         "request": request,
         "account": account,
         "equity": calculate_equity(db),
@@ -131,11 +258,12 @@ async def list_trades(
     request: Request,
     status: Optional[str] = None,
     ticker: Optional[str] = None,
-    trader_id: Optional[int] = None,
+    trader_id: Optional[str] = None,
     db: Session = Depends(get_db)
 ):
     """List all trades with filtering"""
-    trades = crud.get_trades(db, status=status, ticker=ticker, trader_id=trader_id)
+    parsed_trader_id = int(trader_id) if trader_id and trader_id.isdigit() else None
+    trades = crud.get_trades(db, status=status, ticker=ticker, trader_id=parsed_trader_id)
     account = crud.get_account(db)
     traders = crud.get_traders(db)
     
@@ -159,7 +287,7 @@ async def list_trades(
         "equity": calculate_equity(db),
         "current_status": status,
         "current_ticker": ticker,
-        "current_trader": trader_id,
+        "current_trader": parsed_trader_id,
         "traders": traders
     })
 
@@ -306,6 +434,56 @@ async def delete_trade(trade_id: int, db: Session = Depends(get_db)):
     
     return RedirectResponse(url="/trades", status_code=303)
 
+@app.post("/trades/bulk_create")
+async def bulk_create_trades(
+    instrument_type: str = Form(...),
+    bulk_data: str = Form(...),
+    trader_id: Optional[int] = Form(None),
+    db: Session = Depends(get_db)
+):
+    """Create multiple trades from parsed data"""
+    try:
+        rows = json.loads(bulk_data)
+    except Exception:
+        rows = []
+
+    for row in rows:
+        ticker = (row.get("ticker") or "").strip().upper()
+        entry_price = row.get("entry_price")
+        if not ticker or not entry_price:
+            continue
+
+        entered_flag = bool(row.get("entered"))
+        exit_price = row.get("exit_price")
+        normalized_status = "closed" if exit_price else ("entered" if entered_flag else "idea")
+
+        option_type = row.get("option_type")
+        normalized_direction = row.get("direction") or "long"
+        if instrument_type == "stock":
+            normalized_direction = "long"
+        if instrument_type == "option" and option_type:
+            normalized_direction = "long" if option_type == "CALL" else "short"
+
+        trade_data = schemas.TradeCreate(
+            status=normalized_status,
+            trading_style="swing",
+            instrument_type=instrument_type,
+            ticker=ticker,
+            direction=normalized_direction,
+            entered=entered_flag,
+            trader_id=trader_id,
+            option_type=option_type if instrument_type == "option" else None,
+            expiration_date=row.get("expiration_date") if instrument_type == "option" else None,
+            entry_price=Decimal(str(entry_price)),
+            exit_price=Decimal(str(exit_price)) if exit_price else None,
+            quantity=int(row.get("quantity") or 1),
+            fees=Decimal("0.0"),
+            notes=None
+        )
+        crud.create_trade(db, trade_data)
+
+    return RedirectResponse(url="/trades", status_code=303)
+
 @app.get("/account", response_class=HTMLResponse)
 async def account_page(request: Request, db: Session = Depends(get_db)):
     """Account management page"""
@@ -329,31 +507,11 @@ async def account_page(request: Request, db: Session = Depends(get_db)):
     
     equity = calculate_equity(db)
 
-    equity_points = []
-    running = account.balance
-    equity_points.append({
-        "date": account.updated_at.strftime('%Y-%m-%d'),
-        "value": float(running)
-    })
-    for trade in sorted(trades, key=lambda t: t.created_at):
-        if not trade.entered or trade.exit_price is None:
-            continue
-        pnl = crud.calculate_pnl(trade)
-        if pnl:
-            running += pnl
-            equity_points.append({
-                "date": trade.created_at.strftime('%Y-%m-%d'),
-                "value": float(running)
-            })
-    
     return templates.TemplateResponse("account.html", {
         "request": request,
         "account": account,
-        "closed_pnl": closed_pnl,
-        "open_pnl": open_pnl,
-        "equity": equity,
-        "equity_points": equity_points,
-        "traders": traders
+        "traders": traders,
+        "equity": calculate_equity(db)
     })
 
 @app.post("/account/update")
@@ -361,6 +519,7 @@ async def update_account(
     balance: str = Form(...),
     global_sl: Optional[str] = Form(None),
     global_tp: Optional[str] = Form(None),
+    stock_price_provider: Optional[str] = Form(None),
     db: Session = Depends(get_db)
 ):
     """Update account balance"""
@@ -368,6 +527,7 @@ async def update_account(
     account.balance = Decimal(balance)
     account.global_sl = Decimal(global_sl) if global_sl else None
     account.global_tp = Decimal(global_tp) if global_tp else None
+    account.stock_price_provider = stock_price_provider or None
     db.commit()
     db.refresh(account)
     return RedirectResponse(url="/account", status_code=303)
@@ -398,6 +558,132 @@ async def statistics_page(request: Request, db: Session = Depends(get_db)):
         "equity": calculate_equity(db)
     })
 
+@app.get("/charts", response_class=HTMLResponse)
+async def charts_page(
+    request: Request,
+    instrument: Optional[str] = None,
+    entered_only: Optional[str] = None,
+    trader_id: Optional[str] = None,
+    date_from: Optional[str] = None,
+    date_to: Optional[str] = None,
+    metric: Optional[str] = "equity",
+    group_by: Optional[str] = "day",
+    db: Session = Depends(get_db)
+):
+    account = crud.get_account(db)
+    traders = crud.get_traders(db)
+
+    parsed_trader_id = int(trader_id) if trader_id and trader_id.isdigit() else None
+    trades = crud.get_trades(db, trader_id=parsed_trader_id)
+
+    if instrument in ("stock", "option"):
+        trades = [t for t in trades if t.instrument_type.value == instrument]
+
+    if entered_only:
+        trades = [t for t in trades if t.entered]
+
+    start_date = None
+    end_date = None
+    if date_from:
+        try:
+            start_date = datetime.strptime(date_from, "%Y-%m-%d").date()
+        except ValueError:
+            start_date = None
+
+    if date_to:
+        try:
+            end_date = datetime.strptime(date_to, "%Y-%m-%d").date()
+        except ValueError:
+            end_date = None
+
+    if start_date:
+        trades = [t for t in trades if t.created_at.date() >= start_date]
+
+    if end_date:
+        trades = [t for t in trades if t.created_at.date() <= end_date]
+
+    trades = sorted(trades, key=lambda t: t.created_at)
+
+    def bucket_date(dt: datetime, group: str) -> date:
+        d = dt.date()
+        if group == "week":
+            return d - timedelta(days=d.weekday())
+        if group == "month":
+            return date(d.year, d.month, 1)
+        return d
+
+    def format_bucket(d: date, group: str) -> str:
+        if group == "month":
+            return d.strftime("%Y-%m")
+        return d.strftime("%Y-%m-%d")
+
+    grouped = {}
+    for trade in trades:
+        if trade.exit_price is None:
+            continue
+        pnl = crud.calculate_pnl(trade)
+        if pnl is None:
+            continue
+        key = bucket_date(trade.created_at, group_by or "day")
+        grouped[key] = grouped.get(key, Decimal("0.0")) + pnl
+
+    grouped_items = sorted(grouped.items(), key=lambda x: x[0])
+
+    points = []
+    if metric == "pnl":
+        for bucket, pnl in grouped_items:
+            points.append({
+                "date": format_bucket(bucket, group_by or "day"),
+                "value": float(pnl)
+            })
+    elif metric == "cumulative_pnl":
+        running = Decimal("0.0")
+        for bucket, pnl in grouped_items:
+            running += pnl
+            points.append({
+                "date": format_bucket(bucket, group_by or "day"),
+                "value": float(running)
+            })
+    else:
+        running = account.balance
+        if grouped_items:
+            for bucket, pnl in grouped_items:
+                running += pnl
+                points.append({
+                    "date": format_bucket(bucket, group_by or "day"),
+                    "value": float(running)
+                })
+        else:
+            if start_date and end_date:
+                points.append({
+                    "date": start_date.strftime("%Y-%m-%d"),
+                    "value": float(running)
+                })
+                points.append({
+                    "date": end_date.strftime("%Y-%m-%d"),
+                    "value": float(running)
+                })
+            else:
+                points.append({
+                    "date": datetime.now().strftime("%Y-%m-%d"),
+                    "value": float(running)
+                })
+
+    return templates.TemplateResponse("charts.html", {
+        "request": request,
+        "account": account,
+        "equity": calculate_equity(db),
+        "traders": traders,
+        "points": points,
+        "current_instrument": instrument or "",
+        "current_trader": parsed_trader_id,
+        "current_metric": metric or "equity",
+        "current_group_by": group_by or "day",
+        "current_entered_only": bool(entered_only),
+        "current_date_from": date_from or "",
+        "current_date_to": date_to or ""
+    })
+
 @app.get("/api/trades", response_model=list[schemas.TradeResponse])
 async def api_list_trades(db: Session = Depends(get_db)):
     trades = crud.get_trades(db)
@@ -411,3 +697,26 @@ async def api_list_trades(db: Session = Depends(get_db)):
 @app.get("/api/account", response_model=schemas.AccountResponse)
 async def api_get_account(db: Session = Depends(get_db)):
     return crud.get_account(db)
+
+@app.get("/api/price/stock/{ticker}")
+async def api_stock_price(ticker: str, db: Session = Depends(get_db)):
+    account = crud.get_account(db)
+    provider = (account.stock_price_provider or "").strip().lower() or "auto"
+    if provider == "off":
+        return {"price": None}
+
+    def price_or_none(value: Optional[Decimal]) -> dict:
+        return {"price": float(value) if value is not None else None}
+
+    if provider == "a":
+        return price_or_none(fetch_stock_price_stooq(ticker))
+    if provider == "b":
+        return price_or_none(fetch_stock_price_yahoo(ticker))
+    if provider == "auto":
+        price = fetch_stock_price_stooq(ticker)
+        if price is None:
+            price = fetch_stock_price_yahoo(ticker)
+        return price_or_none(price)
+
+    return {"price": None}
+    return {"price": float(price) if price is not None else None}

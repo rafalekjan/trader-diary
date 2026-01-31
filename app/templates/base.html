@@ -18,6 +18,7 @@
                 <a href="/trades" class="{% if '/trades' in request.url.path %}active{% endif %}">Trades</a>
                 <a href="/account" class="{% if request.url.path == '/account' %}active{% endif %}">Account</a>
                 <a href="/stats" class="{% if request.url.path == '/stats' %}active{% endif %}">Stats</a>
+                <a href="/charts" class="{% if request.url.path == '/charts' %}active{% endif %}">Charts</a>
             </div>
             <div class="account-balance">
                 Equity: <strong>${{ equity | format_decimal }}</strong>

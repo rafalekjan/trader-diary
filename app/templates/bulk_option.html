@@ -1,0 +1,193 @@
+{% extends "base.html" %}
+
+{% block title %}Bulk Option Import - Trader Journal{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h2>Bulk Option Import</h2>
+        <p class="page-subtitle">Paste multiple option setups, then adjust any row before saving.</p>
+    </div>
+</div>
+
+<div class="card trade-panel">
+    <div class="trade-panel-header">
+        <div>
+            <h3>Paste Signals</h3>
+            <p class="trade-panel-subtitle">One line per setup. Example: AMZN 2/6 $262.5C @1.98</p>
+        </div>
+    </div>
+
+    <form method="POST" action="/trades/bulk_create" id="bulkForm">
+        <input type="hidden" name="instrument_type" value="option">
+        <input type="hidden" name="bulk_data" id="bulk_data">
+        <div class="form-group">
+            <label for="bulk_trader_id">Signal Source</label>
+            <select name="trader_id" id="bulk_trader_id">
+                <option value="">Select trader</option>
+                {% for trader in traders %}
+                    <option value="{{ trader.id }}">{{ trader.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group paste-signal">
+            <label for="bulk_text">Signals</label>
+            <textarea id="bulk_text" rows="6" placeholder="Paste multiple signals, one per line..."></textarea>
+            <button type="button" class="btn btn-secondary btn-small" id="bulk_parse_btn">Parse</button>
+        </div>
+
+        <div class="bulk-table bulk-option" id="bulk_table"></div>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">Create Trades</button>
+            <a href="/" class="btn btn-secondary">Cancel</a>
+        </div>
+    </form>
+</div>
+
+<script>
+    function parseOptionLine(text) {
+        const upper = text.toUpperCase();
+        const result = {
+            ticker: '',
+            option_type: '',
+            expiration_date: '',
+            entry_price: '',
+            entered: false,
+            exit_price: ''
+        };
+
+        const tickerMatch = upper.match(/\b[A-Z]{1,5}\b/);
+        if (tickerMatch) result.ticker = tickerMatch[0];
+
+        const isoDateMatch = upper.match(/\b(\d{4})-(\d{2})-(\d{2})\b/);
+        if (isoDateMatch) {
+            result.expiration_date = `${isoDateMatch[1]}-${isoDateMatch[2]}-${isoDateMatch[3]}`;
+        } else {
+            const slashDateMatch = upper.match(/\b(\d{1,2})[\/\.-](\d{1,2})[\/\.-](\d{2,4})\b/);
+            if (slashDateMatch) {
+                const month = slashDateMatch[1].padStart(2, '0');
+                const day = slashDateMatch[2].padStart(2, '0');
+                let year = slashDateMatch[3];
+                if (year.length === 2) {
+                    year = `20${year}`;
+                }
+                result.expiration_date = `${year}-${month}-${day}`;
+            } else {
+                const shortDateMatch = upper.match(/\b(\d{1,2})[\/\.-](\d{1,2})\b/);
+                if (shortDateMatch) {
+                    const month = shortDateMatch[1].padStart(2, '0');
+                    const day = shortDateMatch[2].padStart(2, '0');
+                    const year = new Date().getFullYear();
+                    result.expiration_date = `${year}-${month}-${day}`;
+                }
+            }
+        }
+
+        const entryMatch = upper.match(/(?:ENTRY|BUY|AT|@)\s*\$?(\d+(?:\.\d+)?)/);
+        if (entryMatch) {
+            result.entry_price = entryMatch[1];
+        } else {
+            const priceMatch = upper.match(/\$?(\d+(?:\.\d+)?)/);
+            if (priceMatch) result.entry_price = priceMatch[1];
+        }
+
+        if (upper.includes("CALL") || /[0-9]C\b/.test(upper)) result.option_type = "CALL";
+        if (upper.includes("PUT") || /[0-9]P\b/.test(upper)) result.option_type = "PUT";
+        if (upper.includes("ENTERED") || upper.includes("FILLED")) result.entered = true;
+
+        return result;
+    }
+
+    function renderTable(rows) {
+        const container = document.getElementById('bulk_table');
+        if (!container) return;
+
+        if (!rows.length) {
+            container.innerHTML = '';
+            return;
+        }
+
+        const header = `
+            <div class="bulk-row bulk-header">
+                <span>Ticker</span>
+                <span>Type</span>
+                <span>Exp</span>
+                <span>Entry</span>
+                <span>Exit</span>
+                <span>Qty</span>
+                <span>Entered</span>
+            </div>
+        `;
+
+        const body = rows.map((row, index) => `
+            <div class="bulk-row">
+                <input type="text" name="ticker_${index}" value="${row.ticker || ''}" placeholder="Ticker">
+                <select name="option_${index}">
+                    <option value="">Select</option>
+                    <option value="CALL" ${row.option_type === 'CALL' ? 'selected' : ''}>CALL</option>
+                    <option value="PUT" ${row.option_type === 'PUT' ? 'selected' : ''}>PUT</option>
+                </select>
+                <input type="text" name="exp_${index}" value="${row.expiration_date || ''}" placeholder="YYYY-MM-DD">
+                <input type="number" name="entry_${index}" value="${row.entry_price || ''}" step="0.01" placeholder="0.00">
+                <input type="number" name="exit_${index}" value="${row.exit_price || ''}" step="0.01" placeholder="0.00">
+                <input type="number" name="qty_${index}" value="${row.quantity || ''}" min="1" step="1" placeholder="1">
+                <input type="checkbox" name="entered_${index}" ${row.entered ? 'checked' : ''}>
+            </div>
+        `).join('');
+
+        container.innerHTML = header + body;
+    }
+
+    function collectRows() {
+        const container = document.getElementById('bulk_table');
+        const rows = [];
+        if (!container) return rows;
+
+        const rowEls = container.querySelectorAll('.bulk-row:not(.bulk-header)');
+        rowEls.forEach(row => {
+            const inputs = row.querySelectorAll('input, select');
+            const values = {};
+            inputs.forEach(input => {
+                if (input.type === 'checkbox') {
+                    values[input.name] = input.checked;
+                } else {
+                    values[input.name] = input.value.trim();
+                }
+            });
+            rows.push({
+                ticker: values[Object.keys(values).find(k => k.startsWith('ticker_'))] || '',
+                option_type: values[Object.keys(values).find(k => k.startsWith('option_'))] || '',
+                expiration_date: values[Object.keys(values).find(k => k.startsWith('exp_'))] || '',
+                entry_price: values[Object.keys(values).find(k => k.startsWith('entry_'))] || '',
+                exit_price: values[Object.keys(values).find(k => k.startsWith('exit_'))] || '',
+                quantity: values[Object.keys(values).find(k => k.startsWith('qty_'))] || '',
+                entered: values[Object.keys(values).find(k => k.startsWith('entered_'))] || false
+            });
+        });
+        return rows;
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const parseBtn = document.getElementById('bulk_parse_btn');
+        const textarea = document.getElementById('bulk_text');
+        const form = document.getElementById('bulkForm');
+        const hidden = document.getElementById('bulk_data');
+
+        if (parseBtn && textarea) {
+            parseBtn.addEventListener('click', function() {
+                const lines = textarea.value.split('\n').map(l => l.trim()).filter(Boolean);
+                const rows = lines.map(parseOptionLine);
+                renderTable(rows);
+            });
+        }
+
+        if (form && hidden) {
+            form.addEventListener('submit', function() {
+                const rows = collectRows();
+                hidden.value = JSON.stringify(rows);
+            });
+        }
+    });
+</script>
+{% endblock %}
