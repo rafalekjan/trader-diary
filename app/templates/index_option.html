@@ -1,0 +1,179 @@
+{% extends "base.html" %}
+
+{% block title %}{% if edit_mode %}Edit Option Trade{% else %}Add Option Trade{% endif %} - Trader Journal{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h2>{% if edit_mode %}Edit Option Trade{% else %}Add Option Trade{% endif %}</h2>
+        <p class="page-subtitle">Focused options logging.</p>
+    </div>
+</div>
+
+<div class="card trade-panel">
+    <div class="trade-panel-header">
+        <div>
+            <h3>Trade Details</h3>
+            <p class="trade-panel-subtitle">Options only. Call or put.</p>
+        </div>
+        {% if edit_mode %}
+        <span class="trade-panel-badge">Editing</span>
+        {% endif %}
+    </div>
+
+    <form method="POST" action="{% if edit_mode %}/trades/{{ trade.id }}/update{% else %}/trades/create{% endif %}" id="tradeForm">
+        <input type="hidden" name="instrument_type" value="option">
+        <div class="form-grid trade-form-grid">
+            <div class="form-group status-checkboxes">
+                <label>Execution *</label>
+                <div class="idea-entered-toggle">
+                    <label class="toggle-label">
+                        <input type="checkbox" id="entered" name="entered" {% if edit_mode and trade.entered %}checked{% endif %}>
+                        <span>Entered this trade</span>
+                    </label>
+                    <p class="toggle-hint">Use this to mark whether you actually took the trade.</p>
+                </div>
+            </div>
+
+            <div class="form-group status-checkboxes">
+                <label>Trading Style *</label>
+                <div class="checkbox-group">
+                    <label class="checkbox-label">
+                        <input type="radio" name="trading_style" value="swing" {% if edit_mode and trade.trading_style.value == 'swing' %}checked{% elif not edit_mode %}checked{% endif %} required>
+                        <span class="checkbox-text">Swing</span>
+                    </label>
+                    <label class="checkbox-label">
+                        <input type="radio" name="trading_style" value="daytrading" {% if edit_mode and trade.trading_style.value == 'daytrading' %}checked{% endif %} required>
+                        <span class="checkbox-text">Day Trading</span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="ticker">Ticker *</label>
+                <input type="text" name="ticker" id="ticker" value="{% if edit_mode %}{{ trade.ticker }}{% endif %}" placeholder="e.g. AAPL" required style="text-transform: uppercase;">
+            </div>
+
+            <div class="form-group">
+                <label for="trader_id">Signal Source</label>
+                <select name="trader_id" id="trader_id">
+                    <option value="">Select trader</option>
+                    {% for trader in traders %}
+                        <option value="{{ trader.id }}" {% if edit_mode and trade.trader_id == trader.id %}selected{% endif %}>{{ trader.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="form-group status-checkboxes">
+                <label>Direction (Call/Put) *</label>
+                <div class="checkbox-group">
+                    <label class="checkbox-label">
+                        <input type="radio" name="option_type" value="CALL" {% if edit_mode and trade.option_type and trade.option_type.value == 'CALL' %}checked{% elif not edit_mode %}checked{% endif %} required>
+                        <span class="checkbox-text">CALL</span>
+                    </label>
+                    <label class="checkbox-label">
+                        <input type="radio" name="option_type" value="PUT" {% if edit_mode and trade.option_type and trade.option_type.value == 'PUT' %}checked{% endif %} required>
+                        <span class="checkbox-text">PUT</span>
+                    </label>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label for="entry_price">Contract Premium *</label>
+                <input type="number" name="entry_price" id="entry_price" value="{% if edit_mode %}{{ trade.entry_price }}{% endif %}" step="0.01" placeholder="0.00" required>
+            </div>
+
+            <div class="form-group">
+                <label for="exit_price">Contract Exit Price</label>
+                <input type="number" name="exit_price" id="exit_price" value="{% if edit_mode and trade.exit_price %}{{ trade.exit_price }}{% endif %}" step="0.01" placeholder="0.00">
+            </div>
+
+            <div class="form-group">
+                <label for="sl">Stop Loss (SL %)</label>
+                <input type="number" name="sl" id="sl" value="{% if edit_mode and trade.sl %}{{ trade.sl }}{% else %}{{ account.global_sl or '' }}{% endif %}" step="0.01" placeholder="0.00">
+                <input type="text" id="sl_value" class="calc-output" readonly placeholder="SL value ($)">
+            </div>
+
+            <div class="form-group">
+                <label for="tp">Take Profit (TP %)</label>
+                <input type="number" name="tp" id="tp" value="{% if edit_mode and trade.tp %}{{ trade.tp }}{% else %}{{ account.global_tp or '' }}{% endif %}" step="0.01" placeholder="0.00">
+                <input type="text" id="tp_value" class="calc-output" readonly placeholder="TP value ($)">
+            </div>
+
+            <div class="form-group">
+                <label for="quantity">Contracts *</label>
+                <input type="number" name="quantity" id="quantity" value="{% if edit_mode %}{{ trade.quantity }}{% else %}1{% endif %}" min="1" required>
+            </div>
+        </div>
+
+        <details class="advanced-section" {% if edit_mode %}open{% endif %}>
+            <summary>
+                <span>Advanced fields</span>
+                <span class="advanced-hint">Expirations, strikes, fees, notes</span>
+            </summary>
+
+            <div class="advanced-grid">
+                <div class="form-group">
+                    <label for="expiration_date">Expiration Date</label>
+                    <input type="text" name="expiration_date" id="expiration_date" value="{% if edit_mode and trade.expiration_date %}{{ trade.expiration_date }}{% endif %}" placeholder="YYYY-MM-DD">
+                </div>
+
+                <div class="form-group">
+                    <label for="strike">Strike</label>
+                    <input type="number" name="strike" id="strike" value="{% if edit_mode and trade.strike %}{{ trade.strike }}{% endif %}" step="0.01" placeholder="0.00">
+                </div>
+
+                <div class="form-group">
+                    <label for="fees">Fees</label>
+                    <input type="number" name="fees" id="fees" value="{% if edit_mode %}{{ trade.fees }}{% else %}0.00{% endif %}" step="0.01" placeholder="0.00">
+                </div>
+            </div>
+
+            <div class="form-group trade-notes">
+                <label for="notes">Notes</label>
+                <textarea name="notes" id="notes" rows="4" placeholder="Thesis, risk plan, key levels...">{% if edit_mode and trade.notes %}{{ trade.notes }}{% endif %}</textarea>
+            </div>
+        </details>
+
+        <div class="form-actions">
+            <button type="submit" class="btn btn-primary">{% if edit_mode %}Save Changes{% else %}Create Trade{% endif %}</button>
+            {% if edit_mode %}
+            <a href="/trades" class="btn btn-secondary">Cancel</a>
+            {% endif %}
+        </div>
+    </form>
+</div>
+
+<script>
+    function updatePercentOutputs() {
+        const entryInput = document.getElementById('entry_price');
+        const slInput = document.getElementById('sl');
+        const tpInput = document.getElementById('tp');
+        const slValue = document.getElementById('sl_value');
+        const tpValue = document.getElementById('tp_value');
+
+        if (!entryInput || !slInput || !tpInput || !slValue || !tpValue) return;
+
+        const entry = parseFloat(entryInput.value);
+        const slPct = parseFloat(slInput.value);
+        const tpPct = parseFloat(tpInput.value);
+
+        slValue.value = Number.isFinite(entry) && Number.isFinite(slPct)
+            ? `$${(entry * (1 - slPct / 100)).toFixed(2)}`
+            : '';
+        tpValue.value = Number.isFinite(entry) && Number.isFinite(tpPct)
+            ? `$${(entry * (1 + tpPct / 100)).toFixed(2)}`
+            : '';
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        ['entry_price', 'sl', 'tp'].forEach(id => {
+            const el = document.getElementById(id);
+            if (el) {
+                el.addEventListener('input', updatePercentOutputs);
+            }
+        });
+        updatePercentOutputs();
+    });
+</script>
+{% endblock %}

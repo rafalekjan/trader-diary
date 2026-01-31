@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}Trader Journal{% endblock %}</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@500;600;700&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="/static/style.css">
 </head>
 <body>
@@ -11,13 +14,13 @@
         <div class="container">
             <h1 class="logo">Trader Journal</h1>
             <div class="nav-links">
-                <a href="/" class="{% if request.url.path == '/' %}active{% endif %}">Add Trade</a>
+                <a href="/" class="{% if request.url.path == '/' or request.url.path.startswith('/trades/new') %}active{% endif %}">Add Trade</a>
                 <a href="/trades" class="{% if '/trades' in request.url.path %}active{% endif %}">Trades</a>
                 <a href="/account" class="{% if request.url.path == '/account' %}active{% endif %}">Account</a>
                 <a href="/stats" class="{% if request.url.path == '/stats' %}active{% endif %}">Stats</a>
             </div>
             <div class="account-balance">
-                Balance: <strong>${{ account.balance | format_decimal }}</strong>
+                Equity: <strong>${{ equity | format_decimal }}</strong>
             </div>
         </div>
     </nav>

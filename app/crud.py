@@ -6,18 +6,39 @@ from typing import List, Optional
 
 def get_trades(db: Session, skip: int = 0, limit: int = 100, 
                status: Optional[str] = None, 
-               ticker: Optional[str] = None) -> List[models.Trade]:
+               ticker: Optional[str] = None,
+               trader_id: Optional[int] = None) -> List[models.Trade]:
     query = db.query(models.Trade)
     
     if status:
         query = query.filter(models.Trade.status == status)
     if ticker:
         query = query.filter(models.Trade.ticker.ilike(f"%{ticker}%"))
+    if trader_id:
+        query = query.filter(models.Trade.trader_id == trader_id)
     
     return query.order_by(models.Trade.created_at.desc()).offset(skip).limit(limit).all()
 
 def get_trade(db: Session, trade_id: int) -> Optional[models.Trade]:
     return db.query(models.Trade).filter(models.Trade.id == trade_id).first()
+
+def get_traders(db: Session) -> List[models.Trader]:
+    return db.query(models.Trader).order_by(models.Trader.name.asc()).all()
+
+def create_trader(db: Session, name: str) -> models.Trader:
+    trader = models.Trader(name=name.strip())
+    db.add(trader)
+    db.commit()
+    db.refresh(trader)
+    return trader
+
+def delete_trader(db: Session, trader_id: int) -> bool:
+    trader = db.query(models.Trader).filter(models.Trader.id == trader_id).first()
+    if trader:
+        db.delete(trader)
+        db.commit()
+        return True
+    return False
 
 def create_trade(db: Session, trade: schemas.TradeCreate) -> models.Trade:
     db_trade = models.Trade(**trade.model_dump())
@@ -101,6 +122,8 @@ def get_statistics(db: Session) -> dict:
     losing_trades = 0
     
     for trade in closed_trades:
+        if not trade.entered:
+            continue
         pnl = calculate_pnl(trade)
         if pnl:
             total_pnl += pnl
@@ -109,8 +132,42 @@ def get_statistics(db: Session) -> dict:
             elif pnl < 0:
                 losing_trades += 1
     
-    winrate = (winning_trades / len(closed_trades) * 100) if closed_trades else 0
+    entered_closed_trades = [t for t in closed_trades if t.entered]
+    winrate = (winning_trades / len(entered_closed_trades) * 100) if entered_closed_trades else 0
     
+    def build_stats(scope_trades: List[models.Trade]) -> dict:
+        scope_closed = [t for t in scope_trades if t.exit_price is not None]
+        scope_total_pnl = Decimal("0.0")
+        scope_winning = 0
+        scope_losing = 0
+
+        for trade in scope_closed:
+            if not trade.entered:
+                continue
+            pnl = calculate_pnl(trade)
+            if pnl:
+                scope_total_pnl += pnl
+                if pnl > 0:
+                    scope_winning += 1
+                elif pnl < 0:
+                    scope_losing += 1
+
+        scope_entered_closed = [t for t in scope_closed if t.entered]
+        scope_winrate = (scope_winning / len(scope_entered_closed) * 100) if scope_entered_closed else 0
+
+        return {
+            "total_trades": len(scope_trades),
+            "closed_trades": len(scope_closed),
+            "open_trades": len(scope_trades) - len(scope_closed),
+            "total_pnl": scope_total_pnl,
+            "winning_trades": scope_winning,
+            "losing_trades": scope_losing,
+            "winrate": round(scope_winrate, 2)
+        }
+
+    stock_trades = [t for t in trades if t.instrument_type == models.InstrumentType.STOCK]
+    option_trades = [t for t in trades if t.instrument_type == models.InstrumentType.OPTION]
+
     return {
         "total_trades": total_trades,
         "closed_trades": len(closed_trades),
@@ -118,5 +175,9 @@ def get_statistics(db: Session) -> dict:
         "total_pnl": total_pnl,
         "winning_trades": winning_trades,
         "losing_trades": losing_trades,
-        "winrate": round(winrate, 2)
+        "winrate": round(winrate, 2),
+        "by_instrument": {
+            "stock": build_stats(stock_trades),
+            "option": build_stats(option_trades)
+        }
     }

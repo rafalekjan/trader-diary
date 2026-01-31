@@ -9,11 +9,15 @@ class TradeBase(BaseModel):
     instrument_type: str
     ticker: str
     direction: str = "long"
+    entered: bool = False
+    trader_id: Optional[int] = None
     option_type: Optional[str] = None
     expiration_date: Optional[str] = None
     strike: Optional[Decimal] = None
     entry_price: Decimal
     exit_price: Optional[Decimal] = None
+    sl: Optional[Decimal] = None
+    tp: Optional[Decimal] = None
     quantity: int = 1
     fees: Decimal = Decimal("0.0")
     notes: Optional[str] = None

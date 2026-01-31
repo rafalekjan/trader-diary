@@ -38,13 +38,41 @@
 </div>
 
 <div class="card">
-    <h3>Update Balance</h3>
+    <h3>Equity Over Time</h3>
+    <div class="equity-chart" data-points='{{ equity_points | tojson }}'>
+        <svg viewBox="0 0 1000 260" preserveAspectRatio="none">
+            <polyline class="equity-line" points=""></polyline>
+        </svg>
+        <div class="equity-axis">
+            <span class="equity-min"></span>
+            <span class="equity-max"></span>
+        </div>
+        <div class="equity-dates">
+            <span class="equity-date-start"></span>
+            <span class="equity-date-mid"></span>
+            <span class="equity-date-end"></span>
+        </div>
+    </div>
+</div>
+
+<div class="card">
+    <h3>Account Settings</h3>
     <form method="POST" action="/account/update" class="account-form">
         <div class="form-group">
             <label for="balance">New Balance *</label>
             <input type="number" name="balance" id="balance" value="{{ account.balance }}" step="0.01" required>
         </div>
-        <button type="submit" class="btn btn-primary">Save Balance</button>
+        <div class="form-grid trade-form-grid">
+            <div class="form-group">
+                <label for="global_sl">Global Stop Loss (SL %)</label>
+                <input type="number" name="global_sl" id="global_sl" value="{% if account.global_sl %}{{ account.global_sl }}{% endif %}" step="0.01" placeholder="0.00">
+            </div>
+            <div class="form-group">
+                <label for="global_tp">Global Take Profit (TP %)</label>
+                <input type="number" name="global_tp" id="global_tp" value="{% if account.global_tp %}{{ account.global_tp }}{% endif %}" step="0.01" placeholder="0.00">
+            </div>
+        </div>
+        <button type="submit" class="btn btn-primary">Save Settings</button>
     </form>
     <p class="help-text">
         <strong>Note:</strong> Balance is your starting capital. Equity automatically
@@ -54,8 +82,81 @@
 </div>
 
 <div class="card">
+    <h3>Signal Sources</h3>
+    <form method="POST" action="/traders/create" class="account-form">
+        <div class="form-group">
+            <label for="trader_name">Add Trader</label>
+            <input type="text" name="name" id="trader_name" placeholder="Trader name" required>
+        </div>
+        <button type="submit" class="btn btn-primary">Add Trader</button>
+    </form>
+
+    {% if traders %}
+    <div class="trader-list">
+        {% for trader in traders %}
+            <div class="trader-item">
+                <span>{{ trader.name }}</span>
+                <form method="POST" action="/traders/{{ trader.id }}/delete">
+                    <button type="submit" class="btn-small btn-danger">Remove</button>
+                </form>
+            </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+</div>
+
+<div class="card">
     <h3>Details</h3>
     <p><strong>Last updated:</strong> {{ account.updated_at.strftime('%Y-%m-%d %H:%M:%S') }}</p>
     <p><strong>Account ID:</strong> {{ account.id }}</p>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const chart = document.querySelector('.equity-chart');
+        if (!chart) return;
+
+        const data = JSON.parse(chart.dataset.points || '[]');
+        const line = chart.querySelector('.equity-line');
+        const minLabel = chart.querySelector('.equity-min');
+        const maxLabel = chart.querySelector('.equity-max');
+        const dateStart = chart.querySelector('.equity-date-start');
+        const dateMid = chart.querySelector('.equity-date-mid');
+        const dateEnd = chart.querySelector('.equity-date-end');
+
+        if (!data.length) {
+            line.setAttribute('points', '');
+            return;
+        }
+
+        const values = data.map(point => point.value);
+        const min = Math.min(...values);
+        const max = Math.max(...values);
+        const range = max - min || 1;
+
+        const width = 1000;
+        const height = 260;
+        const padding = 20;
+        const innerWidth = width - padding * 2;
+        const innerHeight = height - padding * 2;
+
+        const points = data.map((point, index) => {
+            const x = padding + (innerWidth * (index / Math.max(1, data.length - 1)));
+            const y = padding + (innerHeight * (1 - (point.value - min) / range));
+            return `${x},${y}`;
+        }).join(' ');
+
+        line.setAttribute('points', points);
+        minLabel.textContent = `$${max.toFixed(2)}`;
+        maxLabel.textContent = `$${min.toFixed(2)}`;
+        if (dateStart && dateEnd) {
+            dateStart.textContent = data[0].date || '';
+            dateEnd.textContent = data[data.length - 1].date || '';
+            if (dateMid && data.length > 2) {
+                const midIndex = Math.floor(data.length / 2);
+                dateMid.textContent = data[midIndex].date || '';
+            }
+        }
+    });
+</script>
 {% endblock %}

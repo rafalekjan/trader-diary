@@ -55,6 +55,93 @@
     </div>
 </div>
 
+<div class="card stats-split">
+    <div class="stats-toggle">
+        <button type="button" class="toggle-btn active" data-target="stockStats">Stocks</button>
+        <button type="button" class="toggle-btn" data-target="optionStats">Options</button>
+    </div>
+
+    <div class="stats-scope" id="stockStats">
+        <div class="stats-grid">
+            <div class="stat-card">
+                <h3>Stock Trades</h3>
+                <div class="stat-value">{{ stats.by_instrument.stock.total_trades }}</div>
+                <p class="stat-label">All stock trades</p>
+            </div>
+            <div class="stat-card">
+                <h3>Closed Stocks</h3>
+                <div class="stat-value">{{ stats.by_instrument.stock.closed_trades }}</div>
+                <p class="stat-label">Closed positions</p>
+            </div>
+            <div class="stat-card highlight">
+                <h3>Stock P&amp;L</h3>
+                <div class="stat-value {% if stats.by_instrument.stock.total_pnl > 0 %}positive{% elif stats.by_instrument.stock.total_pnl < 0 %}negative{% endif %}">
+                    ${{ stats.by_instrument.stock.total_pnl | format_decimal }}
+                </div>
+                <p class="stat-label">Net profit/loss</p>
+            </div>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card success">
+                <h3>Stock Winners</h3>
+                <div class="stat-value">{{ stats.by_instrument.stock.winning_trades }}</div>
+                <p class="stat-label">Winning trades</p>
+            </div>
+            <div class="stat-card danger">
+                <h3>Stock Losers</h3>
+                <div class="stat-value">{{ stats.by_instrument.stock.losing_trades }}</div>
+                <p class="stat-label">Losing trades</p>
+            </div>
+            <div class="stat-card highlight">
+                <h3>Stock Win Rate</h3>
+                <div class="stat-value">{{ stats.by_instrument.stock.winrate }}%</div>
+                <p class="stat-label">Win percentage</p>
+            </div>
+        </div>
+    </div>
+
+    <div class="stats-scope" id="optionStats" style="display: none;">
+        <div class="stats-grid">
+            <div class="stat-card">
+                <h3>Option Trades</h3>
+                <div class="stat-value">{{ stats.by_instrument.option.total_trades }}</div>
+                <p class="stat-label">All option trades</p>
+            </div>
+            <div class="stat-card">
+                <h3>Closed Options</h3>
+                <div class="stat-value">{{ stats.by_instrument.option.closed_trades }}</div>
+                <p class="stat-label">Closed positions</p>
+            </div>
+            <div class="stat-card highlight">
+                <h3>Option P&amp;L</h3>
+                <div class="stat-value {% if stats.by_instrument.option.total_pnl > 0 %}positive{% elif stats.by_instrument.option.total_pnl < 0 %}negative{% endif %}">
+                    ${{ stats.by_instrument.option.total_pnl | format_decimal }}
+                </div>
+                <p class="stat-label">Net profit/loss</p>
+            </div>
+        </div>
+
+        <div class="stats-grid">
+            <div class="stat-card success">
+                <h3>Option Winners</h3>
+                <div class="stat-value">{{ stats.by_instrument.option.winning_trades }}</div>
+                <p class="stat-label">Winning trades</p>
+            </div>
+            <div class="stat-card danger">
+                <h3>Option Losers</h3>
+                <div class="stat-value">{{ stats.by_instrument.option.losing_trades }}</div>
+                <p class="stat-label">Losing trades</p>
+            </div>
+            <div class="stat-card highlight">
+                <h3>Option Win Rate</h3>
+                <div class="stat-value">{{ stats.by_instrument.option.winrate }}%</div>
+                <p class="stat-label">Win percentage</p>
+            </div>
+        </div>
+    </div>
+</div>
+
 <div class="card">
     <h3>Analysis</h3>
     <div class="analysis">
@@ -83,4 +170,22 @@
         {% endif %}
     </div>
 </div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const buttons = document.querySelectorAll('.toggle-btn');
+        const scopes = document.querySelectorAll('.stats-scope');
+
+        buttons.forEach(button => {
+            button.addEventListener('click', function() {
+                buttons.forEach(btn => btn.classList.remove('active'));
+                this.classList.add('active');
+
+                scopes.forEach(scope => {
+                    scope.style.display = scope.id === this.dataset.target ? 'block' : 'none';
+                });
+            });
+        });
+    });
+</script>
 {% endblock %}

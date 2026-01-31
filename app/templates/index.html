@@ -6,7 +6,7 @@
 <div class="page-header">
     <div>
         <h2>{% if edit_mode %}Edit Trade{% else %}Add New Trade{% endif %}</h2>
-        <p class="page-subtitle">Fast, focused logging with only the essentials.</p>
+        <p class="page-subtitle">Premium, compact logging with advanced fields tucked away.</p>
     </div>
 </div>
 
@@ -24,20 +24,13 @@
     <form method="POST" action="{% if edit_mode %}/trades/{{ trade.id }}/update{% else %}/trades/create{% endif %}" id="tradeForm">
         <div class="form-grid trade-form-grid">
             <div class="form-group status-checkboxes">
-                <label>Status *</label>
-                <div class="checkbox-group">
-                    <label class="checkbox-label">
-                        <input type="radio" name="status" value="idea" id="status_idea" {% if edit_mode and trade.status.value == 'idea' %}checked{% endif %} required>
-                        <span class="checkbox-text">Idea</span>
+                <label>Execution *</label>
+                <div class="idea-entered-toggle" id="ideaEnteredToggle">
+                    <label class="toggle-label">
+                        <input type="checkbox" id="entered" name="entered" {% if edit_mode and trade.entered %}checked{% endif %}>
+                        <span>Entered this trade</span>
                     </label>
-                    <label class="checkbox-label">
-                        <input type="radio" name="status" value="entered" id="status_entered" {% if edit_mode and trade.status.value == 'entered' %}checked{% elif not edit_mode %}checked{% endif %} required>
-                        <span class="checkbox-text">Entered</span>
-                    </label>
-                    <label class="checkbox-label">
-                        <input type="radio" name="status" value="closed" id="status_closed" {% if edit_mode and trade.status.value == 'closed' %}checked{% endif %} required>
-                        <span class="checkbox-text">Closed</span>
-                    </label>
+                    <p class="toggle-hint">Use this to mark whether you actually took the trade.</p>
                 </div>
             </div>
 
@@ -59,11 +52,11 @@
                 <label>Instrument Type *</label>
                 <div class="checkbox-group">
                     <label class="checkbox-label">
-                        <input type="radio" name="instrument_type" value="stock" {% if edit_mode and trade.instrument_type.value == 'stock' %}checked{% elif not edit_mode %}checked{% endif %} required onchange="toggleOptionFields()">
+                        <input type="radio" name="instrument_type" value="stock" {% if edit_mode and trade.instrument_type.value == 'stock' %}checked{% endif %} required onclick="toggleOptionFields()">
                         <span class="checkbox-text">Stock</span>
                     </label>
                     <label class="checkbox-label">
-                        <input type="radio" name="instrument_type" value="option" {% if edit_mode and trade.instrument_type.value == 'option' %}checked{% endif %} required onchange="toggleOptionFields()">
+                        <input type="radio" name="instrument_type" value="option" {% if edit_mode and trade.instrument_type.value == 'option' %}checked{% endif %} required onclick="toggleOptionFields()">
                         <span class="checkbox-text">Option</span>
                     </label>
                 </div>
@@ -74,64 +67,69 @@
                 <input type="text" name="ticker" id="ticker" value="{% if edit_mode %}{{ trade.ticker }}{% endif %}" placeholder="e.g. AAPL" required style="text-transform: uppercase;">
             </div>
 
-            <div class="form-group status-checkboxes">
-                <label>Direction *</label>
-                <div class="checkbox-group">
-                    <label class="checkbox-label">
-                        <input type="radio" name="direction" value="long" {% if edit_mode and trade.direction.value == 'long' %}checked{% elif not edit_mode %}checked{% endif %} required>
-                        <span class="checkbox-text">Long</span>
-                    </label>
-                    <label class="checkbox-label">
-                        <input type="radio" name="direction" value="short" {% if edit_mode and trade.direction.value == 'short' %}checked{% endif %} required>
-                        <span class="checkbox-text">Short</span>
-                    </label>
+            <div id="trade_continuation" hidden>
+                <div class="form-group status-checkboxes" id="direction_group">
+                    <label id="direction_label">Direction *</label>
+                    <div class="checkbox-group">
+                        <label class="checkbox-label">
+                            <input type="radio" id="direction_primary" name="direction" value="long"
+                                   {% if edit_mode and trade.instrument_type.value == 'option' and trade.option_type and trade.option_type.value == 'CALL' %}checked
+                                   {% elif edit_mode and trade.instrument_type.value == 'stock' and trade.direction.value == 'long' %}checked
+                                   {% elif not edit_mode %}checked{% endif %} required>
+                            <span class="checkbox-text" id="direction_primary_text">Long</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="radio" id="direction_secondary" name="direction" value="short"
+                                   {% if edit_mode and trade.instrument_type.value == 'option' and trade.option_type and trade.option_type.value == 'PUT' %}checked
+                                   {% elif edit_mode and trade.instrument_type.value == 'stock' and trade.direction.value == 'short' %}checked{% endif %} required>
+                            <span class="checkbox-text" id="direction_secondary_text">Short</span>
+                        </label>
+                    </div>
+                </div>
+
+                <div class="form-group" id="entry_price_group">
+                    <label for="entry_price" id="entry_price_label">Entry Price *</label>
+                    <input type="number" name="entry_price" id="entry_price" value="{% if edit_mode %}{{ trade.entry_price }}{% endif %}" step="0.01" placeholder="0.00" required>
+                </div>
+                <div class="form-group" id="exit_price_group">
+                    <label for="exit_price" id="exit_price_label">Exit Price</label>
+                    <input type="number" name="exit_price" id="exit_price" value="{% if edit_mode and trade.exit_price %}{{ trade.exit_price }}{% endif %}" step="0.01" placeholder="0.00">
+                </div>
+                <div class="form-group" id="quantity_group">
+                    <label for="quantity" id="quantity_label">Quantity *</label>
+                    <input type="number" name="quantity" id="quantity" value="{% if edit_mode %}{{ trade.quantity }}{% else %}1{% endif %}" min="1" required>
+                </div>
+            </div>
+        </div>
+
+        <details class="advanced-section" id="advancedSection" hidden {% if edit_mode %}open{% endif %}>
+            <summary>
+                <span>Advanced fields</span>
+                <span class="advanced-hint">Options, exits, fees, notes</span>
+            </summary>
+
+            <div class="advanced-grid">
+                <div class="form-group" id="expiration_group" style="display: none;">
+                    <label for="expiration_date">Expiration Date</label>
+                    <input type="text" name="expiration_date" id="expiration_date" value="{% if edit_mode and trade.expiration_date %}{{ trade.expiration_date }}{% endif %}" placeholder="YYYY-MM-DD">
+                </div>
+
+                <div class="form-group" id="strike_group" style="display: none;">
+                    <label for="strike">Strike</label>
+                    <input type="number" name="strike" id="strike" value="{% if edit_mode and trade.strike %}{{ trade.strike }}{% endif %}" step="0.01" placeholder="0.00">
+                </div>
+
+                <div class="form-group" id="fees_group">
+                    <label for="fees">Fees</label>
+                    <input type="number" name="fees" id="fees" value="{% if edit_mode %}{{ trade.fees }}{% else %}0.00{% endif %}" step="0.01" placeholder="0.00">
                 </div>
             </div>
 
-            <div class="form-group" id="option_type_group" style="display: none;">
-                <label for="option_type">Option Type</label>
-                <select name="option_type" id="option_type">
-                    <option value="">Select</option>
-                    <option value="CALL" {% if edit_mode and trade.option_type and trade.option_type.value == 'CALL' %}selected{% endif %}>CALL</option>
-                    <option value="PUT" {% if edit_mode and trade.option_type and trade.option_type.value == 'PUT' %}selected{% endif %}>PUT</option>
-                </select>
+            <div class="form-group trade-notes" id="notes_group">
+                <label for="notes">Notes</label>
+                <textarea name="notes" id="notes" rows="4" placeholder="Thesis, risk plan, key levels...">{% if edit_mode and trade.notes %}{{ trade.notes }}{% endif %}</textarea>
             </div>
-
-            <div class="form-group" id="expiration_group" style="display: none;">
-                <label for="expiration_date">Expiration Date</label>
-                <input type="text" name="expiration_date" id="expiration_date" value="{% if edit_mode and trade.expiration_date %}{{ trade.expiration_date }}{% endif %}" placeholder="YYYY-MM-DD">
-            </div>
-
-            <div class="form-group" id="strike_group" style="display: none;">
-                <label for="strike">Strike</label>
-                <input type="number" name="strike" id="strike" value="{% if edit_mode and trade.strike %}{{ trade.strike }}{% endif %}" step="0.01" placeholder="0.00">
-            </div>
-
-            <div class="form-group">
-                <label for="entry_price" id="entry_price_label">Entry Price *</label>
-                <input type="number" name="entry_price" id="entry_price" value="{% if edit_mode %}{{ trade.entry_price }}{% endif %}" step="0.01" placeholder="0.00" required>
-            </div>
-
-            <div class="form-group">
-                <label for="exit_price" id="exit_price_label">Exit Price</label>
-                <input type="number" name="exit_price" id="exit_price" value="{% if edit_mode and trade.exit_price %}{{ trade.exit_price }}{% endif %}" step="0.01" placeholder="0.00" oninput="handleExitPriceChange()">
-            </div>
-
-            <div class="form-group">
-                <label for="quantity" id="quantity_label">Quantity *</label>
-                <input type="number" name="quantity" id="quantity" value="{% if edit_mode %}{{ trade.quantity }}{% else %}1{% endif %}" min="1" required>
-            </div>
-
-            <div class="form-group">
-                <label for="fees">Fees</label>
-                <input type="number" name="fees" id="fees" value="{% if edit_mode %}{{ trade.fees }}{% else %}0.00{% endif %}" step="0.01" placeholder="0.00">
-            </div>
-        </div>
-
-        <div class="form-group trade-notes">
-            <label for="notes">Notes</label>
-            <textarea name="notes" id="notes" rows="4" placeholder="Thesis, risk plan, key levels...">{% if edit_mode and trade.notes %}{{ trade.notes }}{% endif %}</textarea>
-        </div>
+        </details>
 
         <div class="form-actions">
             <button type="submit" class="btn btn-primary">{% if edit_mode %}Save Changes{% else %}Create Trade{% endif %}</button>
@@ -152,12 +150,24 @@
             }
         });
 
-        const optionFields = ['option_type_group', 'expiration_group', 'strike_group'];
+        const optionFields = ['expiration_group', 'strike_group'];
         const entryPriceLabel = document.getElementById('entry_price_label');
         const exitPriceLabel = document.getElementById('exit_price_label');
         const quantityLabel = document.getElementById('quantity_label');
         const entryPriceInput = document.getElementById('entry_price');
         const exitPriceInput = document.getElementById('exit_price');
+        const directionGroup = document.getElementById('direction_group');
+        const directionLabel = document.getElementById('direction_label');
+        const directionPrimary = document.getElementById('direction_primary');
+        const directionSecondary = document.getElementById('direction_secondary');
+        const directionPrimaryText = document.getElementById('direction_primary_text');
+        const directionSecondaryText = document.getElementById('direction_secondary_text');
+        const tradeContinuation = document.getElementById('trade_continuation');
+        const advancedSection = document.getElementById('advancedSection');
+
+        const showCoreFields = instrumentType === 'option' || instrumentType === 'stock';
+        if (tradeContinuation) tradeContinuation.hidden = !showCoreFields;
+        if (advancedSection) advancedSection.hidden = !showCoreFields;
 
         optionFields.forEach(fieldId => {
             const field = document.getElementById(fieldId);
@@ -169,34 +179,65 @@
         });
 
         if (instrumentType === 'option') {
+            if (advancedSection) {
+                advancedSection.open = true;
+            }
+            if (directionLabel) {
+                directionLabel.textContent = 'Direction (Call/Put) *';
+            }
+            if (directionPrimary && directionSecondary) {
+                directionPrimary.name = 'option_type';
+                directionSecondary.name = 'option_type';
+                directionPrimary.value = 'CALL';
+                directionSecondary.value = 'PUT';
+                directionPrimaryText.textContent = 'CALL';
+                directionSecondaryText.textContent = 'PUT';
+                directionPrimary.required = true;
+                directionSecondary.required = true;
+            }
             entryPriceLabel.textContent = 'Contract Premium *';
             exitPriceLabel.textContent = 'Contract Exit Price';
             quantityLabel.textContent = 'Contracts *';
             entryPriceInput.placeholder = 'e.g. 2.50';
             exitPriceInput.placeholder = 'e.g. 3.20';
-        } else {
+        } else if (instrumentType === 'stock') {
+            if (directionLabel) {
+                directionLabel.textContent = 'Direction (Long/Short) *';
+            }
+            if (directionPrimary && directionSecondary) {
+                directionPrimary.name = 'direction';
+                directionSecondary.name = 'direction';
+                directionPrimary.value = 'long';
+                directionSecondary.value = 'short';
+                directionPrimaryText.textContent = 'Long';
+                directionSecondaryText.textContent = 'Short';
+                directionPrimary.required = true;
+                directionSecondary.required = true;
+            }
             entryPriceLabel.textContent = 'Entry Price *';
             exitPriceLabel.textContent = 'Exit Price';
             quantityLabel.textContent = 'Quantity *';
             entryPriceInput.placeholder = 'e.g. 150.00';
             exitPriceInput.placeholder = 'e.g. 155.00';
-        }
-    }
-
-    function handleExitPriceChange() {
-        const exitPriceInput = document.getElementById('exit_price');
-        const statusClosedRadio = document.getElementById('status_closed');
-        const statusEnteredRadio = document.getElementById('status_entered');
-
-        if (exitPriceInput.value && parseFloat(exitPriceInput.value) > 0) {
-            statusClosedRadio.checked = true;
         } else {
-            if (statusClosedRadio.checked) {
-                statusEnteredRadio.checked = true;
+            if (directionLabel) {
+                directionLabel.textContent = 'Direction *';
             }
         }
     }
 
-    toggleOptionFields();
+    function initTradeForm() {
+        const instrumentTypeRadios = document.querySelectorAll('input[name="instrument_type"]');
+        instrumentTypeRadios.forEach(radio => {
+            radio.addEventListener('change', toggleOptionFields);
+        });
+        toggleOptionFields();
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initTradeForm);
+    } else {
+        initTradeForm();
+    }
 </script>
 {% endblock %}

@@ -1,8 +1,9 @@
-from sqlalchemy import Column, Integer, String, Numeric, DateTime, Text, Enum as SQLEnum
+from sqlalchemy import Column, Integer, String, Numeric, DateTime, Text, Enum as SQLEnum, Boolean, ForeignKey
 from sqlalchemy.sql import func
 from datetime import datetime
 import enum
 from app.database import Base
+from sqlalchemy.orm import relationship
 
 class TradeStatus(str, enum.Enum):
     IDEA = "idea"
@@ -35,6 +36,8 @@ class Trade(Base):
     instrument_type = Column(SQLEnum(InstrumentType), nullable=False)
     ticker = Column(String(20), nullable=False, index=True)
     direction = Column(SQLEnum(Direction), default=Direction.LONG)
+    entered = Column(Boolean, default=False, nullable=False)
+    trader_id = Column(Integer, ForeignKey("traders.id"), nullable=True)
     
     # Option-specific fields
     option_type = Column(SQLEnum(OptionType), nullable=True)
@@ -44,15 +47,27 @@ class Trade(Base):
     # Price and quantity
     entry_price = Column(Numeric(10, 2), nullable=False)
     exit_price = Column(Numeric(10, 2), nullable=True)
+    sl = Column(Numeric(10, 2), nullable=True)
+    tp = Column(Numeric(10, 2), nullable=True)
     quantity = Column(Integer, default=1, nullable=False)
     fees = Column(Numeric(10, 2), default=0.0)
     
     # Notes
     notes = Column(Text, nullable=True)
 
+    trader = relationship("Trader")
+
+class Trader(Base):
+    __tablename__ = "traders"
+
+    id = Column(Integer, primary_key=True, index=True)
+    name = Column(String(80), unique=True, nullable=False)
+
 class Account(Base):
     __tablename__ = "account"
     
     id = Column(Integer, primary_key=True)
     balance = Column(Numeric(12, 2), default=10000.00, nullable=False)
+    global_sl = Column(Numeric(10, 2), nullable=True)
+    global_tp = Column(Numeric(10, 2), nullable=True)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())

@@ -38,6 +38,15 @@
                 <label for="ticker">Ticker:</label>
                 <input type="text" name="ticker" id="ticker" value="{{ current_ticker or '' }}" placeholder="e.g. AAPL" style="text-transform: uppercase;">
             </div>
+            <div class="filter-group">
+                <label for="trader_id">Trader:</label>
+                <select name="trader_id" id="trader_id">
+                    <option value="">All</option>
+                    {% for trader in traders %}
+                        <option value="{{ trader.id }}" {% if current_trader and current_trader == trader.id %}selected{% endif %}>{{ trader.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
             <button type="submit" class="btn btn-secondary">Filter</button>
             <a href="/trades" class="btn btn-secondary">Clear</a>
         </form>
@@ -58,6 +67,7 @@
                     <th>Exit</th>
                     <th>Qty</th>
                     <th>P&amp;L</th>
+                    <th>Trader</th>
                     <th>Actions</th>
                 </tr>
             </thead>
@@ -65,11 +75,26 @@
                 {% for item in trades %}
                 <tr>
                     <td>{{ item.trade.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
-                    <td><span class="badge badge-{{ item.trade.status.value }}">{{ item.trade.status.value }}</span></td>
+                    <td>
+                        <span class="badge badge-{{ item.trade.status.value }}">{{ item.trade.status.value }}</span>
+                        {% if item.trade.status.value != 'entered' %}
+                            {% if item.trade.entered %}
+                                <span class="mini-tag">entered</span>
+                            {% else %}
+                                <span class="mini-tag muted">paper</span>
+                            {% endif %}
+                        {% endif %}
+                    </td>
                     <td>{{ item.trade.trading_style.value }}</td>
-                    <td>{{ item.trade.instrument_type.value }}{% if item.trade.option_type %} ({{ item.trade.option_type.value }}){% endif %}</td>
+                    <td>{{ item.trade.instrument_type.value }}</td>
                     <td><strong>{{ item.trade.ticker }}</strong></td>
-                    <td><span class="badge badge-{{ item.trade.direction.value }}">{{ item.trade.direction.value }}</span></td>
+                    <td>
+                        {% if item.trade.instrument_type.value == 'option' and item.trade.option_type %}
+                            <span class="badge badge-{{ item.trade.direction.value }}">{{ item.trade.option_type.value }}</span>
+                        {% else %}
+                            <span class="badge badge-{{ item.trade.direction.value }}">{{ item.trade.direction.value }}</span>
+                        {% endif %}
+                    </td>
                     <td>${{ item.trade.entry_price | format_decimal }}</td>
                     <td>
                         {% if item.trade.exit_price %}
@@ -89,7 +114,14 @@
                             -
                         {% endif %}
                     </td>
+                    <td>{{ item.trade.trader.name if item.trade.trader else '-' }}</td>
                     <td class="actions">
+                        <form method="POST" action="/trades/{{ item.trade.id }}/{% if item.trade.entered %}unenter{% else %}enter{% endif %}" style="display: inline;">
+                            <label class="inline-check">
+                                <input type="checkbox" {% if item.trade.entered %}checked{% endif %} onchange="this.form.submit()">
+                                <span>Entered</span>
+                            </label>
+                        </form>
                         <a href="/trades/{{ item.trade.id }}/edit" class="btn-small btn-secondary" title="Edit">Edit</a>
                         <form method="POST" action="/trades/{{ item.trade.id }}/delete" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this trade?');">
                             <button type="submit" class="btn-small btn-danger" title="Delete">Delete</button>
@@ -98,7 +130,7 @@
                 </tr>
                 {% if item.trade.notes %}
                 <tr class="notes-row">
-                    <td colspan="11">
+                    <td colspan="12">
                         <strong>Notes:</strong> {{ item.trade.notes }}
                     </td>
                 </tr>
@@ -119,12 +151,19 @@
     document.addEventListener('DOMContentLoaded', function() {
         const filterForm = document.getElementById('filterForm');
         const statusRadios = filterForm.querySelectorAll('input[name="status"]');
-
+        const traderSelect = document.getElementById('trader_id');
+        
         statusRadios.forEach(radio => {
             radio.addEventListener('change', function() {
                 filterForm.submit();
             });
         });
+
+        if (traderSelect) {
+            traderSelect.addEventListener('change', function() {
+                filterForm.submit();
+            });
+        }
     });
 </script>
 {% endblock %}

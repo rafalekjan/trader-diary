@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block title %}Add Trade - Trader Journal{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h2>Add Trade</h2>
+        <p class="page-subtitle">Choose the instrument type to start.</p>
+    </div>
+</div>
+
+<div class="card trade-select">
+    <div class="trade-select-grid">
+        <a class="trade-select-card" href="/trades/new/stock">
+            <h3>Stock</h3>
+            <p>Long/Short, shares, classic equity trades.</p>
+            <span class="trade-select-cta">Create stock trade</span>
+        </a>
+        <a class="trade-select-card" href="/trades/new/option">
+            <h3>Option</h3>
+            <p>Call/Put, contracts, expirations &amp; strikes.</p>
+            <span class="trade-select-cta">Create option trade</span>
+        </a>
+    </div>
+</div>
+{% endblock %}
