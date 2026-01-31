@@ -23,6 +23,12 @@
 
     <form method="POST" action="{% if edit_mode %}/trades/{{ trade.id }}/update{% else %}/trades/create{% endif %}" id="tradeForm">
         <input type="hidden" name="instrument_type" value="stock">
+        <div class="form-group paste-signal">
+            <label for="signal_text">Paste signal (optional)</label>
+            <textarea id="signal_text" rows="3" placeholder="Paste trader message or setup..."></textarea>
+            <button type="button" class="btn btn-secondary btn-small" id="signal_parse_btn">Auto-fill</button>
+            <p class="help-text compact">We will try to detect ticker, direction, and entry price. You can edit anything after.</p>
+        </div>
         <div class="form-grid trade-form-grid">
             <div class="form-group status-checkboxes">
                 <label>Execution *</label>
@@ -39,84 +45,84 @@
                 <label>Trading Style *</label>
                 <div class="checkbox-group">
                     <label class="checkbox-label">
-                        <input type="radio" name="trading_style" value="swing" {% if edit_mode and trade.trading_style.value == 'swing' %}checked{% elif not edit_mode %}checked{% endif %} required>
+                        <input type="radio" name="trading_style" value="swing" {% if edit_mode and trade.trading_style.value == 'swing' %}checked{% endif %} required>
                         <span class="checkbox-text">Swing</span>
                     </label>
                     <label class="checkbox-label">
-                        <input type="radio" name="trading_style" value="daytrading" {% if edit_mode and trade.trading_style.value == 'daytrading' %}checked{% endif %} required>
+                        <input type="radio" name="trading_style" value="daytrading" {% if edit_mode and trade.trading_style.value == 'daytrading' %}checked{% elif not edit_mode %}checked{% endif %} required>
                         <span class="checkbox-text">Day Trading</span>
                     </label>
                 </div>
             </div>
 
-            <div class="form-group">
-                <label for="ticker">Ticker *</label>
-                <input type="text" name="ticker" id="ticker" value="{% if edit_mode %}{{ trade.ticker }}{% endif %}" placeholder="e.g. AAPL" required style="text-transform: uppercase;">
-            </div>
+            <input type="hidden" name="direction" value="long">
 
-            <div class="form-group">
-                <label for="trader_id">Signal Source</label>
-                <select name="trader_id" id="trader_id">
-                    <option value="">Select trader</option>
-                    {% for trader in traders %}
-                        <option value="{{ trader.id }}" {% if edit_mode and trade.trader_id == trader.id %}selected{% endif %}>{{ trader.name }}</option>
-                    {% endfor %}
-                </select>
-            </div>
+            <div class="trade-row">
+                <div class="trade-left">
+                    <div class="form-group">
+                        <label for="ticker">Ticker *</label>
+                        <input type="text" name="ticker" id="ticker" value="{% if edit_mode %}{{ trade.ticker }}{% endif %}" placeholder="e.g. AAPL" required style="text-transform: uppercase;">
+                    </div>
 
-            <div class="form-group status-checkboxes">
-                <label>Direction (Long/Short) *</label>
-                <div class="checkbox-group">
-                    <label class="checkbox-label">
-                        <input type="radio" name="direction" value="long" {% if edit_mode and trade.direction.value == 'long' %}checked{% elif not edit_mode %}checked{% endif %} required>
-                        <span class="checkbox-text">Long</span>
-                    </label>
-                    <label class="checkbox-label">
-                        <input type="radio" name="direction" value="short" {% if edit_mode and trade.direction.value == 'short' %}checked{% endif %} required>
-                        <span class="checkbox-text">Short</span>
-                    </label>
+                    <div class="form-group">
+                        <label for="quantity">Quantity *</label>
+                        <input type="number" name="quantity" id="quantity" value="{% if edit_mode %}{{ trade.quantity }}{% else %}1{% endif %}" min="1" required>
+                    </div>
+
+                    <div class="entry-current-row">
+                        <div class="form-group">
+                            <label for="entry_price">Entry Price *</label>
+                            <input type="number" name="entry_price" id="entry_price" value="{% if edit_mode %}{{ trade.entry_price }}{% endif %}" step="0.01" placeholder="0.00" required>
+                        </div>
+
+                        <div class="form-group">
+                            <label>Current Price <span class="price-status" id="price_status" aria-live="polite"></span></label>
+                            <input type="text" id="current_price" class="calc-output" readonly placeholder="Fetching...">
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="exit_price">Exit Price</label>
+                        <input type="number" name="exit_price" id="exit_price" value="{% if edit_mode and trade.exit_price %}{{ trade.exit_price }}{% endif %}" step="0.01" placeholder="0.00">
+                    </div>
                 </div>
-            </div>
 
-            <div class="form-group">
-                <label for="entry_price">Entry Price *</label>
-                <input type="number" name="entry_price" id="entry_price" value="{% if edit_mode %}{{ trade.entry_price }}{% endif %}" step="0.01" placeholder="0.00" required>
-            </div>
+                <div class="trade-right">
+                    <div class="trade-right-spacer"></div>
+                    <div class="risk-grid">
+                        <div class="form-group risk-item">
+                            <label for="sl">Stop Loss (SL %)</label>
+                            <input type="number" name="sl" id="sl" value="{% if edit_mode and trade.sl %}{{ trade.sl }}{% else %}{{ account.global_sl or '' }}{% endif %}" step="0.01" placeholder="0.00">
+                            <input type="text" id="sl_value" class="calc-output" readonly placeholder="SL price ($)">
+                        </div>
 
-            <div class="form-group">
-                <label for="exit_price">Exit Price</label>
-                <input type="number" name="exit_price" id="exit_price" value="{% if edit_mode and trade.exit_price %}{{ trade.exit_price }}{% endif %}" step="0.01" placeholder="0.00">
-            </div>
+                        <div class="form-group risk-item">
+                            <label for="tp">Take Profit (TP %)</label>
+                            <input type="number" name="tp" id="tp" value="{% if edit_mode and trade.tp %}{{ trade.tp }}{% else %}{{ account.global_tp or '' }}{% endif %}" step="0.01" placeholder="0.00">
+                            <input type="text" id="tp_value" class="calc-output" readonly placeholder="TP price ($)">
+                        </div>
+                    </div>
 
-            <div class="form-group">
-                <label for="sl">Stop Loss (SL %)</label>
-                <input type="number" name="sl" id="sl" value="{% if edit_mode and trade.sl %}{{ trade.sl }}{% else %}{{ account.global_sl or '' }}{% endif %}" step="0.01" placeholder="0.00">
-                <input type="text" id="sl_value" class="calc-output" readonly placeholder="SL value ($)">
-            </div>
-
-            <div class="form-group">
-                <label for="tp">Take Profit (TP %)</label>
-                <input type="number" name="tp" id="tp" value="{% if edit_mode and trade.tp %}{{ trade.tp }}{% else %}{{ account.global_tp or '' }}{% endif %}" step="0.01" placeholder="0.00">
-                <input type="text" id="tp_value" class="calc-output" readonly placeholder="TP value ($)">
-            </div>
-
-            <div class="form-group">
-                <label for="quantity">Quantity *</label>
-                <input type="number" name="quantity" id="quantity" value="{% if edit_mode %}{{ trade.quantity }}{% else %}1{% endif %}" min="1" required>
+                    <div class="form-group">
+                        <label for="trader_id">Signal Source</label>
+                        <select name="trader_id" id="trader_id">
+                            <option value="">Select trader</option>
+                            {% for trader in traders %}
+                                <option value="{{ trader.id }}" {% if edit_mode and trade.trader_id == trader.id %}selected{% endif %}>{{ trader.name }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                </div>
             </div>
         </div>
 
         <details class="advanced-section" {% if edit_mode %}open{% endif %}>
             <summary>
                 <span>Advanced fields</span>
-                <span class="advanced-hint">Fees, notes</span>
+                <span class="advanced-hint">Notes</span>
             </summary>
 
             <div class="advanced-grid">
-                <div class="form-group">
-                    <label for="fees">Fees</label>
-                    <input type="number" name="fees" id="fees" value="{% if edit_mode %}{{ trade.fees }}{% else %}0.00{% endif %}" step="0.01" placeholder="0.00">
-                </div>
             </div>
 
             <div class="form-group trade-notes">
@@ -135,6 +141,50 @@
 </div>
 
 <script>
+    function parseSignalText(text) {
+        const result = {};
+        const upper = text.toUpperCase();
+
+        const tickerMatch = upper.match(/\b[A-Z]{1,5}\b/);
+        if (tickerMatch) result.ticker = tickerMatch[0];
+
+        const entryMatch = upper.match(/(?:ENTRY|BUY|AT|@)\s*\$?(\d+(?:\.\d+)?)/);
+        if (entryMatch) {
+            result.entry = entryMatch[1];
+        } else {
+            const priceMatch = upper.match(/\$?(\d+(?:\.\d+)?)/);
+            if (priceMatch) result.entry = priceMatch[1];
+        }
+
+        if (upper.includes("LONG")) result.direction = "long";
+        if (upper.includes("SHORT")) result.direction = "short";
+
+        return result;
+    }
+
+    function applyParsedSignal(parsed) {
+        const tickerInput = document.getElementById('ticker');
+        const entryInput = document.getElementById('entry_price');
+        const directionLong = document.querySelector('input[name="direction"][value="long"]');
+        const directionShort = document.querySelector('input[name="direction"][value="short"]');
+
+        if (parsed.ticker && tickerInput) tickerInput.value = parsed.ticker;
+        if (parsed.entry && entryInput) entryInput.value = parsed.entry;
+        if (parsed.direction === 'long' && directionLong) directionLong.checked = true;
+        if (parsed.direction === 'short' && directionShort) directionShort.checked = true;
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const button = document.getElementById('signal_parse_btn');
+        const textarea = document.getElementById('signal_text');
+        if (!button || !textarea) return;
+
+        button.addEventListener('click', function() {
+            const parsed = parseSignalText(textarea.value || '');
+            applyParsedSignal(parsed);
+        });
+    });
+
     function updatePercentOutputs() {
         const entryInput = document.getElementById('entry_price');
         const slInput = document.getElementById('sl');
@@ -164,6 +214,89 @@
             }
         });
         updatePercentOutputs();
+    });
+
+    function formatPrice(value) {
+        if (!Number.isFinite(value)) return '';
+        return `$${value.toFixed(2)}`;
+    }
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const tickerInput = document.getElementById('ticker');
+        const currentPriceInput = document.getElementById('current_price');
+        const priceStatus = document.getElementById('price_status');
+        if (!tickerInput || !currentPriceInput) return;
+
+        let pollTimer = null;
+        let pendingTimer = null;
+        let lastPrice = null;
+
+        function setStatus(message) {
+            if (!priceStatus) return;
+            priceStatus.textContent = message || '';
+            if (message) {
+                priceStatus.classList.remove('is-hidden');
+                priceStatus.setAttribute('title', message);
+            } else {
+                priceStatus.classList.add('is-hidden');
+                priceStatus.removeAttribute('title');
+            }
+        }
+
+        async function refreshCurrentPrice() {
+            const raw = tickerInput.value.trim().toUpperCase();
+            if (!raw) {
+                currentPriceInput.value = '';
+                currentPriceInput.placeholder = 'Enter ticker';
+                setStatus('');
+                return;
+            }
+
+            currentPriceInput.placeholder = 'Refreshing...';
+            setStatus('');
+            try {
+                const response = await fetch(`/api/price/stock/${encodeURIComponent(raw)}`);
+                if (!response.ok) throw new Error('Price fetch failed');
+                const data = await response.json();
+                if (typeof data.price === 'number') {
+                    lastPrice = data.price;
+                    currentPriceInput.value = formatPrice(data.price);
+                    setStatus('');
+                } else {
+                    if (lastPrice !== null) {
+                        currentPriceInput.value = formatPrice(lastPrice);
+                        setStatus('stale');
+                    } else {
+                        currentPriceInput.value = '';
+                        currentPriceInput.placeholder = 'No data';
+                        setStatus('no data');
+                    }
+                }
+            } catch (err) {
+                if (lastPrice !== null) {
+                    currentPriceInput.value = formatPrice(lastPrice);
+                    setStatus('stale');
+                } else {
+                    currentPriceInput.value = '';
+                    currentPriceInput.placeholder = 'Unavailable';
+                    setStatus('unavailable');
+                }
+            }
+        }
+
+        function scheduleRefresh() {
+            if (pendingTimer) {
+                clearTimeout(pendingTimer);
+            }
+            pendingTimer = setTimeout(() => {
+                refreshCurrentPrice();
+                if (pollTimer) clearInterval(pollTimer);
+                pollTimer = setInterval(refreshCurrentPrice, 60000);
+            }, 250);
+        }
+
+        tickerInput.addEventListener('input', scheduleRefresh);
+        scheduleRefresh();
     });
 </script>
 {% endblock %}

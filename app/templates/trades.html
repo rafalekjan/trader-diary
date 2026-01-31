@@ -92,7 +92,7 @@
                         {% if item.trade.instrument_type.value == 'option' and item.trade.option_type %}
                             <span class="badge badge-{{ item.trade.direction.value }}">{{ item.trade.option_type.value }}</span>
                         {% else %}
-                            <span class="badge badge-{{ item.trade.direction.value }}">{{ item.trade.direction.value }}</span>
+                            -
                         {% endif %}
                     </td>
                     <td>${{ item.trade.entry_price | format_decimal }}</td>

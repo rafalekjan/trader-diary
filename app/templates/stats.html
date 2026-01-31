@@ -15,6 +15,12 @@
     </div>
 
     <div class="stat-card">
+        <h3>Account Balance</h3>
+        <div class="stat-value">${{ account.balance | format_decimal }}</div>
+        <p class="stat-label">Starting capital</p>
+    </div>
+
+    <div class="stat-card">
         <h3>Closed Trades</h3>
         <div class="stat-value">{{ stats.closed_trades }}</div>
         <p class="stat-label">Closed positions</p>

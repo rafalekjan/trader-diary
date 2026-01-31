@@ -11,17 +11,33 @@
 </div>
 
 <div class="card trade-select">
-    <div class="trade-select-grid">
-        <a class="trade-select-card" href="/trades/new/stock">
+    <div class="trade-select-simple">
+        <div class="trade-select-row">
             <h3>Stock</h3>
-            <p>Long/Short, shares, classic equity trades.</p>
-            <span class="trade-select-cta">Create stock trade</span>
-        </a>
-        <a class="trade-select-card" href="/trades/new/option">
+            <div class="trade-select-actions">
+                <a class="trade-select-button" href="/trades/new/stock">
+                    <span class="pill-icon">✚</span>
+                    <span>Single</span>
+                </a>
+                <a class="trade-select-button" href="/trades/new/stock/bulk">
+                    <span class="pill-icon">⇪</span>
+                    <span>Bulk</span>
+                </a>
+            </div>
+        </div>
+        <div class="trade-select-row">
             <h3>Option</h3>
-            <p>Call/Put, contracts, expirations &amp; strikes.</p>
-            <span class="trade-select-cta">Create option trade</span>
-        </a>
+            <div class="trade-select-actions">
+                <a class="trade-select-button" href="/trades/new/option">
+                    <span class="pill-icon">✚</span>
+                    <span>Single</span>
+                </a>
+                <a class="trade-select-button" href="/trades/new/option/bulk">
+                    <span class="pill-icon">⇪</span>
+                    <span>Bulk</span>
+                </a>
+            </div>
+        </div>
     </div>
 </div>
 {% endblock %}
