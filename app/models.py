@@ -71,4 +71,5 @@ class Account(Base):
     global_sl = Column(Numeric(10, 2), nullable=True)
     global_tp = Column(Numeric(10, 2), nullable=True)
     stock_price_provider = Column(String(40), nullable=True)
+    option_price_provider = Column(String(40), nullable=True)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())

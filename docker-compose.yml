@@ -29,6 +29,10 @@ services:
       DB_USER: trader
       DB_PASSWORD: trader123
       DB_NAME: trader_journal
+      MARKETDATA_TOKEN: UkxhMS1sbVk4NXBKOEppT2VBcnd3TWMzbnEyYjVwWDRvS0d5dU5ZQS04VT0
+      POLYGON_API_KEY: gjTjXhjWZFEvePxkxh0kudtgXzjKzjev
+      TRADIER_TOKEN: ${TRADIER_TOKEN:-}
+      TRADIER_BASE_URL: ${TRADIER_BASE_URL:-https://api.tradier.com}
     depends_on:
       db:
         condition: service_healthy

@@ -11,6 +11,8 @@ import json
 import time
 import urllib.parse
 import urllib.request
+import re
+import os
 from sqlalchemy import inspect, text
 
 from app.database import get_db, engine, Base
@@ -36,6 +38,12 @@ def ensure_account_columns() -> None:
                 conn.execute(text("ALTER TABLE account ADD COLUMN stock_price_provider VARCHAR(40)"))
         except Exception:
             pass
+    if "option_price_provider" not in columns:
+        try:
+            with engine.begin() as conn:
+                conn.execute(text("ALTER TABLE account ADD COLUMN option_price_provider VARCHAR(40)"))
+        except Exception:
+            pass
 
 ensure_account_columns()
 
@@ -48,6 +56,9 @@ templates.env.filters["format_decimal"] = format_decimal
 
 STOCK_PRICE_TTL_SECONDS = 4
 STOCK_PRICE_CACHE: dict[str, dict[str, object]] = {}
+
+OPTION_PRICE_TTL_SECONDS = 8
+OPTION_PRICE_CACHE: dict[str, dict[str, object]] = {}
 
 def fetch_stock_price_stooq(ticker: str) -> Optional[Decimal]:
     symbol = (ticker or "").strip().upper()
@@ -126,6 +137,408 @@ def fetch_stock_price_yahoo(ticker: str) -> Optional[Decimal]:
         return None
 
     STOCK_PRICE_CACHE[cache_key] = {"ts": now, "price": price}
+    return price
+
+def fetch_option_price_tradingview(symbol: str) -> Optional[Decimal]:
+    normalized = (symbol or "").strip().upper()
+    if normalized.startswith("OPRA:"):
+        normalized = normalized.split(":", 1)[1]
+    if not normalized:
+        return None
+
+    now = time.time()
+    cache_key = f"tv:{normalized}"
+    cached = OPTION_PRICE_CACHE.get(cache_key)
+    if cached and now - float(cached["ts"]) < OPTION_PRICE_TTL_SECONDS:
+        return cached["price"]  # type: ignore[return-value]
+
+    url = f"https://www.tradingview.com/symbols/{urllib.parse.quote(normalized)}/"
+    req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+    try:
+        with urllib.request.urlopen(req, timeout=6) as response:
+            payload = response.read().decode("utf-8", errors="ignore")
+    except Exception:
+        return None
+
+    def parse_decimal(value: str) -> Optional[Decimal]:
+        cleaned = re.sub(r"[^0-9,.\-]", "", value or "")
+        if not cleaned:
+            return None
+        cleaned = cleaned.replace(",", ".")
+        try:
+            return Decimal(cleaned)
+        except Exception:
+            return None
+
+    price: Optional[Decimal] = None
+
+    header_match = re.search(
+        r"class=\"js-symbol-header-ticker\"[^>]*>(.*?)<",
+        payload,
+        re.IGNORECASE | re.DOTALL,
+    )
+    if header_match:
+        header_block = header_match.group(1)
+        last_match = re.search(
+            r"class=\"[^\"\"]*js-symbol-last[^\"\"]*\"[^>]*>(.*?)</span>",
+            header_block,
+            re.IGNORECASE | re.DOTALL,
+        )
+        if last_match:
+            raw_html = last_match.group(1)
+            raw_text = re.sub(r"<[^>]+>", "", raw_html)
+            raw_text = raw_text.replace(" ", "").replace("\n", "")
+            price = parse_decimal(raw_text)
+        if price is None:
+            number_match = re.search(r"([0-9]+(?:[.,][0-9]+)?)", header_block)
+            if number_match:
+                price = parse_decimal(number_match.group(1))
+
+    if price is None:
+        patterns = [
+            r"class=\"js-symbol-header-ticker\"[^>]*data-value=\"([0-9]+(?:[.,][0-9]+)?)\"",
+            r"\"last_price\"\s*:\s*\"?([0-9]+(?:[.,][0-9]+)?)\"?",
+            r"\"lp\"\s*:\s*\"?([0-9]+(?:[.,][0-9]+)?)\"?",
+            r"\"regularMarketPrice\"\s*:\s*\"?([0-9]+(?:[.,][0-9]+)?)\"?",
+            r"Last Price[^0-9]*([0-9]+(?:[.,][0-9]+)?)",
+        ]
+        for pattern in patterns:
+            match = re.search(pattern, payload, re.IGNORECASE | re.DOTALL)
+            if match:
+                price = parse_decimal(match.group(1))
+                if price is not None:
+                    break
+
+    if price is None:
+        return None
+
+    OPTION_PRICE_CACHE[cache_key] = {"ts": now, "price": price}
+    return price
+
+def parse_option_symbol(symbol: str) -> Optional[dict]:
+    normalized = (symbol or "").strip().upper()
+    if normalized.startswith("OPRA:"):
+        normalized = normalized.split(":", 1)[1]
+    match = re.match(r"^([A-Z]{1,6})(\d{2})(\d{2})(\d{2})([CP])(\d+(?:\.\d+)?)$", normalized)
+    if not match:
+        return None
+    ticker, yy, mm, dd, cp, strike = match.groups()
+    try:
+        year = 2000 + int(yy)
+        month = int(mm)
+        day = int(dd)
+        strike_value = float(strike)
+    except Exception:
+        return None
+    return {
+        "ticker": ticker,
+        "year": year,
+        "month": month,
+        "day": day,
+        "cp": cp,
+        "strike": strike_value,
+    }
+
+def fetch_option_price_yahoo(symbol: str) -> Optional[Decimal]:
+    price, _ = fetch_option_price_yahoo_with_meta(symbol)
+    return price
+
+def fetch_option_price_yahoo_with_meta(symbol: str) -> tuple[Optional[Decimal], dict]:
+    parsed = parse_option_symbol(symbol)
+    meta: dict[str, object] = {
+        "parsed": parsed,
+        "available_dates": 0,
+        "target_date": None,
+        "matched_expiry_ts": None,
+        "used_nearest": False,
+        "best_diff": None,
+        "contracts": 0,
+    }
+    if not parsed:
+        return None, meta
+
+    ticker = parsed["ticker"]
+    strike_target = parsed["strike"]
+    side_key = "calls" if parsed["cp"] == "C" else "puts"
+
+    now = time.time()
+    target_date = date(parsed["year"], parsed["month"], parsed["day"])
+    meta["target_date"] = target_date.isoformat()
+
+    url = f"https://query1.finance.yahoo.com/v7/finance/options/{urllib.parse.quote(ticker)}"
+    try:
+        req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+        with urllib.request.urlopen(req, timeout=6) as response:
+            payload = response.read().decode("utf-8", errors="ignore")
+    except Exception:
+        return None, meta
+
+    try:
+        data = json.loads(payload)
+        result = (data.get("optionChain") or {}).get("result") or []
+        if not result:
+            return None, meta
+        available_dates = result[0].get("expirationDates") or []
+    except Exception:
+        return None, meta
+
+    meta["available_dates"] = len(available_dates)
+
+    expiry_ts = None
+    nearest_ts = None
+    nearest_diff = None
+    for ts in available_dates:
+        try:
+            ts_int = int(ts)
+        except Exception:
+            continue
+        if datetime.utcfromtimestamp(ts_int).date() == target_date:
+            expiry_ts = ts_int
+            break
+        if datetime.fromtimestamp(ts_int).date() == target_date:
+            expiry_ts = ts_int
+            break
+        diff_days = abs((datetime.utcfromtimestamp(ts_int).date() - target_date).days)
+        if nearest_diff is None or diff_days < nearest_diff:
+            nearest_diff = diff_days
+            nearest_ts = ts_int
+
+    if expiry_ts is None:
+        if nearest_ts is not None:
+            expiry_ts = nearest_ts
+            meta["used_nearest"] = True
+        else:
+            expiry_ts = int(datetime(parsed["year"], parsed["month"], parsed["day"]).timestamp())
+
+    meta["matched_expiry_ts"] = expiry_ts
+
+    cache_key = f"yahoo_option:{ticker}:{expiry_ts}:{parsed['cp']}:{strike_target}"
+    cached = OPTION_PRICE_CACHE.get(cache_key)
+    if cached and now - float(cached["ts"]) < OPTION_PRICE_TTL_SECONDS:
+        return cached["price"], meta  # type: ignore[return-value]
+
+    url = f"https://query1.finance.yahoo.com/v7/finance/options/{urllib.parse.quote(ticker)}?date={expiry_ts}"
+    try:
+        req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+        with urllib.request.urlopen(req, timeout=6) as response:
+            payload = response.read().decode("utf-8", errors="ignore")
+    except Exception:
+        return None, meta
+
+    try:
+        data = json.loads(payload)
+        result = (data.get("optionChain") or {}).get("result") or []
+        if not result:
+            return None, meta
+        options = (result[0].get("options") or [])
+        if not options:
+            return None, meta
+        contracts = options[0].get(side_key) or []
+    except Exception:
+        return None, meta
+
+    meta["contracts"] = len(contracts)
+
+    best_match = None
+    best_diff = None
+    for contract in contracts:
+        try:
+            strike_value = float(contract.get("strike"))
+        except Exception:
+            continue
+        diff = abs(strike_value - strike_target)
+        if best_diff is None or diff < best_diff:
+            best_diff = diff
+            best_match = contract
+
+    meta["best_diff"] = best_diff
+
+    if best_match and best_diff is not None and best_diff > 0.1:
+        best_match = None
+
+    if not best_match:
+        return None, meta
+
+    price_value = best_match.get("lastPrice")
+    if price_value is None:
+        price_value = best_match.get("bid") if best_match.get("bid") is not None else best_match.get("ask")
+    if price_value is None:
+        return None, meta
+
+    try:
+        price = Decimal(str(price_value))
+    except Exception:
+        return None, meta
+
+    OPTION_PRICE_CACHE[cache_key] = {"ts": now, "price": price}
+    return price, meta
+
+def to_occ_symbol(symbol: str) -> Optional[str]:
+    parsed = parse_option_symbol(symbol)
+    if not parsed:
+        return None
+    ticker = parsed["ticker"].upper()
+    yy = str(parsed["year"])[-2:]
+    mm = f"{parsed['month']:02d}"
+    dd = f"{parsed['day']:02d}"
+    cp = parsed["cp"]
+    strike_int = int(round(parsed["strike"] * 1000))
+    strike_str = f"{strike_int:08d}"
+    return f"{ticker}{yy}{mm}{dd}{cp}{strike_str}"
+
+def to_polygon_symbol(symbol: str) -> Optional[str]:
+    occ = to_occ_symbol(symbol)
+    if not occ:
+        return None
+    return f"O:{occ}"
+
+def fetch_option_price_marketdata(symbol: str) -> Optional[Decimal]:
+    occ = to_occ_symbol(symbol)
+    if not occ:
+        return None
+
+    now = time.time()
+    cache_key = f"marketdata:{occ}"
+    cached = OPTION_PRICE_CACHE.get(cache_key)
+    if cached and now - float(cached["ts"]) < OPTION_PRICE_TTL_SECONDS:
+        return cached["price"]  # type: ignore[return-value]
+
+    url = f"https://api.marketdata.app/v1/options/quotes/{urllib.parse.quote(occ)}/"
+    token = os.environ.get("MARKETDATA_TOKEN", "").strip()
+    headers = {"User-Agent": "Mozilla/5.0"}
+    if token:
+        headers["Authorization"] = f"Bearer {token}"
+    req = urllib.request.Request(url, headers=headers)
+    try:
+        with urllib.request.urlopen(req, timeout=6) as response:
+            payload = response.read().decode("utf-8", errors="ignore")
+    except Exception:
+        return None
+
+    try:
+        data = json.loads(payload)
+        if data.get("s") != "ok":
+            return None
+        def first_value(key):
+            value = data.get(key)
+            if isinstance(value, list) and value:
+                return value[0]
+            return value
+        price_value = first_value("last")
+        if price_value is None:
+            price_value = first_value("mid")
+        if price_value is None:
+            bid = first_value("bid")
+            ask = first_value("ask")
+            if bid is not None and ask is not None:
+                price_value = (float(bid) + float(ask)) / 2
+        if price_value is None:
+            return None
+        price = Decimal(str(price_value))
+    except Exception:
+        return None
+
+    OPTION_PRICE_CACHE[cache_key] = {"ts": now, "price": price}
+    return price
+
+def fetch_option_price_polygon(symbol: str) -> Optional[Decimal]:
+    polygon_symbol = to_polygon_symbol(symbol)
+    parsed = parse_option_symbol(symbol)
+    if not polygon_symbol or not parsed:
+        return None
+    api_key = os.environ.get("POLYGON_API_KEY", "").strip()
+    if not api_key:
+        return None
+
+    now = time.time()
+    cache_key = f"polygon:{polygon_symbol}"
+    cached = OPTION_PRICE_CACHE.get(cache_key)
+    if cached and now - float(cached["ts"]) < OPTION_PRICE_TTL_SECONDS:
+        return cached["price"]  # type: ignore[return-value]
+
+    underlying = parsed["ticker"]
+    url = (
+        f"https://api.polygon.io/v3/snapshot/options/{urllib.parse.quote(underlying)}/"
+        f"{urllib.parse.quote(polygon_symbol)}?apiKey={urllib.parse.quote(api_key)}"
+    )
+    req = urllib.request.Request(url, headers={"User-Agent": "Mozilla/5.0"})
+    try:
+        with urllib.request.urlopen(req, timeout=6) as response:
+            payload = response.read().decode("utf-8", errors="ignore")
+    except Exception:
+        return None
+
+    try:
+        data = json.loads(payload)
+        results = data.get("results") or {}
+        last_trade = results.get("last_trade") or {}
+        last_quote = results.get("last_quote") or {}
+        price_value = last_trade.get("price")
+        if price_value is None:
+            bid = last_quote.get("bid")
+            ask = last_quote.get("ask")
+            if bid is not None and ask is not None:
+                price_value = (float(bid) + float(ask)) / 2
+            elif bid is not None:
+                price_value = bid
+            elif ask is not None:
+                price_value = ask
+        if price_value is None:
+            return None
+        price = Decimal(str(price_value))
+    except Exception:
+        return None
+
+    OPTION_PRICE_CACHE[cache_key] = {"ts": now, "price": price}
+    return price
+
+def fetch_option_price_tradier(symbol: str) -> Optional[Decimal]:
+    occ = to_occ_symbol(symbol)
+    if not occ:
+        return None
+
+    token = os.environ.get("TRADIER_TOKEN", "").strip()
+    if not token:
+        return None
+
+    base_url = os.environ.get("TRADIER_BASE_URL", "https://api.tradier.com").strip()
+    now = time.time()
+    cache_key = f"tradier:{occ}"
+    cached = OPTION_PRICE_CACHE.get(cache_key)
+    if cached and now - float(cached["ts"]) < OPTION_PRICE_TTL_SECONDS:
+        return cached["price"]  # type: ignore[return-value]
+
+    url = f"{base_url}/v1/markets/quotes?symbols={urllib.parse.quote(occ)}&greeks=false"
+    headers = {"Authorization": f"Bearer {token}", "Accept": "application/json"}
+    req = urllib.request.Request(url, headers=headers)
+    try:
+        with urllib.request.urlopen(req, timeout=6) as response:
+            payload = response.read().decode("utf-8", errors="ignore")
+    except Exception:
+        return None
+
+    try:
+        data = json.loads(payload)
+        quotes = (data.get("quotes") or {}).get("quote") or {}
+        if isinstance(quotes, list):
+            quotes = quotes[0] if quotes else {}
+        price_value = quotes.get("last")
+        if price_value is None:
+            bid = quotes.get("bid")
+            ask = quotes.get("ask")
+            if bid is not None and ask is not None:
+                price_value = (float(bid) + float(ask)) / 2
+            elif bid is not None:
+                price_value = bid
+            elif ask is not None:
+                price_value = ask
+        if price_value is None:
+            return None
+        price = Decimal(str(price_value))
+    except Exception:
+        return None
+
+    OPTION_PRICE_CACHE[cache_key] = {"ts": now, "price": price}
     return price
 
 def calculate_total_pnl(db: Session) -> Decimal:
@@ -520,6 +933,7 @@ async def update_account(
     global_sl: Optional[str] = Form(None),
     global_tp: Optional[str] = Form(None),
     stock_price_provider: Optional[str] = Form(None),
+    option_price_provider: Optional[str] = Form(None),
     db: Session = Depends(get_db)
 ):
     """Update account balance"""
@@ -528,6 +942,7 @@ async def update_account(
     account.global_sl = Decimal(global_sl) if global_sl else None
     account.global_tp = Decimal(global_tp) if global_tp else None
     account.stock_price_provider = stock_price_provider or None
+    account.option_price_provider = option_price_provider or None
     db.commit()
     db.refresh(account)
     return RedirectResponse(url="/account", status_code=303)
@@ -720,3 +1135,75 @@ async def api_stock_price(ticker: str, db: Session = Depends(get_db)):
 
     return {"price": None}
     return {"price": float(price) if price is not None else None}
+
+@app.get("/api/price/option/{symbol}")
+async def api_option_price(symbol: str, debug: Optional[int] = None, db: Session = Depends(get_db)):
+    def price_or_none(value: Optional[Decimal]) -> dict:
+        return {"price": float(value) if value is not None else None}
+
+    account = crud.get_account(db)
+    provider = (account.option_price_provider or "").strip().lower() or "auto"
+    if provider == "off":
+        return {"price": None} if not debug else {"price": None, "provider": "off"}
+
+    if provider == "a":
+        price = fetch_option_price_tradingview(symbol)
+        return price_or_none(price) if not debug else {"price": float(price) if price is not None else None, "provider": "a"}
+    if provider == "b":
+        if not debug:
+            price = fetch_option_price_yahoo(symbol)
+            return price_or_none(price)
+        price, meta = fetch_option_price_yahoo_with_meta(symbol)
+        return {"price": float(price) if price is not None else None, "provider": "b", "yahoo": meta}
+    if provider == "c":
+        price = fetch_option_price_marketdata(symbol)
+        return price_or_none(price) if not debug else {"price": float(price) if price is not None else None, "provider": "c"}
+    if provider == "d":
+        price = fetch_option_price_polygon(symbol)
+        return price_or_none(price) if not debug else {"price": float(price) if price is not None else None, "provider": "d"}
+    if provider == "e":
+        price = fetch_option_price_tradier(symbol)
+        return price_or_none(price) if not debug else {"price": float(price) if price is not None else None, "provider": "e"}
+    if provider == "auto":
+        price_a = fetch_option_price_tradingview(symbol)
+        price = price_a
+        source = "a"
+        meta_b = None
+        price_c = None
+        price_d = None
+        price_e = None
+        if price is None:
+            if debug:
+                price_b, meta_b = fetch_option_price_yahoo_with_meta(symbol)
+            else:
+                price_b = fetch_option_price_yahoo(symbol)
+            price = price_b
+            source = "b"
+        if price is None:
+            price_c = fetch_option_price_marketdata(symbol)
+            price = price_c
+            source = "c"
+        if price is None:
+            price_d = fetch_option_price_polygon(symbol)
+            price = price_d
+            source = "d"
+        if price is None:
+            price_e = fetch_option_price_tradier(symbol)
+            price = price_e
+            source = "e"
+        if not debug:
+            return price_or_none(price)
+        return {
+            "price": float(price) if price is not None else None,
+            "provider": "auto",
+            "selected": source,
+            "parsed": parse_option_symbol(symbol),
+            "price_a": float(price_a) if price_a is not None else None,
+            "price_b": float(price_b) if "price_b" in locals() and price_b is not None else None,
+            "price_c": float(price_c) if price_c is not None else None,
+            "price_d": float(price_d) if price_d is not None else None,
+            "price_e": float(price_e) if price_e is not None else None,
+            "yahoo": meta_b,
+        }
+
+    return {"price": None} if not debug else {"price": None, "provider": provider}

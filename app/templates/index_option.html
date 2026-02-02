@@ -57,9 +57,17 @@
 
             <div class="trade-row">
                 <div class="trade-left">
-                    <div class="form-group">
-                        <label for="ticker">Ticker *</label>
-                        <input type="text" name="ticker" id="ticker" value="{% if edit_mode %}{{ trade.ticker }}{% endif %}" placeholder="e.g. AAPL" required style="text-transform: uppercase;">
+                    <input type="hidden" name="entry_price" id="entry_price" value="{% if edit_mode %}{{ trade.entry_price }}{% endif %}" required>
+
+                    <div class="ticker-row">
+                        <div class="form-group">
+                            <label for="ticker">Ticker *</label>
+                            <input type="text" name="ticker" id="ticker" value="{% if edit_mode %}{{ trade.ticker }}{% endif %}" placeholder="e.g. AAPL" required style="text-transform: uppercase;">
+                        </div>
+                        <div class="form-group">
+                            <label>Stock Price <span class="price-status" id="price_status" aria-live="polite"></span></label>
+                            <input type="text" id="current_price" class="calc-output" readonly placeholder="Fetching...">
+                        </div>
                     </div>
 
                     <div class="form-group">
@@ -83,24 +91,25 @@
 
                     <div class="entry-current-row">
                         <div class="form-group">
-                            <label for="entry_price">Contract Premium *</label>
-                            <input type="number" name="entry_price" id="entry_price" value="{% if edit_mode %}{{ trade.entry_price }}{% endif %}" step="0.01" placeholder="0.00" required>
+                            <label for="expiration_date">Expiration Date</label>
+                            <input type="text" name="expiration_date" id="expiration_date" value="{% if edit_mode and trade.expiration_date %}{{ trade.expiration_date }}{% endif %}" placeholder="YYYY-MM-DD">
                         </div>
-
                         <div class="form-group">
-                            <label>Current Price <span class="price-status" id="price_status" aria-live="polite"></span></label>
-                            <input type="text" id="current_price" class="calc-output" readonly placeholder="Fetching...">
+                            <label for="strike">Strike</label>
+                            <input type="text" name="strike" id="strike" value="{% if edit_mode and trade.strike %}{{ trade.strike }}{% endif %}" placeholder="e.g. 245.0">
                         </div>
                     </div>
 
-                    <div class="form-group">
-                        <label for="exit_price">Contract Exit Price</label>
-                        <input type="number" name="exit_price" id="exit_price" value="{% if edit_mode and trade.exit_price %}{{ trade.exit_price }}{% endif %}" step="0.01" placeholder="0.00">
-                    </div>
-
-                    <div class="form-group">
-                        <label for="expiration_date">Expiration Date</label>
-                        <input type="text" name="expiration_date" id="expiration_date" value="{% if edit_mode and trade.expiration_date %}{{ trade.expiration_date }}{% endif %}" placeholder="YYYY-MM-DD">
+                    <div class="entry-current-row">
+                        <div class="form-group">
+                            <label>Contract Price <span class="price-status" id="option_price_status" aria-live="polite"></span></label>
+                            <input type="text" id="option_price" class="calc-output" readonly placeholder="Enter option details">
+                            <p class="help-text compact">Symbol: <a id="option_symbol_link" target="_blank" rel="noopener"><span id="option_symbol_text">-</span></a></p>
+                        </div>
+                        <div class="form-group">
+                            <label for="exit_price">Contract Exit Price</label>
+                            <input type="number" name="exit_price" id="exit_price" value="{% if edit_mode and trade.exit_price %}{{ trade.exit_price }}{% endif %}" step="0.01" placeholder="0.00">
+                        </div>
                     </div>
 
                 </div>
@@ -198,6 +207,26 @@
             if (priceMatch) result.entry = priceMatch[1];
         }
 
+        const strikeMatch = upper.match(/(?:\bSTRIKE\b|\bSTK\b|\bK\b)\s*[:\-]?\s*\$?(\d+(?:[.,]\d+)?)/);
+        if (strikeMatch) {
+            result.strike = strikeMatch[1];
+        } else {
+            const cpStrikeMatch = upper.match(/(?:\bC|\bP)\s*\$?(\d+(?:[.,]\d+)?)(?=\b|[^0-9])/);
+            if (cpStrikeMatch) {
+                result.strike = cpStrikeMatch[1];
+            } else {
+                const strikeBeforeCpMatch = upper.match(/\b(\d+(?:[.,]\d+)?)\s*(?:C|P)\b/);
+                if (strikeBeforeCpMatch) {
+                    result.strike = strikeBeforeCpMatch[1];
+                } else {
+                    const tvSymbolMatch = upper.match(/\b[A-Z]{1,6}\d{2}\d{2}\d{2}[CP](\d+(?:[.,]\d+)?)\b/);
+                    if (tvSymbolMatch) {
+                        result.strike = tvSymbolMatch[1];
+                    }
+                }
+            }
+        }
+
         if (upper.includes("CALL")) result.optionType = "CALL";
         if (upper.includes("PUT")) result.optionType = "PUT";
 
@@ -208,12 +237,14 @@
         const tickerInput = document.getElementById('ticker');
         const entryInput = document.getElementById('entry_price');
         const expirationInput = document.getElementById('expiration_date');
+        const strikeInput = document.getElementById('strike');
         const callRadio = document.querySelector('input[name="option_type"][value="CALL"]');
         const putRadio = document.querySelector('input[name="option_type"][value="PUT"]');
 
         if (parsed.ticker && tickerInput) tickerInput.value = parsed.ticker;
         if (parsed.entry && entryInput) entryInput.value = parsed.entry;
         if (parsed.expiration && expirationInput) expirationInput.value = parsed.expiration;
+        if (parsed.strike && strikeInput) strikeInput.value = parsed.strike;
         if (parsed.optionType === 'CALL' && callRadio) callRadio.checked = true;
         if (parsed.optionType === 'PUT' && putRadio) putRadio.checked = true;
     }
@@ -233,12 +264,20 @@
         const entryInput = document.getElementById('entry_price');
         const slInput = document.getElementById('sl');
         const tpInput = document.getElementById('tp');
+        const optionPriceInput = document.getElementById('option_price');
         const slValue = document.getElementById('sl_value');
         const tpValue = document.getElementById('tp_value');
 
         if (!entryInput || !slInput || !tpInput || !slValue || !tpValue) return;
 
-        const entry = parseFloat(entryInput.value);
+        let entry = parseFloat(entryInput.value);
+        if (!Number.isFinite(entry) && optionPriceInput) {
+            const raw = (optionPriceInput.value || '').replace('$', '').trim();
+            const optionEntry = parseFloat(raw);
+            if (Number.isFinite(optionEntry)) {
+                entry = optionEntry;
+            }
+        }
         const slPct = parseFloat(slInput.value);
         const tpPct = parseFloat(tpInput.value);
 
@@ -340,6 +379,134 @@
         }
 
         tickerInput.addEventListener('input', scheduleRefresh);
+        scheduleRefresh();
+    });
+
+    document.addEventListener('DOMContentLoaded', function() {
+        const tickerInput = document.getElementById('ticker');
+        const expirationInput = document.getElementById('expiration_date');
+        const strikeInput = document.getElementById('strike');
+        const optionPriceInput = document.getElementById('option_price');
+        const entryInput = document.getElementById('entry_price');
+        const optionStatus = document.getElementById('option_price_status');
+        const symbolText = document.getElementById('option_symbol_text');
+        const symbolLink = document.getElementById('option_symbol_link');
+        const optionTypeInputs = document.querySelectorAll('input[name="option_type"]');
+        if (!tickerInput || !expirationInput || !strikeInput || !optionPriceInput) return;
+
+        let pollTimer = null;
+        let pendingTimer = null;
+        let lastPrice = null;
+
+        function setStatus(message) {
+            if (!optionStatus) return;
+            optionStatus.textContent = message || '';
+            if (message) {
+                optionStatus.classList.remove('is-hidden');
+                optionStatus.setAttribute('title', message);
+            } else {
+                optionStatus.classList.add('is-hidden');
+                optionStatus.removeAttribute('title');
+            }
+        }
+
+        function normalizeStrike(value) {
+            const raw = (value || '').trim().replace(',', '.');
+            if (!raw) return null;
+            const parsed = Number(raw);
+            if (!Number.isFinite(parsed)) return null;
+            return parsed.toFixed(1);
+        }
+
+        function buildOptionSymbol() {
+            const ticker = tickerInput.value.trim().toUpperCase();
+            const expiration = expirationInput.value.trim();
+            const strike = normalizeStrike(strikeInput.value);
+            const optionType = document.querySelector('input[name="option_type"]:checked');
+            if (!ticker || !expiration || !strike || !optionType) return null;
+
+            const dateMatch = expiration.match(/(\d{4})-(\d{2})-(\d{2})/);
+            if (!dateMatch) return null;
+            const year = dateMatch[1].slice(2);
+            const month = dateMatch[2];
+            const day = dateMatch[3];
+
+            return `${ticker}${year}${month}${day}${optionType.value.charAt(0)}${strike}`;
+        }
+
+        function updateSymbolDisplay(symbol) {
+            if (!symbolText || !symbolLink) return;
+            if (!symbol) {
+                symbolText.textContent = '-';
+                symbolLink.removeAttribute('href');
+                return;
+            }
+            symbolText.textContent = symbol;
+            symbolLink.href = `https://www.tradingview.com/symbols/${symbol}/`;
+        }
+
+        async function refreshOptionPrice() {
+            const symbol = buildOptionSymbol();
+            updateSymbolDisplay(symbol);
+
+            if (!symbol) {
+                optionPriceInput.value = '';
+                optionPriceInput.placeholder = 'Enter option details';
+                setStatus('');
+                return;
+            }
+
+            optionPriceInput.placeholder = 'Refreshing...';
+            setStatus('');
+            try {
+                const response = await fetch(`/api/price/option/${encodeURIComponent(symbol)}`);
+                if (!response.ok) throw new Error('Option price fetch failed');
+                const data = await response.json();
+                if (typeof data.price === 'number') {
+                    lastPrice = data.price;
+                    optionPriceInput.value = formatPrice(data.price);
+                    if (entryInput && !entryInput.value) {
+                        entryInput.value = data.price.toFixed(2);
+                        updatePercentOutputs();
+                    }
+                    setStatus('');
+                } else {
+                    if (lastPrice !== null) {
+                        optionPriceInput.value = formatPrice(lastPrice);
+                        setStatus('stale');
+                    } else {
+                        optionPriceInput.value = '';
+                        optionPriceInput.placeholder = 'No data';
+                        setStatus('no data');
+                    }
+                }
+            } catch (err) {
+                if (lastPrice !== null) {
+                    optionPriceInput.value = formatPrice(lastPrice);
+                    setStatus('stale');
+                } else {
+                    optionPriceInput.value = '';
+                    optionPriceInput.placeholder = 'Unavailable';
+                    setStatus('unavailable');
+                }
+            }
+        }
+
+        function scheduleRefresh() {
+            if (pendingTimer) {
+                clearTimeout(pendingTimer);
+            }
+            pendingTimer = setTimeout(() => {
+                refreshOptionPrice();
+                if (pollTimer) clearInterval(pollTimer);
+                pollTimer = setInterval(refreshOptionPrice, 60000);
+            }, 250);
+        }
+
+        tickerInput.addEventListener('input', scheduleRefresh);
+        expirationInput.addEventListener('input', scheduleRefresh);
+        strikeInput.addEventListener('input', scheduleRefresh);
+        optionTypeInputs.forEach(input => input.addEventListener('change', scheduleRefresh));
         scheduleRefresh();
     });
 </script>
