@@ -52,6 +52,7 @@
             ticker: '',
             option_type: '',
             expiration_date: '',
+            strike: '',
             entry_price: '',
             entered: false,
             exit_price: ''
@@ -96,6 +97,26 @@
         if (upper.includes("PUT") || /[0-9]P\b/.test(upper)) result.option_type = "PUT";
         if (upper.includes("ENTERED") || upper.includes("FILLED")) result.entered = true;
 
+        const strikeMatch = upper.match(/(?:\bSTRIKE\b|\bSTK\b|\bK\b)\s*[:\-]?\s*\$?(\d+(?:[.,]\d+)?)/);
+        if (strikeMatch) {
+            result.strike = strikeMatch[1];
+        } else {
+            const cpStrikeMatch = upper.match(/(?:\bC|\bP)\s*\$?(\d+(?:[.,]\d+)?)(?=\b|[^0-9])/);
+            if (cpStrikeMatch) {
+                result.strike = cpStrikeMatch[1];
+            } else {
+                const strikeBeforeCpMatch = upper.match(/\b(\d+(?:[.,]\d+)?)\s*(?:C|P)\b/);
+                if (strikeBeforeCpMatch) {
+                    result.strike = strikeBeforeCpMatch[1];
+                } else {
+                    const tvSymbolMatch = upper.match(/\b[A-Z]{1,6}\d{2}\d{2}\d{2}[CP](\d+(?:[.,]\d+)?)\b/);
+                    if (tvSymbolMatch) {
+                        result.strike = tvSymbolMatch[1];
+                    }
+                }
+            }
+        }
+
         return result;
     }
 
@@ -113,6 +134,7 @@
                 <span>Ticker</span>
                 <span>Type</span>
                 <span>Exp</span>
+                <span>Strike</span>
                 <span>Entry</span>
                 <span>Exit</span>
                 <span>Qty</span>
@@ -129,6 +151,7 @@
                     <option value="PUT" ${row.option_type === 'PUT' ? 'selected' : ''}>PUT</option>
                 </select>
                 <input type="text" name="exp_${index}" value="${row.expiration_date || ''}" placeholder="YYYY-MM-DD">
+                <input type="text" name="strike_${index}" value="${row.strike || ''}" placeholder="e.g. 245.0">
                 <input type="number" name="entry_${index}" value="${row.entry_price || ''}" step="0.01" placeholder="0.00">
                 <input type="number" name="exit_${index}" value="${row.exit_price || ''}" step="0.01" placeholder="0.00">
                 <input type="number" name="qty_${index}" value="${row.quantity || ''}" min="1" step="1" placeholder="1">
@@ -159,6 +182,7 @@
                 ticker: values[Object.keys(values).find(k => k.startsWith('ticker_'))] || '',
                 option_type: values[Object.keys(values).find(k => k.startsWith('option_'))] || '',
                 expiration_date: values[Object.keys(values).find(k => k.startsWith('exp_'))] || '',
+                strike: values[Object.keys(values).find(k => k.startsWith('strike_'))] || '',
                 entry_price: values[Object.keys(values).find(k => k.startsWith('entry_'))] || '',
                 exit_price: values[Object.keys(values).find(k => k.startsWith('exit_'))] || '',
                 quantity: values[Object.keys(values).find(k => k.startsWith('qty_'))] || '',

@@ -31,6 +31,7 @@ class Trade(Base):
     
     id = Column(Integer, primary_key=True, index=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+    closed_at = Column(DateTime(timezone=True), nullable=True)
     status = Column(SQLEnum(TradeStatus), default=TradeStatus.IDEA, nullable=False)
     trading_style = Column(SQLEnum(TradingStyle), nullable=False)
     instrument_type = Column(SQLEnum(InstrumentType), nullable=False)

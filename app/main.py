@@ -47,6 +47,22 @@ def ensure_account_columns() -> None:
 
 ensure_account_columns()
 
+def ensure_trade_columns() -> None:
+    try:
+        inspector = inspect(engine)
+        columns = {col["name"] for col in inspector.get_columns("trades")}
+    except Exception:
+        return
+
+    if "closed_at" not in columns:
+        try:
+            with engine.begin() as conn:
+                conn.execute(text("ALTER TABLE trades ADD COLUMN closed_at DATETIME"))
+        except Exception:
+            pass
+
+ensure_trade_columns()
+
 def format_decimal(value):
     if value is None:
         return "-"
@@ -624,6 +640,7 @@ async def create_trade(
     strike: Optional[str] = Form(None),
     entry_price: str = Form(...),
     exit_price: Optional[str] = Form(None),
+    closed_at: Optional[str] = Form(None),
     sl: Optional[str] = Form(None),
     tp: Optional[str] = Form(None),
     quantity: int = Form(1),
@@ -643,6 +660,13 @@ async def create_trade(
     if instrument_type == "option" and option_type:
         normalized_direction = "long" if option_type == "CALL" else "short"
 
+    parsed_closed_at = None
+    if exit_price and closed_at:
+        try:
+            parsed_closed_at = datetime.fromisoformat(closed_at)
+        except ValueError:
+            parsed_closed_at = None
+
     trade_data = schemas.TradeCreate(
         status=normalized_status,
         trading_style=trading_style,
@@ -656,6 +680,7 @@ async def create_trade(
         strike=Decimal(strike) if strike else None,
         entry_price=Decimal(entry_price),
         exit_price=Decimal(exit_price) if exit_price else None,
+        closed_at=parsed_closed_at,
         sl=Decimal(sl) if sl else None,
         tp=Decimal(tp) if tp else None,
         quantity=quantity,
@@ -687,14 +712,36 @@ async def list_trades(
         pnl = crud.calculate_pnl(trade)
         trades_with_pnl.append({
             "trade": trade,
-            "pnl": pnl
+            "pnl": pnl,
+            "is_copy": crud.is_copy_trade(trade)
         })
-        if pnl and trade.entered:
+        if pnl and trade.entered and not crud.is_source_trade(trade):
             total_pnl += pnl
+
+    entered_trades = [
+        item for item in trades_with_pnl
+        if item["trade"].entered and not crud.is_source_trade(item["trade"])
+    ]
+    not_entered_trades = [item for item in trades_with_pnl if not item["trade"].entered]
+
+    trader_groups = []
+    for trader in traders:
+        trader_items = [
+            item for item in trades_with_pnl
+            if item["trade"].trader_id == trader.id and not crud.is_copy_trade(item["trade"])
+        ]
+        if trader_items:
+            trader_groups.append({
+                "trader": trader,
+                "trades": trader_items
+            })
     
     return templates.TemplateResponse("trades.html", {
         "request": request,
         "trades": trades_with_pnl,
+        "entered_trades": entered_trades,
+        "not_entered_trades": not_entered_trades,
+        "trader_groups": trader_groups,
         "total_pnl": total_pnl,
         "account": account,
         "equity": calculate_equity(db),
@@ -741,6 +788,7 @@ async def update_trade(
     strike: Optional[str] = Form(None),
     entry_price: str = Form(...),
     exit_price: Optional[str] = Form(None),
+    closed_at: Optional[str] = Form(None),
     sl: Optional[str] = Form(None),
     tp: Optional[str] = Form(None),
     quantity: int = Form(1),
@@ -760,6 +808,13 @@ async def update_trade(
     if instrument_type == "option" and option_type:
         normalized_direction = "long" if option_type == "CALL" else "short"
 
+    parsed_closed_at = None
+    if closed_at:
+        try:
+            parsed_closed_at = datetime.fromisoformat(closed_at)
+        except ValueError:
+            parsed_closed_at = None
+
     trade_data = schemas.TradeUpdate(
         status=normalized_status,
         trading_style=trading_style,
@@ -773,6 +828,7 @@ async def update_trade(
         strike=Decimal(strike) if strike else None,
         entry_price=Decimal(entry_price),
         exit_price=Decimal(exit_price) if exit_price else None,
+        closed_at=parsed_closed_at,
         sl=Decimal(sl) if sl else None,
         tp=Decimal(tp) if tp else None,
         quantity=quantity,
@@ -796,6 +852,7 @@ async def close_trade(
     
     trade.exit_price = Decimal(exit_price)
     trade.status = models.TradeStatus.CLOSED
+    trade.closed_at = datetime.utcnow()
     db.commit()
     
     return RedirectResponse(url="/trades", status_code=303)
@@ -810,12 +867,57 @@ async def enter_trade(
     if not trade:
         raise HTTPException(status_code=404, detail="Trade not found")
 
-    trade.entered = True
-    if trade.exit_price:
-        trade.status = models.TradeStatus.CLOSED
+    if trade.trader_id is not None:
+        if not trade.entered:
+            trade.entered = True
+        source_marker = f"Source trade #{trade.id}"
+        existing_source = (trade.notes or "")
+        if source_marker.lower() not in existing_source.lower():
+            trade.notes = f"{existing_source}\n{source_marker}".strip() if existing_source else source_marker
+        db.commit()
+
+        copy_marker = f"Copy of trade #{trade.id}"
+        existing = db.query(models.Trade).filter(
+            models.Trade.notes.ilike(f"%{copy_marker}%")
+        ).first()
+        if not existing:
+            notes = (trade.notes or "").strip()
+            if notes:
+                source_tag = f"Source trade #{trade.id}"
+                notes = notes.replace(source_tag, "").strip()
+            if notes:
+                notes = f"{notes}\n{copy_marker}"
+            else:
+                notes = copy_marker
+
+            trade_data = schemas.TradeCreate(
+                status="entered",
+                trading_style=trade.trading_style.value,
+                instrument_type=trade.instrument_type.value,
+                ticker=trade.ticker,
+                direction=trade.direction.value,
+                entered=True,
+                trader_id=trade.trader_id,
+                option_type=trade.option_type.value if trade.option_type else None,
+                expiration_date=trade.expiration_date,
+                strike=trade.strike,
+                entry_price=trade.entry_price,
+                exit_price=None,
+                closed_at=None,
+                sl=trade.sl,
+                tp=trade.tp,
+                quantity=trade.quantity,
+                fees=trade.fees,
+                notes=notes
+            )
+            crud.create_trade(db, trade_data)
     else:
-        trade.status = models.TradeStatus.ENTERED
-    db.commit()
+        trade.entered = True
+        if trade.exit_price:
+            trade.status = models.TradeStatus.CLOSED
+        else:
+            trade.status = models.TradeStatus.ENTERED
+        db.commit()
 
     return RedirectResponse(url="/trades", status_code=303)
 
@@ -877,6 +979,10 @@ async def bulk_create_trades(
         if instrument_type == "option" and option_type:
             normalized_direction = "long" if option_type == "CALL" else "short"
 
+        strike_raw = row.get("strike")
+        if isinstance(strike_raw, str):
+            strike_raw = strike_raw.replace(",", ".")
+
         trade_data = schemas.TradeCreate(
             status=normalized_status,
             trading_style="swing",
@@ -887,6 +993,7 @@ async def bulk_create_trades(
             trader_id=trader_id,
             option_type=option_type if instrument_type == "option" else None,
             expiration_date=row.get("expiration_date") if instrument_type == "option" else None,
+            strike=Decimal(str(strike_raw)) if instrument_type == "option" and strike_raw else None,
             entry_price=Decimal(str(entry_price)),
             exit_price=Decimal(str(exit_price)) if exit_price else None,
             quantity=int(row.get("quantity") or 1),
@@ -973,130 +1080,42 @@ async def statistics_page(request: Request, db: Session = Depends(get_db)):
         "equity": calculate_equity(db)
     })
 
-@app.get("/charts", response_class=HTMLResponse)
-async def charts_page(
-    request: Request,
-    instrument: Optional[str] = None,
-    entered_only: Optional[str] = None,
-    trader_id: Optional[str] = None,
-    date_from: Optional[str] = None,
-    date_to: Optional[str] = None,
-    metric: Optional[str] = "equity",
-    group_by: Optional[str] = "day",
-    db: Session = Depends(get_db)
-):
+@app.get("/analysis", response_class=HTMLResponse)
+async def analysis_page(request: Request, db: Session = Depends(get_db)):
+    """Trade analysis builder page."""
     account = crud.get_account(db)
-    traders = crud.get_traders(db)
+    return templates.TemplateResponse("analysis.html", {
+        "request": request,
+        "account": account,
+        "equity": calculate_equity(db)
+    })
 
-    parsed_trader_id = int(trader_id) if trader_id and trader_id.isdigit() else None
-    trades = crud.get_trades(db, trader_id=parsed_trader_id)
+@app.get("/calendar", response_class=HTMLResponse)
+async def calendar_page(request: Request, db: Session = Depends(get_db)):
+    """Calendar view with daily P&L."""
+    account = crud.get_account(db)
+    trades = crud.get_trades(db)
 
-    if instrument in ("stock", "option"):
-        trades = [t for t in trades if t.instrument_type.value == instrument]
-
-    if entered_only:
-        trades = [t for t in trades if t.entered]
-
-    start_date = None
-    end_date = None
-    if date_from:
-        try:
-            start_date = datetime.strptime(date_from, "%Y-%m-%d").date()
-        except ValueError:
-            start_date = None
-
-    if date_to:
-        try:
-            end_date = datetime.strptime(date_to, "%Y-%m-%d").date()
-        except ValueError:
-            end_date = None
-
-    if start_date:
-        trades = [t for t in trades if t.created_at.date() >= start_date]
-
-    if end_date:
-        trades = [t for t in trades if t.created_at.date() <= end_date]
-
-    trades = sorted(trades, key=lambda t: t.created_at)
-
-    def bucket_date(dt: datetime, group: str) -> date:
-        d = dt.date()
-        if group == "week":
-            return d - timedelta(days=d.weekday())
-        if group == "month":
-            return date(d.year, d.month, 1)
-        return d
-
-    def format_bucket(d: date, group: str) -> str:
-        if group == "month":
-            return d.strftime("%Y-%m")
-        return d.strftime("%Y-%m-%d")
-
-    grouped = {}
+    pnl_by_date: dict[str, float] = {}
     for trade in trades:
+        if not trade.entered:
+            continue
         if trade.exit_price is None:
+            continue
+        if crud.is_source_trade(trade):
             continue
         pnl = crud.calculate_pnl(trade)
         if pnl is None:
             continue
-        key = bucket_date(trade.created_at, group_by or "day")
-        grouped[key] = grouped.get(key, Decimal("0.0")) + pnl
+        close_dt = trade.closed_at or trade.created_at
+        day_key = close_dt.strftime("%Y-%m-%d")
+        pnl_by_date[day_key] = pnl_by_date.get(day_key, 0.0) + float(pnl)
 
-    grouped_items = sorted(grouped.items(), key=lambda x: x[0])
-
-    points = []
-    if metric == "pnl":
-        for bucket, pnl in grouped_items:
-            points.append({
-                "date": format_bucket(bucket, group_by or "day"),
-                "value": float(pnl)
-            })
-    elif metric == "cumulative_pnl":
-        running = Decimal("0.0")
-        for bucket, pnl in grouped_items:
-            running += pnl
-            points.append({
-                "date": format_bucket(bucket, group_by or "day"),
-                "value": float(running)
-            })
-    else:
-        running = account.balance
-        if grouped_items:
-            for bucket, pnl in grouped_items:
-                running += pnl
-                points.append({
-                    "date": format_bucket(bucket, group_by or "day"),
-                    "value": float(running)
-                })
-        else:
-            if start_date and end_date:
-                points.append({
-                    "date": start_date.strftime("%Y-%m-%d"),
-                    "value": float(running)
-                })
-                points.append({
-                    "date": end_date.strftime("%Y-%m-%d"),
-                    "value": float(running)
-                })
-            else:
-                points.append({
-                    "date": datetime.now().strftime("%Y-%m-%d"),
-                    "value": float(running)
-                })
-
-    return templates.TemplateResponse("charts.html", {
+    return templates.TemplateResponse("calendar.html", {
         "request": request,
         "account": account,
         "equity": calculate_equity(db),
-        "traders": traders,
-        "points": points,
-        "current_instrument": instrument or "",
-        "current_trader": parsed_trader_id,
-        "current_metric": metric or "equity",
-        "current_group_by": group_by or "day",
-        "current_entered_only": bool(entered_only),
-        "current_date_from": date_from or "",
-        "current_date_to": date_to or ""
+        "calendar_pnl": pnl_by_date,
     })
 
 @app.get("/api/trades", response_model=list[schemas.TradeResponse])

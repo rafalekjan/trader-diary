@@ -16,6 +16,7 @@ class TradeBase(BaseModel):
     strike: Optional[Decimal] = None
     entry_price: Decimal
     exit_price: Optional[Decimal] = None
+    closed_at: Optional[datetime] = None
     sl: Optional[Decimal] = None
     tp: Optional[Decimal] = None
     quantity: int = 1
@@ -31,6 +32,7 @@ class TradeUpdate(TradeBase):
 class TradeResponse(TradeBase):
     id: int
     created_at: datetime
+    closed_at: Optional[datetime] = None
     pnl: Optional[Decimal] = None
     
     class Config:

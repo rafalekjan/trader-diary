@@ -2,6 +2,7 @@ from sqlalchemy.orm import Session
 from sqlalchemy import func, case
 from app import models, schemas
 from decimal import Decimal
+from datetime import datetime
 from typing import List, Optional
 
 def get_trades(db: Session, skip: int = 0, limit: int = 100, 
@@ -45,17 +46,26 @@ def create_trade(db: Session, trade: schemas.TradeCreate) -> models.Trade:
     db.add(db_trade)
     db.commit()
     db.refresh(db_trade)
+    if db_trade.exit_price is not None and db_trade.closed_at is None:
+        db_trade.closed_at = db_trade.created_at
+        db.commit()
+        db.refresh(db_trade)
     return db_trade
 
 def update_trade(db: Session, trade_id: int, trade: schemas.TradeUpdate) -> Optional[models.Trade]:
     db_trade = get_trade(db, trade_id)
     if db_trade:
+        had_exit_price = db_trade.exit_price is not None
         for key, value in trade.model_dump().items():
             setattr(db_trade, key, value)
         
         # Auto-close trade if exit_price is set
         if db_trade.exit_price is not None and db_trade.status != models.TradeStatus.CLOSED:
             db_trade.status = models.TradeStatus.CLOSED
+        if not had_exit_price and db_trade.exit_price is not None and db_trade.closed_at is None:
+            db_trade.closed_at = datetime.utcnow()
+        if db_trade.exit_price is None and db_trade.closed_at is not None:
+            db_trade.closed_at = None
         
         db.commit()
         db.refresh(db_trade)
@@ -93,6 +103,16 @@ def calculate_pnl(trade: models.Trade) -> Optional[Decimal]:
     
     return pnl
 
+def is_source_trade(trade: models.Trade) -> bool:
+    if not trade.notes:
+        return False
+    return "source trade #" in trade.notes.lower()
+
+def is_copy_trade(trade: models.Trade) -> bool:
+    if not trade.notes:
+        return False
+    return "copy of trade #" in trade.notes.lower()
+
 def get_account(db: Session) -> models.Account:
     account = db.query(models.Account).first()
     if not account:
@@ -113,6 +133,7 @@ def update_account(db: Session, balance: Decimal) -> models.Account:
 def get_statistics(db: Session) -> dict:
     """Calculate trading statistics"""
     trades = db.query(models.Trade).all()
+    account = get_account(db)
     
     total_trades = len(trades)
     closed_trades = [t for t in trades if t.exit_price is not None]
@@ -124,6 +145,8 @@ def get_statistics(db: Session) -> dict:
     for trade in closed_trades:
         if not trade.entered:
             continue
+        if is_source_trade(trade):
+            continue
         pnl = calculate_pnl(trade)
         if pnl:
             total_pnl += pnl
@@ -132,7 +155,8 @@ def get_statistics(db: Session) -> dict:
             elif pnl < 0:
                 losing_trades += 1
     
-    entered_closed_trades = [t for t in closed_trades if t.entered]
+    entered_closed_trades = [t for t in closed_trades if t.entered and not is_source_trade(t)]
+    paper_closed_trades = [t for t in closed_trades if not t.entered]
     winrate = (winning_trades / len(entered_closed_trades) * 100) if entered_closed_trades else 0
     
     def build_stats(scope_trades: List[models.Trade]) -> dict:
@@ -143,6 +167,8 @@ def get_statistics(db: Session) -> dict:
 
         for trade in scope_closed:
             if not trade.entered:
+                continue
+            if is_source_trade(trade):
                 continue
             pnl = calculate_pnl(trade)
             if pnl:
@@ -168,6 +194,43 @@ def get_statistics(db: Session) -> dict:
     stock_trades = [t for t in trades if t.instrument_type == models.InstrumentType.STOCK]
     option_trades = [t for t in trades if t.instrument_type == models.InstrumentType.OPTION]
 
+    entered_closed_trades = [t for t in closed_trades if t.entered and not is_source_trade(t)]
+    def sum_pnl(scope_trades: List[models.Trade]) -> Decimal:
+        total = Decimal("0.0")
+        for trade in scope_trades:
+            pnl = calculate_pnl(trade)
+            if pnl:
+                total += pnl
+        return total
+
+    portfolio_breakdown = []
+    all_pnl = sum_pnl(entered_closed_trades)
+    portfolio_breakdown.append({
+        "label": "All Traders",
+        "pnl": all_pnl,
+        "equity": account.balance + all_pnl,
+        "trades": len(entered_closed_trades),
+    })
+
+    self_trades = [t for t in entered_closed_trades if t.trader_id is None]
+    self_pnl = sum_pnl(self_trades)
+    portfolio_breakdown.append({
+        "label": "Self (unassigned)",
+        "pnl": self_pnl,
+        "equity": account.balance + self_pnl,
+        "trades": len(self_trades),
+    })
+
+    for trader in get_traders(db):
+        trader_trades = [t for t in paper_closed_trades if t.trader_id == trader.id]
+        trader_pnl = sum_pnl(trader_trades)
+        portfolio_breakdown.append({
+            "label": trader.name,
+            "pnl": trader_pnl,
+            "equity": account.balance + trader_pnl,
+            "trades": len(trader_trades),
+        })
+
     return {
         "total_trades": total_trades,
         "closed_trades": len(closed_trades),
@@ -179,5 +242,6 @@ def get_statistics(db: Session) -> dict:
         "by_instrument": {
             "stock": build_stats(stock_trades),
             "option": build_stats(option_trades)
-        }
+        },
+        "portfolio_breakdown": portfolio_breakdown,
     }
