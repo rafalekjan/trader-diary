@@ -1188,6 +1188,12 @@ main {
     gap: 1rem;
 }
 
+.timeframe-row-5cols {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 1rem;
+}
+
 .timeframe-right .form-grid {
     grid-template-columns: 1fr;
 }

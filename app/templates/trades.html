@@ -3,6 +3,102 @@
 {% block title %}Trades - Trader Journal{% endblock %}
 
 {% block content %}
+{% macro render_trades_table(items, empty_text) %}
+{% if items %}
+    <div class="table-responsive">
+        <table class="trades-table">
+            <thead>
+                <tr>
+                    <th class="sortable" data-sort-type="text">Status</th>
+                    <th class="sortable" data-sort-type="text">Style</th>
+                    <th class="sortable" data-sort-type="text">Type</th>
+                    <th class="sortable" data-sort-type="text">Ticker</th>
+                    <th class="sortable" data-sort-type="text">Direction</th>
+                    <th class="sortable" data-sort-type="number">Entry</th>
+                    <th class="sortable" data-sort-type="number">Exit</th>
+                    <th class="sortable" data-sort-type="date">Close Date</th>
+                    <th class="sortable" data-sort-type="number">Qty</th>
+                    <th class="sortable" data-sort-type="number">P&amp;L</th>
+                    <th class="sortable" data-sort-type="text">Trader</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in items %}
+                <tr>
+                    <td>
+                        <span class="badge badge-{{ item.trade.status.value }}">{{ item.trade.status.value }}</span>
+                        {% if item.trade.status.value != 'entered' %}
+                            {% if item.trade.entered %}
+                                <span class="mini-tag">entered</span>
+                            {% else %}
+                                <span class="mini-tag muted">paper</span>
+                            {% endif %}
+                        {% endif %}
+                    </td>
+                    <td>{{ item.trade.trading_style.value }}</td>
+                    <td>{{ item.trade.instrument_type.value }}</td>
+                    <td><strong>{{ item.trade.ticker }}</strong></td>
+                    <td>
+                        {% if item.trade.instrument_type.value == 'option' and item.trade.option_type %}
+                            <span class="badge badge-{{ item.trade.direction.value }}">{{ item.trade.option_type.value }}</span>
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                    <td data-sort-value="{{ item.trade.entry_price }}">${{ item.trade.entry_price | format_decimal }}</td>
+                    <td data-sort-value="{{ item.trade.exit_price or '' }}">
+                        {% if item.trade.exit_price %}
+                            ${{ item.trade.exit_price | format_decimal }}
+                        {% else %}
+                            <form method="POST" action="/trades/{{ item.trade.id }}/close" style="display: inline;">
+                                <input type="number" name="exit_price" step="0.01" placeholder="Exit" style="width: 80px;" required>
+                                <button type="submit" class="btn-small btn-primary">Close</button>
+                            </form>
+                        {% endif %}
+                    </td>
+                    <td data-sort-value="{% if item.trade.closed_at %}{{ item.trade.closed_at.strftime('%Y-%m-%d') }}{% elif item.trade.exit_price %}{{ item.trade.created_at.strftime('%Y-%m-%d') }}{% else %}{% endif %}">
+                        {% if item.trade.closed_at %}
+                            {{ item.trade.closed_at.strftime('%Y-%m-%d') }}
+                        {% elif item.trade.exit_price %}
+                            {{ item.trade.created_at.strftime('%Y-%m-%d') }}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                    <td data-sort-value="{{ item.trade.quantity }}">{{ item.trade.quantity }}</td>
+                    <td data-sort-value="{{ item.pnl or '' }}" class="{% if item.pnl %}{% if item.pnl > 0 %}positive{% elif item.pnl < 0 %}negative{% endif %}{% endif %}">
+                        {% if item.pnl %}
+                            ${{ item.pnl | format_decimal }}
+                        {% else %}
+                            -
+                        {% endif %}
+                    </td>
+                    <td>{{ item.trade.trader.name if item.trade.trader else '-' }}</td>
+                    <td class="actions">
+                        <form method="POST" action="/trades/{{ item.trade.id }}/{% if item.trade.entered %}unenter{% else %}enter{% endif %}" style="display: inline;">
+                            <label class="inline-check">
+                                <input type="checkbox" {% if item.trade.entered %}checked{% endif %} onchange="this.form.submit()">
+                                <span>Entered</span>
+                            </label>
+                        </form>
+                        <a href="/trades/{{ item.trade.id }}/edit" class="btn-small btn-secondary" title="Edit">Edit</a>
+                        <form method="POST" action="/trades/{{ item.trade.id }}/delete" style="display: inline;">
+                            <button type="submit" class="btn-small btn-danger" title="Delete">Delete</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+{% else %}
+    <div class="empty-state">
+        <p>{{ empty_text }}</p>
+    </div>
+{% endif %}
+{% endmacro %}
+
 <div class="page-header">
     <h2>Trades</h2>
     <div class="total-pnl {% if total_pnl > 0 %}positive{% elif total_pnl < 0 %}negative{% endif %}">
@@ -51,101 +147,30 @@
             <a href="/trades" class="btn btn-secondary">Clear</a>
         </form>
     </div>
+</div>
 
-    {% if trades %}
-    <div class="table-responsive">
-        <table class="trades-table">
-            <thead>
-                <tr>
-                    <th>Date</th>
-                    <th>Status</th>
-                    <th>Style</th>
-                    <th>Type</th>
-                    <th>Ticker</th>
-                    <th>Direction</th>
-                    <th>Entry</th>
-                    <th>Exit</th>
-                    <th>Qty</th>
-                    <th>P&amp;L</th>
-                    <th>Trader</th>
-                    <th>Actions</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for item in trades %}
-                <tr>
-                    <td>{{ item.trade.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
-                    <td>
-                        <span class="badge badge-{{ item.trade.status.value }}">{{ item.trade.status.value }}</span>
-                        {% if item.trade.status.value != 'entered' %}
-                            {% if item.trade.entered %}
-                                <span class="mini-tag">entered</span>
-                            {% else %}
-                                <span class="mini-tag muted">paper</span>
-                            {% endif %}
-                        {% endif %}
-                    </td>
-                    <td>{{ item.trade.trading_style.value }}</td>
-                    <td>{{ item.trade.instrument_type.value }}</td>
-                    <td><strong>{{ item.trade.ticker }}</strong></td>
-                    <td>
-                        {% if item.trade.instrument_type.value == 'option' and item.trade.option_type %}
-                            <span class="badge badge-{{ item.trade.direction.value }}">{{ item.trade.option_type.value }}</span>
-                        {% else %}
-                            -
-                        {% endif %}
-                    </td>
-                    <td>${{ item.trade.entry_price | format_decimal }}</td>
-                    <td>
-                        {% if item.trade.exit_price %}
-                            ${{ item.trade.exit_price | format_decimal }}
-                        {% else %}
-                            <form method="POST" action="/trades/{{ item.trade.id }}/close" style="display: inline;">
-                                <input type="number" name="exit_price" step="0.01" placeholder="Exit" style="width: 80px;" required>
-                                <button type="submit" class="btn-small btn-primary">Close</button>
-                            </form>
-                        {% endif %}
-                    </td>
-                    <td>{{ item.trade.quantity }}</td>
-                    <td class="{% if item.pnl %}{% if item.pnl > 0 %}positive{% elif item.pnl < 0 %}negative{% endif %}{% endif %}">
-                        {% if item.pnl %}
-                            ${{ item.pnl | format_decimal }}
-                        {% else %}
-                            -
-                        {% endif %}
-                    </td>
-                    <td>{{ item.trade.trader.name if item.trade.trader else '-' }}</td>
-                    <td class="actions">
-                        <form method="POST" action="/trades/{{ item.trade.id }}/{% if item.trade.entered %}unenter{% else %}enter{% endif %}" style="display: inline;">
-                            <label class="inline-check">
-                                <input type="checkbox" {% if item.trade.entered %}checked{% endif %} onchange="this.form.submit()">
-                                <span>Entered</span>
-                            </label>
-                        </form>
-                        <a href="/trades/{{ item.trade.id }}/edit" class="btn-small btn-secondary" title="Edit">Edit</a>
-                        <form method="POST" action="/trades/{{ item.trade.id }}/delete" style="display: inline;" onsubmit="return confirm('Are you sure you want to delete this trade?');">
-                            <button type="submit" class="btn-small btn-danger" title="Delete">Delete</button>
-                        </form>
-                    </td>
-                </tr>
-                {% if item.trade.notes %}
-                <tr class="notes-row">
-                    <td colspan="12">
-                        <strong>Notes:</strong> {{ item.trade.notes }}
-                    </td>
-                </tr>
-                {% endif %}
-                {% endfor %}
-            </tbody>
-        </table>
+{% if entered_trades or not_entered_trades %}
+<div class="card">
+    <h3>Entered Setups ({{ entered_trades | length }})</h3>
+    {{ render_trades_table(entered_trades, "No entered setups yet.") }}
+</div>
+
+{% if trader_groups %}
+    {% for group in trader_groups %}
+    <div class="card">
+        <h3>Trader: {{ group.trader.name }} ({{ group.trades | length }})</h3>
+        {{ render_trades_table(group.trades, "No setups for this trader.") }}
     </div>
-    {% else %}
+    {% endfor %}
+{% endif %}
+{% else %}
+<div class="card">
     <div class="empty-state">
         <p>No trades to display.</p>
         <a href="/" class="btn btn-primary">Add your first trade</a>
     </div>
-    {% endif %}
 </div>
+{% endif %}
 
 <script>
     document.addEventListener('DOMContentLoaded', function() {
@@ -164,6 +189,85 @@
                 filterForm.submit();
             });
         }
+
+        initTradesTableSorting();
     });
+
+    function initTradesTableSorting() {
+        const tables = document.querySelectorAll('.trades-table');
+        tables.forEach((table) => {
+            const headers = table.querySelectorAll('thead th.sortable');
+            headers.forEach((header, index) => {
+                header.addEventListener('click', () => {
+                    sortTradesTable(table, index, header);
+                });
+            });
+        });
+    }
+
+    function sortTradesTable(table, columnIndex, headerCell) {
+        const tbody = table.querySelector('tbody');
+        const headers = table.querySelectorAll('thead th');
+        const rows = Array.from(tbody.querySelectorAll('tr'));
+
+        const groups = [];
+        rows.forEach((row) => {
+            if (row.classList.contains('notes-row')) {
+                const lastGroup = groups[groups.length - 1];
+                if (lastGroup) {
+                    lastGroup.notes = row;
+                }
+                return;
+            }
+            groups.push({ row, notes: null });
+        });
+
+        let isAscending = true;
+        if (headerCell.classList.contains('sorted-asc')) {
+            isAscending = false;
+        }
+
+        headers.forEach(h => {
+            h.classList.remove('sorted-asc', 'sorted-desc');
+        });
+        headerCell.classList.add(isAscending ? 'sorted-asc' : 'sorted-desc');
+
+        const sortType = headerCell.getAttribute('data-sort-type') || 'text';
+
+        groups.sort((a, b) => {
+            const aCell = a.row.children[columnIndex];
+            const bCell = b.row.children[columnIndex];
+            let aValue = aCell ? (aCell.dataset.sortValue ?? aCell.textContent.trim()) : '';
+            let bValue = bCell ? (bCell.dataset.sortValue ?? bCell.textContent.trim()) : '';
+
+            if (aValue === '-' || aValue === '') return isAscending ? 1 : -1;
+            if (bValue === '-' || bValue === '') return isAscending ? -1 : 1;
+
+            if (sortType === 'number') {
+                const aNum = parseFloat(aValue.replace(/[^\d.-]/g, ''));
+                const bNum = parseFloat(bValue.replace(/[^\d.-]/g, ''));
+                if (!isNaN(aNum) && !isNaN(bNum)) {
+                    return isAscending ? aNum - bNum : bNum - aNum;
+                }
+            }
+
+            if (sortType === 'date') {
+                const aDate = Date.parse(aValue);
+                const bDate = Date.parse(bValue);
+                if (!isNaN(aDate) && !isNaN(bDate)) {
+                    return isAscending ? aDate - bDate : bDate - aDate;
+                }
+            }
+
+            return isAscending ? aValue.localeCompare(bValue) : bValue.localeCompare(aValue);
+        });
+
+        groups.forEach(group => {
+            tbody.appendChild(group.row);
+            if (group.notes) {
+                tbody.appendChild(group.notes);
+            }
+        });
+    }
 </script>
 {% endblock %}

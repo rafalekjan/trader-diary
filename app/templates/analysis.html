@@ -58,12 +58,22 @@
             <div class="spy-right">
                 <div class="form-grid trade-form-grid">
                     <div class="form-group">
-                        <label for="spy_resistance">Key Resistance</label>
-                        <input id="spy_resistance" name="spy_resistance" type="text" placeholder="Resistance level">
+                        <label for="spy_resistance">Resistance</label>
+                        <select id="spy_resistance" name="spy_resistance">
+                            <option value="">Select</option>
+                            <option value="Failing">Failing</option>
+                            <option value="Breaking">Breaking</option>
+                            <option value="Keeping">Keeping</option>
+                        </select>
                     </div>
                     <div class="form-group">
-                        <label for="spy_support">Key Support</label>
-                        <input id="spy_support" name="spy_support" type="text" placeholder="Support level">
+                        <label for="spy_support">Support</label>
+                        <select id="spy_support" name="spy_support">
+                            <option value="">Select</option>
+                            <option value="Losing">Losing</option>
+                            <option value="Breaking">Breaking</option>
+                            <option value="Keeping">Keeping</option>
+                        </select>
                     </div>
                 </div>
             </div>
@@ -138,26 +148,30 @@
                         </div>
                         <div class="form-group">
                             <label for="d1_sma_200">200 SMA</label>
-                            <input id="d1_sma_200" name="d1_sma_200" type="text" placeholder="200 SMA level">
+                            <select id="d1_sma_200" name="d1_sma_200">
+                                <option value="">Select</option>
+                                <option value="Above">Above</option>
+                                <option value="Below">Below</option>
+                            </select>
                         </div>
-                    </div>
-                    <div class="form-group">
-                        <label for="d1_note">Note</label>
-                        <textarea id="d1_note" name="d1_note" rows="2" placeholder="1 line"></textarea>
                     </div>
                 </div>
                 <div class="timeframe-right">
-                    <div class="form-grid trade-form-grid">
+                    <div class="timeframe-row-2cols">
                         <div class="form-group">
-                            <label for="d1_resistance">Resistance <span class="help-icon" data-tooltip="Example: 14.6.">?</span></label>
-                            <input id="d1_resistance" name="d1_resistance" type="text" placeholder="Resistance level">
+                            <label for="d1_resistance">Resistance <span class="help-icon" data-tooltip="Example: 14.6 failing / breaking.">?</span></label>
+                            <input id="d1_resistance" name="d1_resistance" type="text" placeholder="Resistance detail">
                         </div>
                         <div class="form-group">
-                            <label for="d1_support">Support <span class="help-icon" data-tooltip="Example: 13.2 or none defined.">?</span></label>
-                            <input id="d1_support" name="d1_support" type="text" placeholder="Support level">
+                            <label for="d1_support">Support <span class="help-icon" data-tooltip="Example: 13.2 losing / breaking.">?</span></label>
+                            <input id="d1_support" name="d1_support" type="text" placeholder="Support detail">
                         </div>
                     </div>
                 </div>
+            </div>
+            <div class="form-group">
+                <label for="d1_note">Note</label>
+                <textarea id="d1_note" name="d1_note" rows="2" placeholder="1 line"></textarea>
             </div>
         </div>
 
@@ -197,6 +211,68 @@
                                 <option value="Middle">Middle</option>
                                 <option value="Below">Below</option>
                             </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label>Key levels</label>
+                        <div class="checkbox-group checkbox-group-column">
+                            <div class="timeframe-row-5cols">
+                                <div class="checkbox-row">
+                                    <span class="checkbox-text">Prior day high</span>
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" name="h4_pdh_above">
+                                        <span class="checkbox-text">Above</span>
+                                    </label>
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" name="h4_pdh_below">
+                                        <span class="checkbox-text">Below</span>
+                                    </label>
+                                </div>
+                                <div class="checkbox-row">
+                                    <span class="checkbox-text">Prior day low</span>
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" name="h4_pdl_above">
+                                        <span class="checkbox-text">Above</span>
+                                    </label>
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" name="h4_pdl_below">
+                                        <span class="checkbox-text">Below</span>
+                                    </label>
+                                </div>
+                                <div class="checkbox-row">
+                                    <span class="checkbox-text">MA 20</span>
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" name="h4_ma20_above">
+                                        <span class="checkbox-text">Above</span>
+                                    </label>
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" name="h4_ma20_below">
+                                        <span class="checkbox-text">Below</span>
+                                    </label>
+                                </div>
+                                <div class="checkbox-row">
+                                    <span class="checkbox-text">MA 50</span>
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" name="h4_ma50_above">
+                                        <span class="checkbox-text">Above</span>
+                                    </label>
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" name="h4_ma50_below">
+                                        <span class="checkbox-text">Below</span>
+                                    </label>
+                                </div>
+                                <div class="checkbox-row">
+                                    <span class="checkbox-text">MA 200</span>
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" name="h4_ma200_above">
+                                        <span class="checkbox-text">Above</span>
+                                    </label>
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" name="h4_ma200_below">
+                                        <span class="checkbox-text">Below</span>
+                                    </label>
+                                </div>
+                            </div>
                         </div>
                     </div>
                     <div class="timeframe-row-2cols">
@@ -285,6 +361,68 @@
                             </select>
                         </div>
                     </div>
+                    <div class="form-group">
+                        <label>Key levels</label>
+                        <div class="checkbox-group checkbox-group-column">
+                            <div class="timeframe-row-5cols">
+                                <div class="checkbox-row">
+                                    <span class="checkbox-text">Prior day high</span>
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" name="h1_pdh_above">
+                                        <span class="checkbox-text">Above</span>
+                                    </label>
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" name="h1_pdh_below">
+                                        <span class="checkbox-text">Below</span>
+                                    </label>
+                                </div>
+                                <div class="checkbox-row">
+                                    <span class="checkbox-text">Prior day low</span>
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" name="h1_pdl_above">
+                                        <span class="checkbox-text">Above</span>
+                                    </label>
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" name="h1_pdl_below">
+                                        <span class="checkbox-text">Below</span>
+                                    </label>
+                                </div>
+                                <div class="checkbox-row">
+                                    <span class="checkbox-text">MA 20</span>
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" name="h1_ma20_above">
+                                        <span class="checkbox-text">Above</span>
+                                    </label>
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" name="h1_ma20_below">
+                                        <span class="checkbox-text">Below</span>
+                                    </label>
+                                </div>
+                                <div class="checkbox-row">
+                                    <span class="checkbox-text">MA 50</span>
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" name="h1_ma50_above">
+                                        <span class="checkbox-text">Above</span>
+                                    </label>
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" name="h1_ma50_below">
+                                        <span class="checkbox-text">Below</span>
+                                    </label>
+                                </div>
+                                <div class="checkbox-row">
+                                    <span class="checkbox-text">MA 200</span>
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" name="h1_ma200_above">
+                                        <span class="checkbox-text">Above</span>
+                                    </label>
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" name="h1_ma200_below">
+                                        <span class="checkbox-text">Below</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
                     <div class="timeframe-row-2cols">
                         <div class="form-group">
                             <label for="h1_pullback">Pullback</label>
@@ -370,10 +508,6 @@
                                 <option value="Below">Below</option>
                             </select>
                         </div>
-                    </div>
-                    <div class="form-group">
-                        <label for="m15_key_levels">Key levels</label>
-                        <input id="m15_key_levels" name="m15_key_levels" type="text" placeholder="Key levels">
                     </div>
                     <div class="timeframe-row-2cols">
                         <div class="form-group">
@@ -476,6 +610,7 @@
                 <label for="tp2">TP2 / Runner <span class="help-icon" data-tooltip="Example: 11.90 runner.">?</span></label>
                 <input id="tp2" name="tp2" type="text" placeholder="Optional">
             </div>
+            <div></div>
         </div>
         <div class="form-group">
             <label for="trigger">What must happen to enter <span class="help-icon" data-tooltip="Example: 1H close above resistance or pullback hold.">?</span></label>

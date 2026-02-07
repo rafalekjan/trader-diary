@@ -5,6 +5,7 @@ document.addEventListener('DOMContentLoaded', function() {
         input.addEventListener('input', function() {
             this.value = this.value.toUpperCase();
         });
+    });
 
     // Confirm delete
     const deleteForms = document.querySelectorAll('form[action*="/delete"]');
@@ -14,6 +15,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 e.preventDefault();
             }
         });
+    });
 
     initAnalysisBuilder();
 });
@@ -61,9 +63,37 @@ function initAnalysisBuilder() {
         return el ? el.value : '';
     };
 
+    const getCheckbox = (name) => {
+        const el = document.querySelector(`input[name="${name}"]`);
+        return el ? el.checked : false;
+    };
+
+    const bindMutualExclusive = (nameA, nameB) => {
+        const a = document.querySelector(`input[name="${nameA}"]`);
+        const b = document.querySelector(`input[name="${nameB}"]`);
+        if (!a || !b) return;
+        a.addEventListener('change', () => {
+            if (a.checked) b.checked = false;
+        });
+        b.addEventListener('change', () => {
+            if (b.checked) a.checked = false;
+        });
+    };
+
     const withFallback = (value, fallback) => (value && value.length ? value : fallback);
     const storageKey = 'analysis:latest';
     const storageListKey = 'analysis:entries';
+
+    bindMutualExclusive('h4_pdh_above', 'h4_pdh_below');
+    bindMutualExclusive('h4_pdl_above', 'h4_pdl_below');
+    bindMutualExclusive('h4_ma20_above', 'h4_ma20_below');
+    bindMutualExclusive('h4_ma50_above', 'h4_ma50_below');
+    bindMutualExclusive('h4_ma200_above', 'h4_ma200_below');
+    bindMutualExclusive('h1_pdh_above', 'h1_pdh_below');
+    bindMutualExclusive('h1_pdl_above', 'h1_pdl_below');
+    bindMutualExclusive('h1_ma20_above', 'h1_ma20_below');
+    bindMutualExclusive('h1_ma50_above', 'h1_ma50_below');
+    bindMutualExclusive('h1_ma200_above', 'h1_ma200_below');
 
     const formatDate = (d) => {
         const pad = (n) => String(n).padStart(2, '0');
@@ -158,6 +188,18 @@ function initAnalysisBuilder() {
         const h4Note = withFallback(getValue('h4_note'), '---');
         const h4Breakdown = withFallback(getValue('h4_breakdown'), '---');
         const h4Breakout = withFallback(getValue('h4_breakout'), '---');
+        const h4KeyLevels = [
+            getCheckbox('h4_pdh_above') ? 'PDH above' : '',
+            getCheckbox('h4_pdh_below') ? 'PDH below' : '',
+            getCheckbox('h4_pdl_above') ? 'PDL above' : '',
+            getCheckbox('h4_pdl_below') ? 'PDL below' : '',
+            getCheckbox('h4_ma20_above') ? 'MA20 above' : '',
+            getCheckbox('h4_ma20_below') ? 'MA20 below' : '',
+            getCheckbox('h4_ma50_above') ? 'MA50 above' : '',
+            getCheckbox('h4_ma50_below') ? 'MA50 below' : '',
+            getCheckbox('h4_ma200_above') ? 'MA200 above' : '',
+            getCheckbox('h4_ma200_below') ? 'MA200 below' : ''
+        ].filter(Boolean).join(', ') || '---';
 
         const h1Bias = withFallback(getValue('h1_bias'), '---');
         const h1Structure = withFallback(getValue('h1_structure'), '---');
@@ -169,30 +211,40 @@ function initAnalysisBuilder() {
         const h1Note = withFallback(getValue('h1_note'), '---');
         const h1Breakdown = withFallback(getValue('h1_breakdown'), '---');
         const h1Breakout = withFallback(getValue('h1_breakout'), '---');
+        const h1KeyLevels = [
+            getCheckbox('h1_pdh_above') ? 'PDH above' : '',
+            getCheckbox('h1_pdh_below') ? 'PDH below' : '',
+            getCheckbox('h1_pdl_above') ? 'PDL above' : '',
+            getCheckbox('h1_pdl_below') ? 'PDL below' : '',
+            getCheckbox('h1_ma20_above') ? 'MA20 above' : '',
+            getCheckbox('h1_ma20_below') ? 'MA20 below' : '',
+            getCheckbox('h1_ma50_above') ? 'MA50 above' : '',
+            getCheckbox('h1_ma50_below') ? 'MA50 below' : '',
+            getCheckbox('h1_ma200_above') ? 'MA200 above' : '',
+            getCheckbox('h1_ma200_below') ? 'MA200 below' : ''
+        ].filter(Boolean).join(', ') || '---';
 
         const m15Bias = withFallback(getValue('m15_bias'), '---');
         const m15Structure = withFallback(getValue('m15_structure'), '---');
         const m15Vwap = withFallback(getValue('m15_vwap'), '---');
         const m15Note = withFallback(getValue('m15_note'), '---');
         const m15Rate = withFallback(getValue('m15_rate'), '---');
-        const m15KeyLevels = withFallback(getValue('m15_key_levels'), '---');
         const m15StructureBreaks = withFallback(getValue('m15_structure_breaks'), '---');
         const m15Momentum = withFallback(getValue('m15_momentum'), '---');
         const m15Breakdown = withFallback(getValue('m15_breakdown'), '---');
         const m15Breakout = withFallback(getValue('m15_breakout'), '---');
 
-        const optTicker = getValue('ticker');
         const optExpiry = getValue('opt_expiry');
         const optCp = getValue('opt_cp');
         const optStrike = getValue('opt_strike');
         const optPrice = getValue('opt_price');
         const optVolume = getValue('opt_volume');
-        const optionsEmpty = !optTicker && !optExpiry && !optCp && !optStrike && !optPrice && !optVolume;
+        const optionsEmpty = !optExpiry && !optCp && !optStrike && !optPrice && !optVolume;
 
-        const optContractParts = [optTicker, optExpiry, optCp, optStrike].filter(Boolean);
-        const optContractOut = optionsEmpty ? 'Not selected' : (optContractParts.length ? optContractParts.join(' ') : 'Not defined');
-        const optPriceOut = optionsEmpty ? '-' : withFallback(optPrice, '---');
-        const optVolumeOut = optionsEmpty ? '-' : withFallback(optVolume, '---');
+        const optContractParts = [optExpiry, optCp, optStrike].filter(Boolean);
+        const optContractOut = optionsEmpty ? '---' : (optContractParts.length ? optContractParts.join(' ') : '---');
+        const optPriceOut = optionsEmpty ? '---' : withFallback(optPrice, '---');
+        const optVolumeOut = optionsEmpty ? '---' : withFallback(optVolume, '---');
 
         const riskMain = withFallback(getValue('risk_main'), '---');
         const riskWhy = withFallback(getValue('risk_why'), '---');
@@ -207,8 +259,8 @@ function initAnalysisBuilder() {
             `Rate: ${spyRate}`,
             `Structure: ${spyStructure}`,
             `VWAP: ${spyVwap}`,
-            `Key Resistance: ${spyResistance}`,
-            `Key Support: ${spySupport}`,
+            `Resistance: ${spyResistance}`,
+            `Support: ${spySupport}`,
             `Note: ${spyNote}`,
             '',
             'MARKET ALIGNED?',
@@ -225,14 +277,12 @@ function initAnalysisBuilder() {
             statusLine('Observation-only'),
             statusLine('Invalidation hit'),
             '',
-            'TRIGGER (what must happen to enter):',
-            `→ ${trigger}`,
-            '',
             'ENTRY PLAN:',
             `Entry: ${entryPlan}`,
             `Stop Loss (invalidation): ${stopLoss}`,
             `TP1: ${tp1}`,
             `TP2 / Runner: ${tp2}`,
+            `What must happen to enter: ${trigger}`,
             '',
             '--------------------------------',
             'TOP-DOWN STRUCTURE',
@@ -246,8 +296,8 @@ function initAnalysisBuilder() {
             `VWAP: ${d1Vwap}`,
             `200 SMA: ${d1Sma200}`,
             `Relative: ${d1Relative}`,
-            `Note: ${d1Note}`,
             `Rate: ${d1Rate}`,
+            `Note: ${d1Note}`,
             '',
             '4H:',
             `Bias: ${h4Bias}`,
@@ -257,6 +307,7 @@ function initAnalysisBuilder() {
             `Pullback: ${h4Pullback}`,
             `Trend pattern: ${h4TrendPattern}`,
             `Define risk: ${h4RiskDefine}`,
+            `Key levels: ${h4KeyLevels}`,
             `Breakdown: ${h4Breakdown}`,
             `Breakout: ${h4Breakout}`,
             `Note: ${h4Note}`,
@@ -269,6 +320,7 @@ function initAnalysisBuilder() {
             `Pullback: ${h1Pullback}`,
             `Trend pattern: ${h1TrendPattern}`,
             `Define risk: ${h1RiskDefine}`,
+            `Key levels: ${h1KeyLevels}`,
             `Breakdown: ${h1Breakdown}`,
             `Breakout: ${h1Breakout}`,
             `Note: ${h1Note}`,
@@ -277,13 +329,12 @@ function initAnalysisBuilder() {
             `Bias: ${m15Bias}`,
             `Structure: ${m15Structure}`,
             `VWAP: ${m15Vwap}`,
-            `Note: ${m15Note}`,
             `Rate: ${m15Rate}`,
-            `Key levels: ${m15KeyLevels}`,
             `Structure breaks: ${m15StructureBreaks}`,
             `Momentum: ${m15Momentum}`,
             `Breakdown: ${m15Breakdown}`,
             `Breakout: ${m15Breakout}`,
+            `Note: ${m15Note}`,
             '',
             '--------------------------------',
             'OPTIONS (if applicable)',
@@ -305,27 +356,27 @@ function initAnalysisBuilder() {
     const buildCompactOutput = () => {
         const ticker = withFallback(getValue('ticker'), '_____');
 
-        const spyBias = withFallback(getValue('spy_bias'), 'Not defined');
-        const spyRate = withFallback(getValue('spy_rate'), 'Not defined');
-        const spyStructure = withFallback(getValue('spy_structure'), 'Not defined');
-        const spyVwap = withFallback(getValue('spy_vwap'), 'Not defined');
-        const spySupport = withFallback(getValue('spy_support'), 'Not defined');
-        const spyResistance = withFallback(getValue('spy_resistance'), 'Not defined');
+        const spyBias = withFallback(getValue('spy_bias'), '---');
+        const spyRate = withFallback(getValue('spy_rate'), '---');
+        const spyStructure = withFallback(getValue('spy_structure'), '---');
+        const spyVwap = withFallback(getValue('spy_vwap'), '---');
+        const spySupport = withFallback(getValue('spy_support'), '---');
+        const spyResistance = withFallback(getValue('spy_resistance'), '---');
         const spyNote = withFallback(getValue('spy_note'), '');
 
-        const d1Bias = withFallback(getValue('d1_bias'), 'Not defined');
-        const d1Structure = withFallback(getValue('d1_structure'), 'Not defined');
-        const d1Resistance = withFallback(getValue('d1_resistance'), 'Not defined');
-        const d1Support = withFallback(getValue('d1_support'), 'Not defined');
-        const d1Vwap = withFallback(getValue('d1_vwap'), 'Not defined');
+        const d1Bias = withFallback(getValue('d1_bias'), '---');
+        const d1Structure = withFallback(getValue('d1_structure'), '---');
+        const d1Resistance = withFallback(getValue('d1_resistance'), '---');
+        const d1Support = withFallback(getValue('d1_support'), '---');
+        const d1Vwap = withFallback(getValue('d1_vwap'), '---');
         const d1Sma200 = withFallback(getValue('d1_sma_200'), '');
-        const d1Relative = withFallback(getValue('d1_relative'), 'Not defined');
+        const d1Relative = withFallback(getValue('d1_relative'), '---');
         const d1Note = withFallback(getValue('d1_note'), '');
         const d1Rate = withFallback(getValue('d1_rate'), '');
 
-        const h4Bias = withFallback(getValue('h4_bias'), 'Not defined');
-        const h4Structure = withFallback(getValue('h4_structure'), 'Not defined');
-        const h4Vwap = withFallback(getValue('h4_vwap'), 'Not defined');
+        const h4Bias = withFallback(getValue('h4_bias'), '---');
+        const h4Structure = withFallback(getValue('h4_structure'), '---');
+        const h4Vwap = withFallback(getValue('h4_vwap'), '---');
         const h4Rate = withFallback(getValue('h4_rate'), '');
         const h4Pullback = withFallback(getValue('h4_pullback'), '');
         const h4TrendPattern = withFallback(getValue('h4_trend_pattern'), '');
@@ -333,10 +384,22 @@ function initAnalysisBuilder() {
         const h4Note = withFallback(getValue('h4_note'), '');
         const h4Breakdown = withFallback(getValue('h4_breakdown'), '');
         const h4Breakout = withFallback(getValue('h4_breakout'), '');
+        const h4KeyLevels = [
+            getCheckbox('h4_pdh_above') ? 'PDH above' : '',
+            getCheckbox('h4_pdh_below') ? 'PDH below' : '',
+            getCheckbox('h4_pdl_above') ? 'PDL above' : '',
+            getCheckbox('h4_pdl_below') ? 'PDL below' : '',
+            getCheckbox('h4_ma20_above') ? 'MA20 above' : '',
+            getCheckbox('h4_ma20_below') ? 'MA20 below' : '',
+            getCheckbox('h4_ma50_above') ? 'MA50 above' : '',
+            getCheckbox('h4_ma50_below') ? 'MA50 below' : '',
+            getCheckbox('h4_ma200_above') ? 'MA200 above' : '',
+            getCheckbox('h4_ma200_below') ? 'MA200 below' : ''
+        ].filter(Boolean).join(', ');
 
-        const h1Bias = withFallback(getValue('h1_bias'), 'Not defined');
-        const h1Structure = withFallback(getValue('h1_structure'), 'Not defined');
-        const h1Vwap = withFallback(getValue('h1_vwap'), 'Not defined');
+        const h1Bias = withFallback(getValue('h1_bias'), '---');
+        const h1Structure = withFallback(getValue('h1_structure'), '---');
+        const h1Vwap = withFallback(getValue('h1_vwap'), '---');
         const h1Rate = withFallback(getValue('h1_rate'), '');
         const h1Pullback = withFallback(getValue('h1_pullback'), '');
         const h1TrendPattern = withFallback(getValue('h1_trend_pattern'), '');
@@ -344,13 +407,24 @@ function initAnalysisBuilder() {
         const h1Note = withFallback(getValue('h1_note'), '');
         const h1Breakdown = withFallback(getValue('h1_breakdown'), '');
         const h1Breakout = withFallback(getValue('h1_breakout'), '');
+        const h1KeyLevels = [
+            getCheckbox('h1_pdh_above') ? 'PDH above' : '',
+            getCheckbox('h1_pdh_below') ? 'PDH below' : '',
+            getCheckbox('h1_pdl_above') ? 'PDL above' : '',
+            getCheckbox('h1_pdl_below') ? 'PDL below' : '',
+            getCheckbox('h1_ma20_above') ? 'MA20 above' : '',
+            getCheckbox('h1_ma20_below') ? 'MA20 below' : '',
+            getCheckbox('h1_ma50_above') ? 'MA50 above' : '',
+            getCheckbox('h1_ma50_below') ? 'MA50 below' : '',
+            getCheckbox('h1_ma200_above') ? 'MA200 above' : '',
+            getCheckbox('h1_ma200_below') ? 'MA200 below' : ''
+        ].filter(Boolean).join(', ');
 
-        const m15Bias = withFallback(getValue('m15_bias'), 'Not defined');
-        const m15Structure = withFallback(getValue('m15_structure'), 'Not defined');
-        const m15Vwap = withFallback(getValue('m15_vwap'), 'Not defined');
+        const m15Bias = withFallback(getValue('m15_bias'), '---');
+        const m15Structure = withFallback(getValue('m15_structure'), '---');
+        const m15Vwap = withFallback(getValue('m15_vwap'), '---');
         const m15Note = withFallback(getValue('m15_note'), '');
         const m15Rate = withFallback(getValue('m15_rate'), '');
-        const m15KeyLevels = withFallback(getValue('m15_key_levels'), '');
         const m15StructureBreaks = withFallback(getValue('m15_structure_breaks'), '');
         const m15Momentum = withFallback(getValue('m15_momentum'), '');
         const m15Breakdown = withFallback(getValue('m15_breakdown'), '');
@@ -387,8 +461,8 @@ function initAnalysisBuilder() {
             `${d1Vwap} VWAP + holding`,
             d1Sma200 ? `200 SMA: ${d1Sma200}` : '',
             d1Relative,
-            d1Note ? d1Note : '',
             d1Rate ? `Rate: ${d1Rate}` : '',
+            d1Note ? d1Note : '',
             '4H',
             `${h4Bias.toLowerCase()} - ${h4Structure}`,
             `${h4Vwap} VWAP + holding`,
@@ -396,6 +470,7 @@ function initAnalysisBuilder() {
             h4Pullback ? `Pullback: ${h4Pullback}` : '',
             h4TrendPattern ? `Trend pattern: ${h4TrendPattern}` : '',
             h4RiskDefine ? `Define risk: ${h4RiskDefine}` : '',
+            h4KeyLevels ? `Key levels: ${h4KeyLevels}` : '',
             h4Breakdown ? `Breakdown: ${h4Breakdown}` : '',
             h4Breakout ? `Breakout: ${h4Breakout}` : '',
             h4Note ? h4Note : '',
@@ -406,19 +481,19 @@ function initAnalysisBuilder() {
             h1Pullback ? `Pullback: ${h1Pullback}` : '',
             h1TrendPattern ? `Trend pattern: ${h1TrendPattern}` : '',
             h1RiskDefine ? `Define risk: ${h1RiskDefine}` : '',
+            h1KeyLevels ? `Key levels: ${h1KeyLevels}` : '',
             h1Breakdown ? `Breakdown: ${h1Breakdown}` : '',
             h1Breakout ? `Breakout: ${h1Breakout}` : '',
             h1Note ? h1Note : '',
             '15m',
             `${m15Bias.toLowerCase()} - ${m15Structure}`,
             `${m15Vwap} VWAP + holding`,
-            m15Note ? m15Note : '',
             m15Rate ? `Rate: ${m15Rate}` : '',
-            m15KeyLevels ? `Key levels: ${m15KeyLevels}` : '',
             m15StructureBreaks ? `Structure breaks: ${m15StructureBreaks}` : '',
             m15Momentum ? `Momentum: ${m15Momentum}` : '',
             m15Breakdown ? `Breakdown: ${m15Breakdown}` : '',
             m15Breakout ? `Breakout: ${m15Breakout}` : '',
+            m15Note ? m15Note : '',
             '',
             riskWhy,
             optionLine,
