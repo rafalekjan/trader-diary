@@ -41,6 +41,35 @@
     </div>
 </div>
 
+<div class="card">
+    <h3>Portfolio Snapshot</h3>
+    <div class="table-responsive">
+        <table class="stats-table">
+            <thead>
+                <tr>
+                    <th>Trader</th>
+                    <th>Closed Entered Trades</th>
+                    <th>P&amp;L</th>
+                    <th>Portfolio Value</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for row in stats.portfolio_breakdown %}
+                <tr>
+                    <td>{{ row.label }}</td>
+                    <td>{{ row.trades }}</td>
+                    <td class="{% if row.pnl > 0 %}positive{% elif row.pnl < 0 %}negative{% endif %}">
+                        ${{ row.pnl | format_decimal }}
+                    </td>
+                    <td>${{ row.equity | format_decimal }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+    <p class="help-text">Portfolio value = starting balance + entered, closed P&amp;L.</p>
+</div>
+
 <div class="stats-grid">
     <div class="stat-card success">
         <h3>Winning Trades</h3>

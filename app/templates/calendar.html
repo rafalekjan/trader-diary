@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+
+{% block title %}Calendar - Trader Journal{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <div>
+        <h2>Calendar</h2>
+        <p class="page-subtitle">Daily profit and loss from closed, entered trades</p>
+    </div>
+    <div class="calendar-nav">
+        <button type="button" class="btn btn-secondary" id="prevMonth">Prev</button>
+        <div class="calendar-title" id="calendarTitle">-</div>
+        <button type="button" class="btn btn-secondary" id="nextMonth">Next</button>
+        <button type="button" class="btn btn-primary" id="todayBtn">Today</button>
+    </div>
+</div>
+
+<div class="card">
+    <div class="table-responsive">
+        <table class="calendar-table">
+            <thead>
+                <tr>
+                    <th>Mon</th>
+                    <th>Tue</th>
+                    <th>Wed</th>
+                    <th>Thu</th>
+                    <th>Fri</th>
+                    <th>Sat</th>
+                    <th>Sun</th>
+                </tr>
+            </thead>
+            <tbody id="calendarBody"></tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    const pnlByDate = {{ calendar_pnl | tojson }};
+
+    const calendarTitle = document.getElementById('calendarTitle');
+    const calendarBody = document.getElementById('calendarBody');
+    const prevMonthBtn = document.getElementById('prevMonth');
+    const nextMonthBtn = document.getElementById('nextMonth');
+    const todayBtn = document.getElementById('todayBtn');
+
+    let current = new Date();
+    current.setDate(1);
+
+    function formatMonthYear(date) {
+        return date.toLocaleString('en-US', { month: 'long', year: 'numeric' });
+    }
+
+    function formatNumber(value) {
+        return new Intl.NumberFormat('en-US', {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        }).format(value);
+    }
+
+    function getMondayIndex(date) {
+        const day = date.getDay();
+        return (day + 6) % 7;
+    }
+
+    function renderCalendar() {
+        calendarTitle.textContent = formatMonthYear(current);
+
+        calendarBody.innerHTML = '';
+
+        const year = current.getFullYear();
+        const month = current.getMonth();
+        const firstDay = new Date(year, month, 1);
+        const startOffset = getMondayIndex(firstDay);
+        const startDate = new Date(year, month, 1 - startOffset);
+
+        for (let week = 0; week < 6; week++) {
+            const row = document.createElement('tr');
+
+            for (let day = 0; day < 7; day++) {
+                const dayDate = new Date(startDate);
+                dayDate.setDate(startDate.getDate() + week * 7 + day);
+
+                const iso = dayDate.toISOString().slice(0, 10);
+                const pnl = pnlByDate[iso] || 0;
+                const isCurrentMonth = dayDate.getMonth() === month;
+                const isToday = iso === new Date().toISOString().slice(0, 10);
+
+                const cell = document.createElement('td');
+                cell.className = 'calendar-cell';
+                if (!isCurrentMonth) cell.classList.add('calendar-cell--muted');
+                if (isToday) cell.classList.add('calendar-cell--today');
+                if (pnl > 0) cell.classList.add('calendar-cell--positive');
+                if (pnl < 0) cell.classList.add('calendar-cell--negative');
+
+                cell.innerHTML = `
+                    <div class="calendar-date">${dayDate.getDate()}</div>
+                    <div class="calendar-pnl">${pnl !== 0 ? '$' + formatNumber(pnl) : '-'}</div>
+                `;
+
+                row.appendChild(cell);
+            }
+
+            calendarBody.appendChild(row);
+        }
+    }
+
+    prevMonthBtn.addEventListener('click', () => {
+        current.setMonth(current.getMonth() - 1);
+        renderCalendar();
+    });
+
+    nextMonthBtn.addEventListener('click', () => {
+        current.setMonth(current.getMonth() + 1);
+        renderCalendar();
+    });
+
+    todayBtn.addEventListener('click', () => {
+        current = new Date();
+        current.setDate(1);
+        renderCalendar();
+    });
+
+    renderCalendar();
+</script>
+{% endblock %}

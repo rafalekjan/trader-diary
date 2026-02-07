@@ -44,6 +44,7 @@
                             <select id="spy_vwap" name="spy_vwap">
                                 <option value="">Select</option>
                                 <option value="Above">Above</option>
+                                <option value="Middle">Middle</option>
                                 <option value="Below">Below</option>
                             </select>
                         </div>
@@ -91,7 +92,7 @@
             </div>
         </div>
         <div class="analysis-subsection">
-            <h4>1D</h4>
+            <h4>1D - Direction &amp; Context</h4>
             <div class="timeframe-grid">
                 <div class="timeframe-left">
                     <div class="timeframe-row-3cols">
@@ -116,7 +117,7 @@
                             </select>
                         </div>
                     </div>
-                    <div class="timeframe-row-2cols">
+                    <div class="timeframe-row-3cols">
                         <div class="form-group">
                             <label for="d1_structure">Structure <span class="help-icon" data-tooltip="Example: HH/HL/LL/LH.">?</span></label>
                             <select id="d1_structure" name="d1_structure">
@@ -131,8 +132,13 @@
                             <select id="d1_vwap" name="d1_vwap">
                                 <option value="">Select</option>
                                 <option value="Above">Above</option>
+                                <option value="Middle">Middle</option>
                                 <option value="Below">Below</option>
                             </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="d1_sma_200">200 SMA</label>
+                            <input id="d1_sma_200" name="d1_sma_200" type="text" placeholder="200 SMA level">
                         </div>
                     </div>
                     <div class="form-group">
@@ -156,10 +162,10 @@
         </div>
 
         <div class="analysis-subsection">
-            <h4>4H</h4>
+            <h4>4H - Structure &amp; Planning</h4>
             <div class="timeframe-grid">
                 <div class="timeframe-left">
-                    <div class="timeframe-row-3cols">
+                    <div class="timeframe-row-2cols">
                         <div class="form-group">
                             <label for="h4_bias">Bias <span class="help-icon" data-tooltip="Bullish or Bearish.">?</span></label>
                             <select id="h4_bias" name="h4_bias">
@@ -171,14 +177,6 @@
                         <div class="form-group">
                             <label for="h4_rate">Rate</label>
                             <input id="h4_rate" name="h4_rate" type="text" placeholder="Rate">
-                        </div>
-                        <div class="form-group">
-                            <label for="h4_relative">Relative <span class="help-icon" data-tooltip="Strength or Weakness vs market.">?</span></label>
-                            <select id="h4_relative" name="h4_relative">
-                                <option value="">Select</option>
-                                <option value="Strength">Strength</option>
-                                <option value="Weakness">Weakness</option>
-                            </select>
                         </div>
                     </div>
                     <div class="timeframe-row-2cols">
@@ -196,7 +194,48 @@
                             <select id="h4_vwap" name="h4_vwap">
                                 <option value="">Select</option>
                                 <option value="Above">Above</option>
+                                <option value="Middle">Middle</option>
                                 <option value="Below">Below</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="timeframe-row-2cols">
+                        <div class="form-group">
+                            <label for="h4_pullback">Pullback</label>
+                            <select id="h4_pullback" name="h4_pullback">
+                                <option value="">Select</option>
+                                <option value="Within the trend">Within the trend</option>
+                                <option value="Against">Against</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="h4_trend_pattern">Trend pattern</label>
+                            <select id="h4_trend_pattern" name="h4_trend_pattern">
+                                <option value="">Select</option>
+                                <option value="Continuation">Continuation</option>
+                                <option value="Against">Against</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="h4_risk_define">Define risk</label>
+                        <input id="h4_risk_define" name="h4_risk_define" type="text" placeholder="Define risk">
+                    </div>
+                    <div class="timeframe-row-2cols">
+                        <div class="form-group">
+                            <label for="h4_breakdown">Breakdown</label>
+                            <select id="h4_breakdown" name="h4_breakdown">
+                                <option value="">Select</option>
+                                <option value="Breaks">Breaks</option>
+                                <option value="No">No</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="h4_breakout">Breakout</label>
+                            <select id="h4_breakout" name="h4_breakout">
+                                <option value="">Select</option>
+                                <option value="Breaks">Breaks</option>
+                                <option value="No">No</option>
                             </select>
                         </div>
                     </div>
@@ -205,26 +244,14 @@
                         <textarea id="h4_note" name="h4_note" rows="2" placeholder="1 line"></textarea>
                     </div>
                 </div>
-                <div class="timeframe-right">
-                    <div class="form-grid trade-form-grid">
-                        <div class="form-group">
-                            <label for="h4_resistance">Resistance <span class="help-icon" data-tooltip="Example: 14.8.">?</span></label>
-                            <input id="h4_resistance" name="h4_resistance" type="text" placeholder="Resistance level">
-                        </div>
-                        <div class="form-group">
-                            <label for="h4_support">Support <span class="help-icon" data-tooltip="Example: none defined.">?</span></label>
-                            <input id="h4_support" name="h4_support" type="text" placeholder="Support level">
-                        </div>
-                    </div>
-                </div>
             </div>
         </div>
 
         <div class="analysis-subsection">
-            <h4>1H</h4>
+            <h4>1H - Structure &amp; Planning</h4>
             <div class="timeframe-grid">
                 <div class="timeframe-left">
-                    <div class="timeframe-row-3cols">
+                    <div class="timeframe-row-2cols">
                         <div class="form-group">
                             <label for="h1_bias">Bias <span class="help-icon" data-tooltip="Bullish or Bearish.">?</span></label>
                             <select id="h1_bias" name="h1_bias">
@@ -236,14 +263,6 @@
                         <div class="form-group">
                             <label for="h1_rate">Rate</label>
                             <input id="h1_rate" name="h1_rate" type="text" placeholder="Rate">
-                        </div>
-                        <div class="form-group">
-                            <label for="h1_relative">Relative <span class="help-icon" data-tooltip="Strength or Weakness vs market.">?</span></label>
-                            <select id="h1_relative" name="h1_relative">
-                                <option value="">Select</option>
-                                <option value="Strength">Strength</option>
-                                <option value="Weakness">Weakness</option>
-                            </select>
                         </div>
                     </div>
                     <div class="timeframe-row-2cols">
@@ -261,7 +280,48 @@
                             <select id="h1_vwap" name="h1_vwap">
                                 <option value="">Select</option>
                                 <option value="Above">Above</option>
+                                <option value="Middle">Middle</option>
                                 <option value="Below">Below</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="timeframe-row-2cols">
+                        <div class="form-group">
+                            <label for="h1_pullback">Pullback</label>
+                            <select id="h1_pullback" name="h1_pullback">
+                                <option value="">Select</option>
+                                <option value="Within the trend">Within the trend</option>
+                                <option value="Against">Against</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="h1_trend_pattern">Trend pattern</label>
+                            <select id="h1_trend_pattern" name="h1_trend_pattern">
+                                <option value="">Select</option>
+                                <option value="Continuation">Continuation</option>
+                                <option value="Against">Against</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="h1_risk_define">Define risk</label>
+                        <input id="h1_risk_define" name="h1_risk_define" type="text" placeholder="Define risk">
+                    </div>
+                    <div class="timeframe-row-2cols">
+                        <div class="form-group">
+                            <label for="h1_breakdown">Breakdown</label>
+                            <select id="h1_breakdown" name="h1_breakdown">
+                                <option value="">Select</option>
+                                <option value="Breaks">Breaks</option>
+                                <option value="No">No</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="h1_breakout">Breakout</label>
+                            <select id="h1_breakout" name="h1_breakout">
+                                <option value="">Select</option>
+                                <option value="Breaks">Breaks</option>
+                                <option value="No">No</option>
                             </select>
                         </div>
                     </div>
@@ -270,26 +330,14 @@
                         <textarea id="h1_note" name="h1_note" rows="2" placeholder="1 line"></textarea>
                     </div>
                 </div>
-                <div class="timeframe-right">
-                    <div class="form-grid trade-form-grid">
-                        <div class="form-group">
-                            <label for="h1_resistance">Resistance <span class="help-icon" data-tooltip="Example: 13.6.">?</span></label>
-                            <input id="h1_resistance" name="h1_resistance" type="text" placeholder="Resistance level">
-                        </div>
-                        <div class="form-group">
-                            <label for="h1_support">Support <span class="help-icon" data-tooltip="Example: none defined.">?</span></label>
-                            <input id="h1_support" name="h1_support" type="text" placeholder="Support level">
-                        </div>
-                    </div>
-                </div>
             </div>
         </div>
 
         <div class="analysis-subsection">
-            <h4>15m (Timing Only)</h4>
+            <h4>15m - Execution &amp; Timing</h4>
             <div class="timeframe-grid">
                 <div class="timeframe-left">
-                    <div class="timeframe-row-3cols">
+                    <div class="timeframe-row-2cols">
                         <div class="form-group">
                             <label for="m15_bias">Bias <span class="help-icon" data-tooltip="Bullish or Bearish.">?</span></label>
                             <select id="m15_bias" name="m15_bias">
@@ -301,14 +349,6 @@
                         <div class="form-group">
                             <label for="m15_rate">Rate</label>
                             <input id="m15_rate" name="m15_rate" type="text" placeholder="Rate">
-                        </div>
-                        <div class="form-group">
-                            <label for="m15_relative">Relative <span class="help-icon" data-tooltip="Strength or Weakness vs market.">?</span></label>
-                            <select id="m15_relative" name="m15_relative">
-                                <option value="">Select</option>
-                                <option value="Strength">Strength</option>
-                                <option value="Weakness">Weakness</option>
-                            </select>
                         </div>
                     </div>
                     <div class="timeframe-row-2cols">
@@ -326,25 +366,50 @@
                             <select id="m15_vwap" name="m15_vwap">
                                 <option value="">Select</option>
                                 <option value="Above">Above</option>
+                                <option value="Middle">Middle</option>
                                 <option value="Below">Below</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label for="m15_key_levels">Key levels</label>
+                        <input id="m15_key_levels" name="m15_key_levels" type="text" placeholder="Key levels">
+                    </div>
+                    <div class="timeframe-row-2cols">
+                        <div class="form-group">
+                            <label for="m15_structure_breaks">Structure breaks</label>
+                            <select id="m15_structure_breaks" name="m15_structure_breaks">
+                                <option value="">Select</option>
+                                <option value="Yes">Yes</option>
+                                <option value="No">No</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="m15_momentum">Momentum</label>
+                            <input id="m15_momentum" name="m15_momentum" type="text" placeholder="e.g. turns back down after a failed reclaim">
+                        </div>
+                    </div>
+                    <div class="timeframe-row-2cols">
+                        <div class="form-group">
+                            <label for="m15_breakdown">Breakdown</label>
+                            <select id="m15_breakdown" name="m15_breakdown">
+                                <option value="">Select</option>
+                                <option value="Confirm">Confirm</option>
+                                <option value="No">No</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="m15_breakout">Breakout</label>
+                            <select id="m15_breakout" name="m15_breakout">
+                                <option value="">Select</option>
+                                <option value="Confirm">Confirm</option>
+                                <option value="No">No</option>
                             </select>
                         </div>
                     </div>
                     <div class="form-group">
                         <label for="m15_note">Note</label>
                         <textarea id="m15_note" name="m15_note" rows="2" placeholder="1 line"></textarea>
-                    </div>
-                </div>
-                <div class="timeframe-right">
-                    <div class="form-grid trade-form-grid">
-                        <div class="form-group">
-                            <label for="m15_resistance">Resistance <span class="help-icon" data-tooltip="Example: 8.04.">?</span></label>
-                            <input id="m15_resistance" name="m15_resistance" type="text" placeholder="Resistance level">
-                        </div>
-                        <div class="form-group">
-                            <label for="m15_support">Support <span class="help-icon" data-tooltip="Example: none defined.">?</span></label>
-                            <input id="m15_support" name="m15_support" type="text" placeholder="Support level">
-                        </div>
                     </div>
                 </div>
             </div>
@@ -494,9 +559,48 @@
         <button type="reset" class="btn btn-secondary" id="analysis-clear">Clear</button>
     </div>
 
-    <div class="analysis-output">
-        <label for="analysis-output">Generated Text <span class="help-icon" data-tooltip="Copy this and send it to your mentor.">?</span></label>
-        <textarea id="analysis-output" rows="22" readonly></textarea>
+    <div class="analysis-section">
+        <h3>Saved Analyses</h3>
+        <div class="form-grid trade-form-grid">
+            <div class="form-group">
+                <label for="analysis_name">Analysis name</label>
+                <input id="analysis_name" name="analysis_name" type="text" placeholder="e.g. MARA 1D-4H 2026-02-06">
+            </div>
+            <div class="form-group">
+                <label for="analysis_list">Saved list</label>
+                <select id="analysis_list" name="analysis_list">
+                    <option value="">Select saved analysis</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="analysis_sort">Sort by</label>
+                <select id="analysis_sort" name="analysis_sort">
+                    <option value="updated_desc">Newest updated</option>
+                    <option value="updated_asc">Oldest updated</option>
+                    <option value="created_desc">Newest created</option>
+                    <option value="created_asc">Oldest created</option>
+                    <option value="name_asc">Name A-Z</option>
+                    <option value="name_desc">Name Z-A</option>
+                </select>
+            </div>
+        </div>
+        <div class="form-actions">
+            <button type="button" class="btn btn-secondary" id="analysis-save">Save Analysis</button>
+            <button type="button" class="btn btn-secondary" id="analysis-load">Load Selected</button>
+            <button type="button" class="btn btn-secondary" id="analysis-preview">Preview Selected</button>
+            <button type="button" class="btn btn-secondary" id="analysis-delete">Delete Selected</button>
+        </div>
+    </div>
+
+    <div class="analysis-output-grid">
+        <div class="analysis-output">
+            <label for="analysis-output">Generated Text <span class="help-icon" data-tooltip="Copy this and send it to your mentor.">?</span></label>
+            <textarea id="analysis-output" rows="22" readonly></textarea>
+        </div>
+        <div class="analysis-output">
+            <label for="analysis-preview-output">Preview (read-only)</label>
+            <textarea id="analysis-preview-output" rows="22" readonly></textarea>
+        </div>
     </div>
 </form>
 {% endblock %}

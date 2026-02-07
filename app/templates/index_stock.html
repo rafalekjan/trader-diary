@@ -85,6 +85,11 @@
                         <label for="exit_price">Exit Price</label>
                         <input type="number" name="exit_price" id="exit_price" value="{% if edit_mode and trade.exit_price %}{{ trade.exit_price }}{% endif %}" step="0.01" placeholder="0.00">
                     </div>
+
+                    <div class="form-group">
+                        <label for="closed_at">Exit Date</label>
+                        <input type="date" name="closed_at" id="closed_at" value="{% if edit_mode and trade.closed_at %}{{ trade.closed_at.strftime('%Y-%m-%d') }}{% elif edit_mode and trade.exit_price %}{{ trade.created_at.strftime('%Y-%m-%d') }}{% endif %}">
+                    </div>
                 </div>
 
                 <div class="trade-right">

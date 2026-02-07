@@ -650,6 +650,8 @@ async def create_trade(
 ):
     """Create a new trade"""
     entered_flag = bool(entered)
+    if trader_id is None:
+        entered_flag = True
     normalized_status = "idea"
     if entered_flag:
         normalized_status = "entered"

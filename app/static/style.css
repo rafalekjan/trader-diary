@@ -1044,6 +1044,33 @@ main {
     gap: 0.5rem;
 }
 
+.analysis-output-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    overflow: hidden;
+    background: #fffaf2;
+    align-items: start;
+}
+
+.analysis-output-grid .analysis-output {
+    padding: 1rem;
+    border-right: 1px solid var(--border);
+    background: transparent;
+}
+
+.analysis-output-grid .analysis-output:last-child {
+    border-right: none;
+}
+
+.analysis-output-grid .analysis-output label {
+    font-weight: 600;
+    color: #3f3f46;
+    padding-bottom: 0.5rem;
+    border-bottom: 1px dashed rgba(180, 138, 60, 0.35);
+}
+
 .analysis-output textarea {
     width: 100%;
     min-height: 360px;
@@ -1140,7 +1167,7 @@ main {
 
 .timeframe-grid {
     display: grid;
-    grid-template-columns: minmax(0, 1.2fr) minmax(0, 0.8fr);
+    grid-template-columns: 1fr;
     gap: 1rem;
 }
 

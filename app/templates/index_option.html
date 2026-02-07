@@ -112,6 +112,13 @@
                         </div>
                     </div>
 
+                    <div class="entry-current-row">
+                        <div class="form-group">
+                            <label for="closed_at">Exit Date</label>
+                            <input type="date" name="closed_at" id="closed_at" value="{% if edit_mode and trade.closed_at %}{{ trade.closed_at.strftime('%Y-%m-%d') }}{% elif edit_mode and trade.exit_price %}{{ trade.created_at.strftime('%Y-%m-%d') }}{% endif %}">
+                        </div>
+                    </div>
+
                 </div>
 
                 <div class="trade-right">
