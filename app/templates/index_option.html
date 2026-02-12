@@ -57,8 +57,6 @@
 
             <div class="trade-row">
                 <div class="trade-left">
-                    <input type="hidden" name="entry_price" id="entry_price" value="{% if edit_mode %}{{ trade.entry_price }}{% endif %}" required>
-
                     <div class="ticker-row">
                         <div class="form-group">
                             <label for="ticker">Ticker *</label>
@@ -102,9 +100,8 @@
 
                     <div class="entry-current-row">
                         <div class="form-group">
-                            <label>Contract Price <span class="price-status" id="option_price_status" aria-live="polite"></span></label>
-                            <input type="text" id="option_price" class="calc-output" readonly placeholder="Enter option details">
-                            <p class="help-text compact">Symbol: <a id="option_symbol_link" target="_blank" rel="noopener"><span id="option_symbol_text">-</span></a></p>
+                            <label for="entry_price">Contract Entry Price *</label>
+                            <input type="number" name="entry_price" id="entry_price" value="{% if edit_mode %}{{ trade.entry_price }}{% endif %}" step="0.01" placeholder="0.00" required>
                         </div>
                         <div class="form-group">
                             <label for="exit_price">Contract Exit Price</label>
@@ -123,6 +120,11 @@
 
                 <div class="trade-right">
                     <div class="trade-right-spacer"></div>
+                    <div class="side-price-panel">
+                        <label>Current Price <span class="price-status" id="option_price_status" aria-live="polite"></span></label>
+                        <input type="text" id="option_price" class="calc-output" readonly placeholder="Enter option details">
+                        <p class="help-text compact">Symbol: <a id="option_symbol_link" target="_blank" rel="noopener"><span id="option_symbol_text">-</span></a></p>
+                    </div>
                     <div class="risk-grid">
                         <div class="form-group risk-item">
                             <label for="sl">Stop Loss (SL %)</label>

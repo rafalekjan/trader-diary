@@ -363,6 +363,22 @@ main {
     gap: 1rem;
 }
 
+.side-price-panel {
+    display: grid;
+    gap: 0.5rem;
+    padding: 0.9rem 1rem;
+    border-radius: 14px;
+    border: 1px solid var(--border);
+    background: #fffaf2;
+    box-shadow: var(--shadow-soft);
+    margin-bottom: 1rem;
+}
+
+.side-price-panel .help-text {
+    margin-top: 0.2rem;
+    padding: 0.5rem 0.65rem;
+}
+
 .risk-item .calc-output {
     font-size: 0.95rem;
     border-style: dashed;
@@ -949,6 +965,35 @@ main {
     margin-bottom: 1.5rem;
 }
 
+.trader-tabs {
+    display: flex;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+    margin: -0.5rem 0 1.5rem;
+}
+
+.trader-tab {
+    text-decoration: none;
+    padding: 0.5rem 1rem;
+    border-radius: 999px;
+    background: #f4f1ea;
+    color: #3f3f46;
+    font-weight: 600;
+    border: 1px solid var(--border);
+    transition: all 0.2s ease;
+}
+
+.trader-tab:hover {
+    background: #e9e2d6;
+}
+
+.trader-tab.active {
+    background: var(--accent);
+    color: white;
+    border-color: transparent;
+    box-shadow: 0 8px 18px rgba(180, 138, 60, 0.25);
+}
+
 .filter-form {
     display: flex;
     gap: 1rem;
@@ -1191,6 +1236,12 @@ main {
 .timeframe-row-5cols {
     display: grid;
     grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 1rem;
+}
+
+.timeframe-row-8cols {
+    display: grid;
+    grid-template-columns: repeat(8, minmax(0, 1fr));
     gap: 1rem;
 }
 

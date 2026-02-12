@@ -74,7 +74,7 @@
                             -
                         {% endif %}
                     </td>
-                    <td>{{ item.trade.trader.name if item.trade.trader else '-' }}</td>
+                    <td>{{ item.trade.trader.name if item.trade.trader else 'Me' }}</td>
                     <td class="actions">
                         <form method="POST" action="/trades/{{ item.trade.id }}/{% if item.trade.entered %}unenter{% else %}enter{% endif %}" style="display: inline;">
                             <label class="inline-check">
@@ -100,15 +100,23 @@
 {% endmacro %}
 
 <div class="page-header">
-    <h2>Trades</h2>
+    <h2>Trades — {{ current_label }}</h2>
     <div class="total-pnl {% if total_pnl > 0 %}positive{% elif total_pnl < 0 %}negative{% endif %}">
         Total P&amp;L: <strong>${{ total_pnl | format_decimal }}</strong>
     </div>
 </div>
 
+<div class="trader-tabs">
+    <a href="/trades" class="trader-tab {% if is_all_scope %}active{% endif %}">All</a>
+    <a href="/trades/self" class="trader-tab {% if is_self_scope %}active{% endif %}">Me</a>
+    {% for trader in traders %}
+        <a href="/trades/trader/{{ trader.id }}" class="trader-tab {% if (not is_self_scope) and (not is_all_scope) and current_trader_id == trader.id %}active{% endif %}">{{ trader.name }}</a>
+    {% endfor %}
+</div>
+
 <div class="card">
     <div class="filters">
-        <form method="GET" action="/trades" class="filter-form" id="filterForm">
+        <form method="GET" action="{{ scope_url }}" class="filter-form" id="filterForm">
             <div class="filter-group status-filter">
                 <label>Status:</label>
                 <div class="checkbox-group-filter">
@@ -134,39 +142,35 @@
                 <label for="ticker">Ticker:</label>
                 <input type="text" name="ticker" id="ticker" value="{{ current_ticker or '' }}" placeholder="e.g. AAPL" style="text-transform: uppercase;">
             </div>
-            <div class="filter-group">
-                <label for="trader_id">Trader:</label>
-                <select name="trader_id" id="trader_id">
-                    <option value="">All</option>
-                    {% for trader in traders %}
-                        <option value="{{ trader.id }}" {% if current_trader and current_trader == trader.id %}selected{% endif %}>{{ trader.name }}</option>
-                    {% endfor %}
-                </select>
-            </div>
             <button type="submit" class="btn btn-secondary">Filter</button>
-            <a href="/trades" class="btn btn-secondary">Clear</a>
+            <a href="{{ scope_url }}" class="btn btn-secondary">Clear</a>
         </form>
     </div>
 </div>
 
 {% if entered_trades or not_entered_trades %}
-<div class="card">
-    <h3>Entered Setups ({{ entered_trades | length }})</h3>
-    {{ render_trades_table(entered_trades, "No entered setups yet.") }}
-</div>
-
-{% if trader_groups %}
-    {% for group in trader_groups %}
+    {% if is_self_scope %}
     <div class="card">
-        <h3>Trader: {{ group.trader.name }} ({{ group.trades | length }})</h3>
-        {{ render_trades_table(group.trades, "No setups for this trader.") }}
+        <h3>Entered Setups ({{ entered_trades | length }})</h3>
+        {{ render_trades_table(entered_trades, "No entered setups yet.") }}
     </div>
-    {% endfor %}
-{% endif %}
+
+    {% if not_entered_trades %}
+    <div class="card">
+        <h3>Paper Setups ({{ not_entered_trades | length }})</h3>
+        {{ render_trades_table(not_entered_trades, "No paper setups yet.") }}
+    </div>
+    {% endif %}
+    {% else %}
+    <div class="card">
+        <h3>Trades ({{ trades | length }})</h3>
+        {{ render_trades_table(trades, "No trades to display.") }}
+    </div>
+    {% endif %}
 {% else %}
 <div class="card">
     <div class="empty-state">
-        <p>No trades to display.</p>
+        <p>No trades for {{ current_label }} yet.</p>
         <a href="/" class="btn btn-primary">Add your first trade</a>
     </div>
 </div>
@@ -176,19 +180,11 @@
     document.addEventListener('DOMContentLoaded', function() {
         const filterForm = document.getElementById('filterForm');
         const statusRadios = filterForm.querySelectorAll('input[name="status"]');
-        const traderSelect = document.getElementById('trader_id');
-        
         statusRadios.forEach(radio => {
             radio.addEventListener('change', function() {
                 filterForm.submit();
             });
         });
-
-        if (traderSelect) {
-            traderSelect.addEventListener('change', function() {
-                filterForm.submit();
-            });
-        }
 
         initTradesTableSorting();
     });

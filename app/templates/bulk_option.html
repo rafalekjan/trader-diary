@@ -85,12 +85,25 @@
             }
         }
 
-        const entryMatch = upper.match(/(?:ENTRY|BUY|AT|@)\s*\$?(\d+(?:\.\d+)?)/);
+        const entryMatch = upper.match(/(?:ENTRY|BUY|AT|@)\s*\$?(\d+(?:[.,]\d+)?)/);
         if (entryMatch) {
-            result.entry_price = entryMatch[1];
+            result.entry_price = entryMatch[1].replace(',', '.');
         } else {
-            const priceMatch = upper.match(/\$?(\d+(?:\.\d+)?)/);
-            if (priceMatch) result.entry_price = priceMatch[1];
+            const numberMatches = Array.from(upper.matchAll(/\d+(?:[.,]\d+)?/g));
+            const candidates = numberMatches.filter(match => {
+                const start = match.index ?? 0;
+                const end = start + match[0].length;
+                const before = upper[start - 1] || '';
+                const after = upper[end] || '';
+                if (before === '/' || after === '/' || before === '-' || after === '-') {
+                    return false;
+                }
+                return true;
+            });
+            if (candidates.length) {
+                const last = candidates[candidates.length - 1][0];
+                result.entry_price = last.replace(',', '.');
+            }
         }
 
         if (upper.includes("CALL") || /[0-9]C\b/.test(upper)) result.option_type = "CALL";
@@ -99,19 +112,19 @@
 
         const strikeMatch = upper.match(/(?:\bSTRIKE\b|\bSTK\b|\bK\b)\s*[:\-]?\s*\$?(\d+(?:[.,]\d+)?)/);
         if (strikeMatch) {
-            result.strike = strikeMatch[1];
+            result.strike = strikeMatch[1].replace(',', '.');
         } else {
-            const cpStrikeMatch = upper.match(/(?:\bC|\bP)\s*\$?(\d+(?:[.,]\d+)?)(?=\b|[^0-9])/);
-            if (cpStrikeMatch) {
-                result.strike = cpStrikeMatch[1];
+            const strikeBeforeCpMatch = upper.match(/\b(\d+(?:[.,]\d+)?)\s*(?:C|P)\b/);
+            if (strikeBeforeCpMatch) {
+                result.strike = strikeBeforeCpMatch[1].replace(',', '.');
             } else {
-                const strikeBeforeCpMatch = upper.match(/\b(\d+(?:[.,]\d+)?)\s*(?:C|P)\b/);
-                if (strikeBeforeCpMatch) {
-                    result.strike = strikeBeforeCpMatch[1];
+                const cpStrikeMatch = upper.match(/(?:\bC|\bP)\s*\$?(\d+(?:[.,]\d+)?)(?!\s*[\/\.-]\d)/);
+                if (cpStrikeMatch) {
+                    result.strike = cpStrikeMatch[1].replace(',', '.');
                 } else {
                     const tvSymbolMatch = upper.match(/\b[A-Z]{1,6}\d{2}\d{2}\d{2}[CP](\d+(?:[.,]\d+)?)\b/);
                     if (tvSymbolMatch) {
-                        result.strike = tvSymbolMatch[1];
+                        result.strike = tvSymbolMatch[1].replace(',', '.');
                     }
                 }
             }

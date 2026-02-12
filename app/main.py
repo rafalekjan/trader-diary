@@ -691,25 +691,46 @@ async def create_trade(
     )
     
     crud.create_trade(db, trade_data)
-    return RedirectResponse(url="/trades", status_code=303)
+    return RedirectResponse(url=resolve_trades_redirect(request, trader_id, True), status_code=303)
 
-@app.get("/trades", response_class=HTMLResponse)
-async def list_trades(
-    request: Request,
-    status: Optional[str] = None,
-    ticker: Optional[str] = None,
-    trader_id: Optional[str] = None,
-    db: Session = Depends(get_db)
+def fetch_trades_for_scope(
+    db: Session,
+    status: Optional[str],
+    ticker: Optional[str],
+    is_self_scope: bool,
+    is_all_scope: bool,
+    trader_id: Optional[int]
 ):
-    """List all trades with filtering"""
-    parsed_trader_id = int(trader_id) if trader_id and trader_id.isdigit() else None
-    trades = crud.get_trades(db, status=status, ticker=ticker, trader_id=parsed_trader_id)
+    query = db.query(models.Trade)
+    if status:
+        query = query.filter(models.Trade.status == status)
+    if ticker:
+        query = query.filter(models.Trade.ticker.ilike(f"%{ticker}%"))
+    if is_all_scope:
+        pass
+    elif is_self_scope:
+        query = query.filter(models.Trade.trader_id.is_(None))
+    elif trader_id is not None:
+        query = query.filter(models.Trade.trader_id == trader_id)
+    return query.order_by(models.Trade.created_at.desc()).all()
+
+def render_trades_page(
+    request: Request,
+    db: Session,
+    status: Optional[str],
+    ticker: Optional[str],
+    is_self_scope: bool,
+    is_all_scope: bool,
+    trader: Optional[models.Trader],
+    scope_url: str
+):
+    trades = fetch_trades_for_scope(db, status, ticker, is_self_scope, is_all_scope, trader.id if trader else None)
     account = crud.get_account(db)
     traders = crud.get_traders(db)
-    
+
     trades_with_pnl = []
     total_pnl = Decimal("0.0")
-    
+
     for trade in trades:
         pnl = crud.calculate_pnl(trade)
         trades_with_pnl.append({
@@ -726,32 +747,84 @@ async def list_trades(
     ]
     not_entered_trades = [item for item in trades_with_pnl if not item["trade"].entered]
 
-    trader_groups = []
-    for trader in traders:
-        trader_items = [
-            item for item in trades_with_pnl
-            if item["trade"].trader_id == trader.id and not crud.is_copy_trade(item["trade"])
-        ]
-        if trader_items:
-            trader_groups.append({
-                "trader": trader,
-                "trades": trader_items
-            })
-    
+    if is_all_scope:
+        current_label = "All"
+    else:
+        current_label = "Me" if is_self_scope else trader.name if trader else "Trades"
+
     return templates.TemplateResponse("trades.html", {
         "request": request,
         "trades": trades_with_pnl,
         "entered_trades": entered_trades,
         "not_entered_trades": not_entered_trades,
-        "trader_groups": trader_groups,
         "total_pnl": total_pnl,
         "account": account,
         "equity": calculate_equity(db),
         "current_status": status,
         "current_ticker": ticker,
-        "current_trader": parsed_trader_id,
+        "current_label": current_label,
+        "is_self_scope": is_self_scope,
+        "is_all_scope": is_all_scope,
+        "current_trader_id": trader.id if trader else None,
+        "scope_url": scope_url,
         "traders": traders
     })
+
+def resolve_trades_redirect(
+    request: Request,
+    fallback_trader_id: Optional[int] = None,
+    prefer_trader: bool = False
+) -> str:
+    if prefer_trader and fallback_trader_id:
+        return f"/trades/trader/{fallback_trader_id}"
+    referer = request.headers.get("referer")
+    if referer:
+        try:
+            parsed = urllib.parse.urlparse(referer)
+            if parsed.path.startswith("/trades"):
+                if parsed.query:
+                    return f"{parsed.path}?{parsed.query}"
+                return parsed.path
+        except Exception:
+            pass
+    if fallback_trader_id:
+        return f"/trades/trader/{fallback_trader_id}"
+    return "/trades"
+
+@app.get("/trades", response_class=HTMLResponse)
+async def list_trades_default(
+    request: Request,
+    status: Optional[str] = None,
+    ticker: Optional[str] = None,
+    db: Session = Depends(get_db)
+):
+    """Default trades view (all)"""
+    return render_trades_page(request, db, status, ticker, False, True, None, "/trades")
+
+@app.get("/trades/self", response_class=HTMLResponse)
+async def list_trades_self(
+    request: Request,
+    status: Optional[str] = None,
+    ticker: Optional[str] = None,
+    db: Session = Depends(get_db)
+):
+    """Self trades view"""
+    return render_trades_page(request, db, status, ticker, True, False, None, "/trades/self")
+
+@app.get("/trades/trader/{trader_id}", response_class=HTMLResponse)
+async def list_trades_trader(
+    request: Request,
+    trader_id: int,
+    status: Optional[str] = None,
+    ticker: Optional[str] = None,
+    db: Session = Depends(get_db)
+):
+    """Trades view for a specific trader"""
+    trader = crud.get_trader(db, trader_id)
+    if not trader:
+        raise HTTPException(status_code=404, detail="Trader not found")
+    scope_url = f"/trades/trader/{trader_id}"
+    return render_trades_page(request, db, status, ticker, False, False, trader, scope_url)
 
 @app.get("/trades/{trade_id}/edit", response_class=HTMLResponse)
 async def edit_trade_form(
@@ -778,6 +851,7 @@ async def edit_trade_form(
 
 @app.post("/trades/{trade_id}/update")
 async def update_trade(
+    request: Request,
     trade_id: int,
     entered: Optional[str] = Form(None),
     trading_style: str = Form(...),
@@ -839,10 +913,11 @@ async def update_trade(
     )
     
     crud.update_trade(db, trade_id, trade_data)
-    return RedirectResponse(url="/trades", status_code=303)
+    return RedirectResponse(url=resolve_trades_redirect(request, trader_id, True), status_code=303)
 
 @app.post("/trades/{trade_id}/close")
 async def close_trade(
+    request: Request,
     trade_id: int,
     exit_price: str = Form(...),
     db: Session = Depends(get_db)
@@ -857,10 +932,11 @@ async def close_trade(
     trade.closed_at = datetime.utcnow()
     db.commit()
     
-    return RedirectResponse(url="/trades", status_code=303)
+    return RedirectResponse(url=resolve_trades_redirect(request, trade.trader_id), status_code=303)
 
 @app.post("/trades/{trade_id}/enter")
 async def enter_trade(
+    request: Request,
     trade_id: int,
     db: Session = Depends(get_db)
 ):
@@ -921,10 +997,11 @@ async def enter_trade(
             trade.status = models.TradeStatus.ENTERED
         db.commit()
 
-    return RedirectResponse(url="/trades", status_code=303)
+    return RedirectResponse(url=resolve_trades_redirect(request, trade.trader_id), status_code=303)
 
 @app.post("/trades/{trade_id}/unenter")
 async def unenter_trade(
+    request: Request,
     trade_id: int,
     db: Session = Depends(get_db)
 ):
@@ -940,19 +1017,21 @@ async def unenter_trade(
         trade.status = models.TradeStatus.IDEA
     db.commit()
 
-    return RedirectResponse(url="/trades", status_code=303)
+    return RedirectResponse(url=resolve_trades_redirect(request, trade.trader_id), status_code=303)
 
 @app.post("/trades/{trade_id}/delete")
-async def delete_trade(trade_id: int, db: Session = Depends(get_db)):
+async def delete_trade(request: Request, trade_id: int, db: Session = Depends(get_db)):
     """Delete a trade"""
-    success = crud.delete_trade(db, trade_id)
-    if not success:
+    trade = crud.get_trade(db, trade_id)
+    if not trade:
         raise HTTPException(status_code=404, detail="Trade not found")
-    
-    return RedirectResponse(url="/trades", status_code=303)
+
+    crud.delete_trade(db, trade_id)
+    return RedirectResponse(url=resolve_trades_redirect(request, trade.trader_id), status_code=303)
 
 @app.post("/trades/bulk_create")
 async def bulk_create_trades(
+    request: Request,
     instrument_type: str = Form(...),
     bulk_data: str = Form(...),
     trader_id: Optional[int] = Form(None),
@@ -969,12 +1048,19 @@ async def bulk_create_trades(
         entry_price = row.get("entry_price")
         if not ticker or not entry_price:
             continue
+        if isinstance(entry_price, str):
+            entry_price = entry_price.replace(",", ".").strip()
 
         entered_flag = bool(row.get("entered"))
         exit_price = row.get("exit_price")
+        if isinstance(exit_price, str):
+            exit_price = exit_price.replace(",", ".").strip()
         normalized_status = "closed" if exit_price else ("entered" if entered_flag else "idea")
 
-        option_type = row.get("option_type")
+        option_type_raw = row.get("option_type") or ""
+        if isinstance(option_type_raw, str):
+            option_type_raw = option_type_raw.strip().upper()
+        option_type = option_type_raw if option_type_raw in {"CALL", "PUT"} else None
         normalized_direction = row.get("direction") or "long"
         if instrument_type == "stock":
             normalized_direction = "long"
@@ -984,6 +1070,11 @@ async def bulk_create_trades(
         strike_raw = row.get("strike")
         if isinstance(strike_raw, str):
             strike_raw = strike_raw.replace(",", ".")
+
+        try:
+            entry_decimal = Decimal(str(entry_price))
+        except Exception:
+            continue
 
         trade_data = schemas.TradeCreate(
             status=normalized_status,
@@ -996,7 +1087,7 @@ async def bulk_create_trades(
             option_type=option_type if instrument_type == "option" else None,
             expiration_date=row.get("expiration_date") if instrument_type == "option" else None,
             strike=Decimal(str(strike_raw)) if instrument_type == "option" and strike_raw else None,
-            entry_price=Decimal(str(entry_price)),
+            entry_price=entry_decimal,
             exit_price=Decimal(str(exit_price)) if exit_price else None,
             quantity=int(row.get("quantity") or 1),
             fees=Decimal("0.0"),
@@ -1004,7 +1095,7 @@ async def bulk_create_trades(
         )
         crud.create_trade(db, trade_data)
 
-    return RedirectResponse(url="/trades", status_code=303)
+    return RedirectResponse(url=resolve_trades_redirect(request, trader_id, True), status_code=303)
 
 @app.get("/account", response_class=HTMLResponse)
 async def account_page(request: Request, db: Session = Depends(get_db)):

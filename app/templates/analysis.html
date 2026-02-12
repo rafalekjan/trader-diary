@@ -50,8 +50,8 @@
                         </div>
                     </div>
                     <div class="form-group">
-                        <label for="spy_note">Note</label>
-                        <textarea id="spy_note" name="spy_note" rows="2" placeholder="1 line"></textarea>
+                        <label for="spy_note">SPY behavior <span class="help-icon" data-tooltip="Price above key moving averages / structure intact / price approaching a level of interest.">?</span></label>
+                        <textarea id="spy_note" name="spy_note" rows="2" placeholder="Price above key moving averages / structure intact / price approaching a level of interest"></textarea>
                     </div>
                 </div>
             </div>
@@ -216,7 +216,7 @@
                     <div class="form-group">
                         <label>Key levels</label>
                         <div class="checkbox-group checkbox-group-column">
-                            <div class="timeframe-row-5cols">
+                            <div class="timeframe-row-8cols">
                                 <div class="checkbox-row">
                                     <span class="checkbox-text">Prior day high</span>
                                     <label class="checkbox-label">
@@ -290,6 +290,7 @@
                                 <option value="">Select</option>
                                 <option value="Continuation">Continuation</option>
                                 <option value="Against">Against</option>
+                                <option value="Chop">Chop</option>
                             </select>
                         </div>
                     </div>
@@ -316,8 +317,8 @@
                         </div>
                     </div>
                     <div class="form-group">
-                        <label for="h4_note">Note</label>
-                        <textarea id="h4_note" name="h4_note" rows="2" placeholder="1 line"></textarea>
+                        <label for="h4_note">Stock behavior <span class="help-icon" data-tooltip="Price stops making LL at support / strong rejection wicks / clean break and hold above resistance.">?</span></label>
+                        <textarea id="h4_note" name="h4_note" rows="2" placeholder="Price stops making LL at support / strong rejection wicks / clean break and hold above resistance"></textarea>
                     </div>
                 </div>
             </div>
@@ -364,7 +365,7 @@
                     <div class="form-group">
                         <label>Key levels</label>
                         <div class="checkbox-group checkbox-group-column">
-                            <div class="timeframe-row-5cols">
+                            <div class="timeframe-row-8cols">
                                 <div class="checkbox-row">
                                     <span class="checkbox-text">Prior day high</span>
                                     <label class="checkbox-label">
@@ -384,6 +385,43 @@
                                     </label>
                                     <label class="checkbox-label">
                                         <input type="checkbox" name="h1_pdl_below">
+                                        <span class="checkbox-text">Below</span>
+                                    </label>
+                                </div>
+                                <div class="checkbox-row">
+                                    <span class="checkbox-text">Premarket high</span>
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" name="h1_pmh_above">
+                                        <span class="checkbox-text">Above</span>
+                                    </label>
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" name="h1_pmh_below">
+                                        <span class="checkbox-text">Below</span>
+                                    </label>
+                                </div>
+                                <div class="checkbox-row">
+                                    <span class="checkbox-text">Premarket low</span>
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" name="h1_pml_above">
+                                        <span class="checkbox-text">Above</span>
+                                    </label>
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" name="h1_pml_below">
+                                        <span class="checkbox-text">Below</span>
+                                    </label>
+                                </div>
+                                <div class="checkbox-row">
+                                    <span class="checkbox-text">Opening range</span>
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" name="h1_or_above">
+                                        <span class="checkbox-text">Above</span>
+                                    </label>
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" name="h1_or_middle">
+                                        <span class="checkbox-text">Middle</span>
+                                    </label>
+                                    <label class="checkbox-label">
+                                        <input type="checkbox" name="h1_or_below">
                                         <span class="checkbox-text">Below</span>
                                     </label>
                                 </div>
@@ -438,6 +476,7 @@
                                 <option value="">Select</option>
                                 <option value="Continuation">Continuation</option>
                                 <option value="Against">Against</option>
+                                <option value="Chop">Chop</option>
                             </select>
                         </div>
                     </div>
@@ -464,8 +503,8 @@
                         </div>
                     </div>
                     <div class="form-group">
-                        <label for="h1_note">Note</label>
-                        <textarea id="h1_note" name="h1_note" rows="2" placeholder="1 line"></textarea>
+                        <label for="h1_note">Stock behavior <span class="help-icon" data-tooltip="Price stops making LL at support / strong rejection wicks / clean break and hold above resistance.">?</span></label>
+                        <textarea id="h1_note" name="h1_note" rows="2" placeholder="Price stops making LL at support / strong rejection wicks / clean break and hold above resistance"></textarea>
                     </div>
                 </div>
             </div>
@@ -520,7 +559,19 @@
                         </div>
                         <div class="form-group">
                             <label for="m15_momentum">Momentum</label>
-                            <input id="m15_momentum" name="m15_momentum" type="text" placeholder="e.g. turns back down after a failed reclaim">
+                            <select id="m15_momentum" name="m15_momentum">
+                                <option value="">Select</option>
+                                <option value="Turns back down (failed reclaim)">Turns back down (failed reclaim)</option>
+                                <option value="Aligning with direction">Aligning with direction</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label for="m15_volume">Volume</label>
+                            <select id="m15_volume" name="m15_volume">
+                                <option value="">Select</option>
+                                <option value="Increasing volume on the move">Increasing volume on the move</option>
+                                <option value="Reduced volume on pullbacks">Reduced volume on pullbacks</option>
+                            </select>
                         </div>
                     </div>
                     <div class="timeframe-row-2cols">

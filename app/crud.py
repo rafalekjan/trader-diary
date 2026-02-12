@@ -23,6 +23,9 @@ def get_trades(db: Session, skip: int = 0, limit: int = 100,
 def get_trade(db: Session, trade_id: int) -> Optional[models.Trade]:
     return db.query(models.Trade).filter(models.Trade.id == trade_id).first()
 
+def get_trader(db: Session, trader_id: int) -> Optional[models.Trader]:
+    return db.query(models.Trader).filter(models.Trader.id == trader_id).first()
+
 def get_traders(db: Session) -> List[models.Trader]:
     return db.query(models.Trader).order_by(models.Trader.name.asc()).all()
 

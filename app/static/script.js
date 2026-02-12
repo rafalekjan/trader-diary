@@ -79,6 +79,18 @@ function initAnalysisBuilder() {
             if (b.checked) a.checked = false;
         });
     };
+    const bindMutualExclusiveGroup = (names) => {
+        const inputs = names.map(name => document.querySelector(`input[name="${name}"]`)).filter(Boolean);
+        if (inputs.length < 2) return;
+        inputs.forEach(input => {
+            input.addEventListener('change', () => {
+                if (!input.checked) return;
+                inputs.forEach(other => {
+                    if (other !== input) other.checked = false;
+                });
+            });
+        });
+    };
 
     const withFallback = (value, fallback) => (value && value.length ? value : fallback);
     const storageKey = 'analysis:latest';
@@ -91,6 +103,9 @@ function initAnalysisBuilder() {
     bindMutualExclusive('h4_ma200_above', 'h4_ma200_below');
     bindMutualExclusive('h1_pdh_above', 'h1_pdh_below');
     bindMutualExclusive('h1_pdl_above', 'h1_pdl_below');
+    bindMutualExclusive('h1_pmh_above', 'h1_pmh_below');
+    bindMutualExclusive('h1_pml_above', 'h1_pml_below');
+    bindMutualExclusiveGroup(['h1_or_above', 'h1_or_middle', 'h1_or_below']);
     bindMutualExclusive('h1_ma20_above', 'h1_ma20_below');
     bindMutualExclusive('h1_ma50_above', 'h1_ma50_below');
     bindMutualExclusive('h1_ma200_above', 'h1_ma200_below');
@@ -216,6 +231,13 @@ function initAnalysisBuilder() {
             getCheckbox('h1_pdh_below') ? 'PDH below' : '',
             getCheckbox('h1_pdl_above') ? 'PDL above' : '',
             getCheckbox('h1_pdl_below') ? 'PDL below' : '',
+            getCheckbox('h1_pmh_above') ? 'Premarket high above' : '',
+            getCheckbox('h1_pmh_below') ? 'Premarket high below' : '',
+            getCheckbox('h1_pml_above') ? 'Premarket low above' : '',
+            getCheckbox('h1_pml_below') ? 'Premarket low below' : '',
+            getCheckbox('h1_or_above') ? 'Opening range above' : '',
+            getCheckbox('h1_or_middle') ? 'Opening range middle' : '',
+            getCheckbox('h1_or_below') ? 'Opening range below' : '',
             getCheckbox('h1_ma20_above') ? 'MA20 above' : '',
             getCheckbox('h1_ma20_below') ? 'MA20 below' : '',
             getCheckbox('h1_ma50_above') ? 'MA50 above' : '',
@@ -231,6 +253,7 @@ function initAnalysisBuilder() {
         const m15Rate = withFallback(getValue('m15_rate'), '---');
         const m15StructureBreaks = withFallback(getValue('m15_structure_breaks'), '---');
         const m15Momentum = withFallback(getValue('m15_momentum'), '---');
+        const m15Volume = withFallback(getValue('m15_volume'), '---');
         const m15Breakdown = withFallback(getValue('m15_breakdown'), '---');
         const m15Breakout = withFallback(getValue('m15_breakout'), '---');
 
@@ -254,19 +277,6 @@ function initAnalysisBuilder() {
         const marketAlignedLine = (label) => `[${marketAligned === label ? 'X' : ' '}] ${label}`;
 
         return [
-            'DAY CONTEXT (SPY FIRST):',
-            `Bias: ${spyBias}`,
-            `Rate: ${spyRate}`,
-            `Structure: ${spyStructure}`,
-            `VWAP: ${spyVwap}`,
-            `Resistance: ${spyResistance}`,
-            `Support: ${spySupport}`,
-            `Note: ${spyNote}`,
-            '',
-            'MARKET ALIGNED?',
-            marketAlignedLine('Yes (trade allowed)'),
-            marketAlignedLine('No (observation-only / smaller size / wait)'),
-            '',
             '================================================',
             '',
             `SETUP #${setup}        TICKER: ${ticker}`,
@@ -283,6 +293,19 @@ function initAnalysisBuilder() {
             `TP1: ${tp1}`,
             `TP2 / Runner: ${tp2}`,
             `What must happen to enter: ${trigger}`,
+            '',
+            'DAY CONTEXT (SPY FIRST):',
+            `Bias: ${spyBias}`,
+            `Rate: ${spyRate}`,
+            `Structure: ${spyStructure}`,
+            `VWAP: ${spyVwap}`,
+            `Resistance: ${spyResistance}`,
+            `Support: ${spySupport}`,
+            `Note: ${spyNote}`,
+            '',
+            'MARKET ALIGNED?',
+            marketAlignedLine('Yes (trade allowed)'),
+            marketAlignedLine('No (observation-only / smaller size / wait)'),
             '',
             '--------------------------------',
             'TOP-DOWN STRUCTURE',
@@ -332,6 +355,7 @@ function initAnalysisBuilder() {
             `Rate: ${m15Rate}`,
             `Structure breaks: ${m15StructureBreaks}`,
             `Momentum: ${m15Momentum}`,
+            `Volume: ${m15Volume}`,
             `Breakdown: ${m15Breakdown}`,
             `Breakout: ${m15Breakout}`,
             `Note: ${m15Note}`,
@@ -412,6 +436,13 @@ function initAnalysisBuilder() {
             getCheckbox('h1_pdh_below') ? 'PDH below' : '',
             getCheckbox('h1_pdl_above') ? 'PDL above' : '',
             getCheckbox('h1_pdl_below') ? 'PDL below' : '',
+            getCheckbox('h1_pmh_above') ? 'Premarket high above' : '',
+            getCheckbox('h1_pmh_below') ? 'Premarket high below' : '',
+            getCheckbox('h1_pml_above') ? 'Premarket low above' : '',
+            getCheckbox('h1_pml_below') ? 'Premarket low below' : '',
+            getCheckbox('h1_or_above') ? 'Opening range above' : '',
+            getCheckbox('h1_or_middle') ? 'Opening range middle' : '',
+            getCheckbox('h1_or_below') ? 'Opening range below' : '',
             getCheckbox('h1_ma20_above') ? 'MA20 above' : '',
             getCheckbox('h1_ma20_below') ? 'MA20 below' : '',
             getCheckbox('h1_ma50_above') ? 'MA50 above' : '',
@@ -427,6 +458,7 @@ function initAnalysisBuilder() {
         const m15Rate = withFallback(getValue('m15_rate'), '');
         const m15StructureBreaks = withFallback(getValue('m15_structure_breaks'), '');
         const m15Momentum = withFallback(getValue('m15_momentum'), '');
+        const m15Volume = withFallback(getValue('m15_volume'), '');
         const m15Breakdown = withFallback(getValue('m15_breakdown'), '');
         const m15Breakout = withFallback(getValue('m15_breakout'), '');
 
@@ -491,6 +523,7 @@ function initAnalysisBuilder() {
             m15Rate ? `Rate: ${m15Rate}` : '',
             m15StructureBreaks ? `Structure breaks: ${m15StructureBreaks}` : '',
             m15Momentum ? `Momentum: ${m15Momentum}` : '',
+            m15Volume ? `Volume: ${m15Volume}` : '',
             m15Breakdown ? `Breakdown: ${m15Breakdown}` : '',
             m15Breakout ? `Breakout: ${m15Breakout}` : '',
             m15Note ? m15Note : '',
