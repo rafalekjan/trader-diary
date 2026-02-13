@@ -12,7 +12,10 @@
     <div class="analysis-section">
         <div class="scoring-header-row">
             <h3>SPY</h3>
-            <button type="button" class="btn btn-secondary btn-small" id="scoring-autofill" disabled title="Wkrótce: uzupełnianie z webhooka TradingView">Autofill</button>
+            <div class="scoring-header-summary">
+                <div><strong>TOTAL SCORE:</strong> <span id="scoring-total-score">0 / 25</span></div>
+                <div><strong>Interpretation:</strong> <span id="scoring-interpretation">Observation only</span></div>
+            </div>
         </div>
 
         <div class="analysis-subsection">
@@ -243,21 +246,21 @@
                 </div>
             </div>
         </div>
+
+        <div class="analysis-subsection">
+            <h4>Summary</h4>
+            <div class="form-group">
+                <label for="sc_spy_summary">SPY summary</label>
+                <textarea id="sc_spy_summary" name="sc_spy_summary" rows="3" placeholder="Short SPY context summary..."></textarea>
+            </div>
+        </div>
     </div>
 
     <div class="analysis-section">
         <h3>Score Result</h3>
         <div class="form-group">
-            <label>TOTAL SCORE</label>
-            <div id="scoring-total-score">0 / 25</div>
-        </div>
-        <div class="form-group">
             <label>RAW SCORE (before caps)</label>
             <div id="scoring-raw-score">0 / 25</div>
-        </div>
-        <div class="form-group">
-            <label>Interpretation</label>
-            <div id="scoring-interpretation">Observation only</div>
         </div>
         <div class="form-group">
             <label>Section Scores</label>
@@ -272,3 +275,6 @@
     </div>
 </form>
 {% endblock %}
+
+
+

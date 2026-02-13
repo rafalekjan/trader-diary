@@ -1240,39 +1240,6 @@ main {
     gap: 0.75rem;
 }
 
-.source-badge {
-    display: inline-flex;
-    align-items: center;
-    margin-left: 0.4rem;
-    padding: 0.08rem 0.4rem;
-    border-radius: 999px;
-    border: 1px solid var(--border);
-    background: #fff;
-    font-size: 0.66rem;
-    font-weight: 700;
-    letter-spacing: 0.03em;
-    color: #6b7280;
-    text-transform: uppercase;
-    vertical-align: middle;
-}
-
-.source-badge.badge-auto {
-    border-color: #8bb89f;
-    color: #2f6f49;
-    background: #eef8f2;
-}
-
-.source-badge.badge-autostar {
-    border-color: #b9a774;
-    color: #7a5a18;
-    background: #fff8e7;
-}
-
-.source-badge.badge-manual {
-    border-color: #a9afba;
-    color: #4b5563;
-    background: #f4f6f8;
-}
 
 .scoring-builder .analysis-subsection {
     margin-top: 0.9rem;
@@ -1740,3 +1707,4 @@ footer {
     accent-color: var(--accent);
     cursor: pointer;
 }
+

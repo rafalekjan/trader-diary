@@ -751,59 +751,38 @@ function initAnalysisBuilder() {
 }
 
 const SPY_SCORING_FIELD_HELP = {
-    sc_spy_bias: { badge: 'RÊCZNIE', tooltipText: 'Wybierz kierunek, ktory widzisz na wykresie; jesli nie masz przewagi, wybierz Neutral.' },
-    sc_spy_regime: { badge: 'AUTO*', tooltipText: 'Trending gdy ruch jest kierunkowy, Ranging gdy cena chodzi bokiem, Volatile gdy czesto gwaltownie zawraca.' },
-    sc_spy_structure: { badge: 'AUTO*', tooltipText: 'HH/HL gdy dolki i szczyty ida wyzej, LL/LH gdy ida nizej, Mixed gdy brak konsekwencji.' },
-    sc_spy_vwap: { badge: 'AUTO', tooltipText: 'Above gdy cena zamkniecia jest nad VWAP, Below gdy jest pod VWAP.' },
-    sc_spy_rate: { badge: 'RÊCZNIE', tooltipText: 'Wpisz ocene sily rynku od 0 do 100 na podstawie tego, co widzisz na wykresie.' },
-    sc_spy_volume_gt_20d: { badge: 'AUTO', tooltipText: 'Zaznacz, gdy dzisiejszy wolumen jest wiekszy niz srednia z 20 dni.' },
-    sc_spy_volume_expansion: { badge: 'AUTO', tooltipText: 'Zaznacz, gdy wolumen jest wyraznie wiekszy niz na kilku poprzednich sesjach.' },
-    sc_spy_vix_trend: { badge: 'AUTO', tooltipText: 'Falling gdy VIX spada od kilku dni, Rising gdy rosnie, Flat gdy stoi blisko jednego poziomu.' },
-    sc_spy_vix_level: { badge: 'AUTO', tooltipText: 'Wybierz zakres zgodny z aktualnym VIX: ponizej 20, 20-25 lub powyzej 25.' },
-    sc_spy_breadth: { badge: 'AUTO*', tooltipText: 'Strong gdy wiekszosc rynku idzie w tym samym kierunku, Weak gdy tylko czesc spolek bierze udzial, Neutral gdy jest po rowno.' },
-    sc_spy_location: { badge: 'RÊCZNIE', tooltipText: 'Breaking range gdy cena wybija zakres konsolidacji, inaczej wybierz support, resistance albo srodek zakresu.' },
-    sc_spy_room: { badge: 'RÊCZNIE', tooltipText: 'Large gdy do kolejnego poziomu jest duzo miejsca, Limited gdy poziom jest blisko, None gdy miejsca praktycznie nie ma.' },
-    sc_spy_behavior_above_20_50: { badge: 'AUTO*', tooltipText: 'Zaznacz, gdy cena utrzymuje sie nad srednimi 20 i 50.' },
-    sc_spy_behavior_above_200: { badge: 'AUTO', tooltipText: 'Zaznacz, gdy cena zamyka sie powyzej SMA200.' },
-    sc_spy_behavior_trend: { badge: 'AUTO*', tooltipText: 'Higher lows gdy dolki rosna, Lower highs gdy szczyty spadaja, None gdy nie ma czytelnego sygnalu.' },
-    sc_spy_behavior_pullback_in_progress: { badge: 'AUTO*', tooltipText: 'Zaznacz, gdy po ruchu kierunkowym trwa korekta, ale struktura nie zostala zanegowana.' },
-    sc_spy_behavior_compression: { badge: 'AUTO*', tooltipText: 'Zaznacz, gdy ostatnie swiece maja coraz mniejszy zakres ruchu.' },
-    sc_spy_behavior_expansion_up: { badge: 'AUTO*', tooltipText: 'Zaznacz, gdy swieca ma duzy zakres i zamyka sie blisko maksimum.' },
-    sc_spy_behavior_expansion_down: { badge: 'AUTO*', tooltipText: 'Zaznacz, gdy swieca ma duzy zakres i zamyka sie blisko minimum.' }
+    sc_spy_bias: { tooltipText: 'Wybierz kierunek, ktory widzisz na wykresie; jesli nie masz przewagi, wybierz Neutral.' },
+    sc_spy_regime: { tooltipText: 'Trending gdy ruch jest kierunkowy, Ranging gdy cena chodzi bokiem, Volatile gdy czesto gwaltownie zawraca.' },
+    sc_spy_structure: { tooltipText: 'HH/HL gdy dolki i szczyty ida wyzej, LL/LH gdy ida nizej, Mixed gdy brak konsekwencji.' },
+    sc_spy_vwap: { tooltipText: 'Above gdy cena zamkniecia jest nad VWAP, Below gdy jest pod VWAP.' },
+    sc_spy_rate: { tooltipText: 'Wpisz ocene sily rynku od 0 do 100 na podstawie tego, co widzisz na wykresie.' },
+    sc_spy_volume_gt_20d: { tooltipText: 'Zaznacz, gdy dzisiejszy wolumen jest wiekszy niz srednia z 20 dni.' },
+    sc_spy_volume_expansion: { tooltipText: 'Zaznacz, gdy wolumen jest wyraznie wiekszy niz na kilku poprzednich sesjach.' },
+    sc_spy_vix_trend: { tooltipText: 'Falling gdy VIX spada od kilku dni, Rising gdy rosnie, Flat gdy stoi blisko jednego poziomu.' },
+    sc_spy_vix_level: { tooltipText: 'Wybierz zakres zgodny z aktualnym VIX: ponizej 20, 20-25 lub powyzej 25.' },
+    sc_spy_breadth: { tooltipText: 'Strong gdy wiekszosc rynku idzie w tym samym kierunku, Weak gdy tylko czesc spolek bierze udzial, Neutral gdy jest po rowno.' },
+    sc_spy_location: { tooltipText: 'Breaking range gdy cena wybija zakres konsolidacji, inaczej wybierz support, resistance albo srodek zakresu.' },
+    sc_spy_room: { tooltipText: 'Large gdy do kolejnego poziomu jest duzo miejsca, Limited gdy poziom jest blisko, None gdy miejsca praktycznie nie ma.' },
+    sc_spy_behavior_above_20_50: { tooltipText: 'Zaznacz, gdy cena utrzymuje sie nad srednimi 20 i 50.' },
+    sc_spy_behavior_above_200: { tooltipText: 'Zaznacz, gdy cena zamyka sie powyzej SMA200.' },
+    sc_spy_behavior_trend: { tooltipText: 'Higher lows gdy dolki rosna, Lower highs gdy szczyty spadaja, None gdy nie ma czytelnego sygnalu.' },
+    sc_spy_behavior_pullback_in_progress: { tooltipText: 'Zaznacz, gdy po ruchu kierunkowym trwa korekta, ale struktura nie zostala zanegowana.' },
+    sc_spy_behavior_compression: { tooltipText: 'Zaznacz, gdy ostatnie swiece maja coraz mniejszy zakres ruchu.' },
+    sc_spy_behavior_expansion_up: { tooltipText: 'Zaznacz, gdy swieca ma duzy zakres i zamyka sie blisko maksimum.' },
+    sc_spy_behavior_expansion_down: { tooltipText: 'Zaznacz, gdy swieca ma duzy zakres i zamyka sie blisko minimum.' }
 };
 
-function autofillSpyFields(tvPayload) {
-    // Placeholder pod przyszly webhook TradingView.
-    // Docelowo funkcja:
-    // 1) odbierze JSON z wartosciami (np. vwap_side, vix_level, above_200),
-    // 2) zmapuje je na nazwy pol formularza scoringu,
-    // 3) ustawi radio/checkbox i odpali ponowne przeliczenie score.
-    // Na razie nie zmienia stanu formularza.
-    void tvPayload;
-}
-
 function initScoringFieldHelp(form) {
-    const makeBadgeClass = (badge) => {
-        if (badge === 'AUTO') return 'badge-auto';
-        if (badge === 'AUTO*') return 'badge-autostar';
-        return 'badge-manual';
-    };
-
     const appendMeta = (targetEl, fieldId, meta) => {
         if (!targetEl || !meta) return;
-        if (targetEl.querySelector(`.source-badge[data-field-id="${fieldId}"]`)) return;
-
-        const badge = document.createElement('span');
-        badge.className = `source-badge ${makeBadgeClass(meta.badge)}`;
-        badge.dataset.fieldId = fieldId;
-        badge.textContent = meta.badge;
+        if (targetEl.querySelector(`.help-icon[data-field-id="${fieldId}"]`)) return;
 
         const help = document.createElement('span');
         help.className = 'help-icon';
+        help.dataset.fieldId = fieldId;
         help.dataset.tooltip = meta.tooltipText;
         help.textContent = '?';
 
-        targetEl.appendChild(badge);
         targetEl.appendChild(help);
     };
 
@@ -1014,7 +993,6 @@ function initScoringBuilder() {
     const form = document.getElementById('scoring-form');
     if (!form) return;
     initScoringFieldHelp(form);
-    window.autofillSpyFields = autofillSpyFields;
 
     const totalEl = document.getElementById('scoring-total-score');
     const rawEl = document.getElementById('scoring-raw-score');
@@ -1115,4 +1093,6 @@ function initScoringBuilder() {
     form.addEventListener('input', renderScore);
     renderScore();
 }
+
+
 
