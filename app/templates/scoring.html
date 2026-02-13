@@ -1,0 +1,274 @@
+{% extends "base.html" %}
+{% block title %}Scoring{% endblock %}
+{% block content %}
+<div class="page-header">
+    <div>
+        <h2>Scoring</h2>
+        <p class="page-subtitle">Scoring framework based on market context. Migration starts from SPY.</p>
+    </div>
+</div>
+
+<form id="scoring-form" class="card analysis-builder scoring-builder" autocomplete="off">
+    <div class="analysis-section">
+        <div class="scoring-header-row">
+            <h3>SPY</h3>
+            <button type="button" class="btn btn-secondary btn-small" id="scoring-autofill" disabled title="Wkrótce: uzupełnianie z webhooka TradingView">Autofill</button>
+        </div>
+
+        <div class="analysis-subsection">
+            <h4>1. Direction</h4>
+            <div class="scoring-stage-grid">
+                <div class="form-group">
+                    <label>Bias</label>
+                    <div class="checkbox-group scoring-option-grid">
+                        <label class="checkbox-label">
+                            <input type="radio" name="sc_spy_bias" value="bullish">
+                            <span class="checkbox-text">Bullish</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="radio" name="sc_spy_bias" value="bearish">
+                            <span class="checkbox-text">Bearish</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="radio" name="sc_spy_bias" value="neutral">
+                            <span class="checkbox-text">Neutral</span>
+                        </label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Market Regime</label>
+                    <div class="checkbox-group scoring-option-grid">
+                        <label class="checkbox-label">
+                            <input type="radio" name="sc_spy_regime" value="trending">
+                            <span class="checkbox-text">Trending</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="radio" name="sc_spy_regime" value="ranging">
+                            <span class="checkbox-text">Ranging</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="radio" name="sc_spy_regime" value="volatile">
+                            <span class="checkbox-text">Volatile/Distribution</span>
+                        </label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Structure</label>
+                    <div class="checkbox-group scoring-option-grid">
+                        <label class="checkbox-label">
+                            <input type="radio" name="sc_spy_structure" value="hh_hl">
+                            <span class="checkbox-text">HH/HL</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="radio" name="sc_spy_structure" value="ll_lh">
+                            <span class="checkbox-text">LL/LH</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="radio" name="sc_spy_structure" value="mixed">
+                            <span class="checkbox-text">Mixed</span>
+                        </label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>VWAP</label>
+                    <div class="checkbox-group scoring-option-grid">
+                        <label class="checkbox-label">
+                            <input type="radio" name="sc_spy_vwap" value="above">
+                            <span class="checkbox-text">Above</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="radio" name="sc_spy_vwap" value="below">
+                            <span class="checkbox-text">Below</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="analysis-subsection">
+            <h4>2. Strength</h4>
+            <div class="scoring-stage-grid">
+                <div class="form-group">
+                    <label for="sc_spy_rate">Rate</label>
+                    <input id="sc_spy_rate" name="sc_spy_rate" type="text" placeholder="Rate">
+                </div>
+                <div class="form-group">
+                    <label>Volume confirmation</label>
+                    <div class="checkbox-group scoring-option-grid">
+                        <label class="checkbox-label">
+                            <input type="checkbox" name="sc_spy_volume_gt_20d">
+                            <span class="checkbox-text">Volume &gt; 20D avg</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" name="sc_spy_volume_expansion">
+                            <span class="checkbox-text">Volume expansion</span>
+                        </label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>VIX</label>
+                    <div class="checkbox-group scoring-option-grid">
+                        <label class="checkbox-label">
+                            <input type="radio" name="sc_spy_vix_trend" value="falling">
+                            <span class="checkbox-text">Falling</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="radio" name="sc_spy_vix_trend" value="rising">
+                            <span class="checkbox-text">Rising</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="radio" name="sc_spy_vix_trend" value="flat">
+                            <span class="checkbox-text">Flat</span>
+                        </label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>VIX level</label>
+                    <div class="checkbox-group scoring-option-grid">
+                        <label class="checkbox-label">
+                            <input type="radio" name="sc_spy_vix_level" value="lt20">
+                            <span class="checkbox-text">&lt;20</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="radio" name="sc_spy_vix_level" value="20_25">
+                            <span class="checkbox-text">20-25</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="radio" name="sc_spy_vix_level" value="gt25">
+                            <span class="checkbox-text">&gt;25</span>
+                        </label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Breadth</label>
+                    <div class="checkbox-group scoring-option-grid">
+                        <label class="checkbox-label">
+                            <input type="radio" name="sc_spy_breadth" value="strong">
+                            <span class="checkbox-text">Strong</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="radio" name="sc_spy_breadth" value="neutral">
+                            <span class="checkbox-text">Neutral</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="radio" name="sc_spy_breadth" value="weak">
+                            <span class="checkbox-text">Weak</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="analysis-subsection">
+            <h4>3. Location</h4>
+            <div class="scoring-stage-grid">
+                <div class="form-group">
+                    <label>Location</label>
+                    <div class="checkbox-group scoring-option-grid">
+                        <label class="checkbox-label">
+                            <input type="radio" name="sc_spy_location" value="at_resistance">
+                            <span class="checkbox-text">At resistance</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="radio" name="sc_spy_location" value="at_support">
+                            <span class="checkbox-text">At support</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="radio" name="sc_spy_location" value="mid_range">
+                            <span class="checkbox-text">Mid-range</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="radio" name="sc_spy_location" value="breaking_range">
+                            <span class="checkbox-text">Breaking range</span>
+                        </label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Room to move</label>
+                    <div class="checkbox-group scoring-option-grid">
+                        <label class="checkbox-label">
+                            <input type="radio" name="sc_spy_room" value="large">
+                            <span class="checkbox-text">Large</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="radio" name="sc_spy_room" value="limited">
+                            <span class="checkbox-text">Limited</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="radio" name="sc_spy_room" value="none">
+                            <span class="checkbox-text">None</span>
+                        </label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>SPY behavior</label>
+                    <div class="checkbox-group scoring-option-grid scoring-option-grid-2">
+                        <label class="checkbox-label">
+                            <input type="checkbox" name="sc_spy_behavior_above_20_50">
+                            <span class="checkbox-text">Above 20/50</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" name="sc_spy_behavior_above_200">
+                            <span class="checkbox-text">Above 200</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="radio" name="sc_spy_behavior_trend" value="higher_lows">
+                            <span class="checkbox-text">Higher lows intact</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="radio" name="sc_spy_behavior_trend" value="lower_highs">
+                            <span class="checkbox-text">Lower highs intact</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="radio" name="sc_spy_behavior_trend" value="none" checked>
+                            <span class="checkbox-text">No clear trend signal</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" name="sc_spy_behavior_pullback_in_progress">
+                            <span class="checkbox-text">Pullback in progress</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" name="sc_spy_behavior_compression">
+                            <span class="checkbox-text">Compression</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" name="sc_spy_behavior_expansion_up">
+                            <span class="checkbox-text">Price expansion up</span>
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" name="sc_spy_behavior_expansion_down">
+                            <span class="checkbox-text">Price expansion down</span>
+                        </label>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="analysis-section">
+        <h3>Score Result</h3>
+        <div class="form-group">
+            <label>TOTAL SCORE</label>
+            <div id="scoring-total-score">0 / 25</div>
+        </div>
+        <div class="form-group">
+            <label>RAW SCORE (before caps)</label>
+            <div id="scoring-raw-score">0 / 25</div>
+        </div>
+        <div class="form-group">
+            <label>Interpretation</label>
+            <div id="scoring-interpretation">Observation only</div>
+        </div>
+        <div class="form-group">
+            <label>Section Scores</label>
+            <div id="scoring-breakdown">
+                Direction: 0/5 | Strength: 0/8 | Volatility Regime: 0/6 | Location: 0/6
+            </div>
+            <div id="pen-vol-subtotal">Volatility penalties subtotal: 0</div>
+        </div>
+        <div class="form-group">
+            <div id="scoring-cap-note"></div>
+        </div>
+    </div>
+</form>
+{% endblock %}

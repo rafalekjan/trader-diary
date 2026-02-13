@@ -1183,6 +1183,16 @@ async def analysis_page(request: Request, db: Session = Depends(get_db)):
         "equity": calculate_equity(db)
     })
 
+@app.get("/scoring", response_class=HTMLResponse)
+async def scoring_page(request: Request, db: Session = Depends(get_db)):
+    """Market scoring page."""
+    account = crud.get_account(db)
+    return templates.TemplateResponse("scoring.html", {
+        "request": request,
+        "account": account,
+        "equity": calculate_equity(db)
+    })
+
 @app.get("/calendar", response_class=HTMLResponse)
 async def calendar_page(request: Request, db: Session = Depends(get_db)):
     """Calendar view with daily P&L."""

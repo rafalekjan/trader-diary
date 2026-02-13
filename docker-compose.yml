@@ -10,6 +10,7 @@ services:
       POSTGRES_DB: trader_journal
     ports:
       - "5433:5432"
+    restart: unless-stopped
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
@@ -23,6 +24,7 @@ services:
     container_name: trader_web
     ports:
       - "8001:8000"
+    restart: unless-stopped
     environment:
       DB_HOST: db
       DB_PORT: 5432

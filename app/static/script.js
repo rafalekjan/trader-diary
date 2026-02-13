@@ -18,6 +18,7 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 
     initAnalysisBuilder();
+    initScoringBuilder();
 });
 
 // Toggle option fields based on instrument type
@@ -192,6 +193,11 @@ function initAnalysisBuilder() {
         const d1Relative = withFallback(getValue('d1_relative'), '---');
         const d1Note = withFallback(getValue('d1_note'), '---');
         const d1Rate = withFallback(getValue('d1_rate'), '---');
+        const d1Pullback = withFallback(getValue('d1_pullback'), '---');
+        const d1CompanyEvents = [
+            getCheckbox('d1_event_dividend') ? 'Dividends' : '',
+            getCheckbox('d1_event_earnings') ? 'Earnings' : ''
+        ].filter(Boolean).join(', ') || 'None';
 
         const h4Bias = withFallback(getValue('h4_bias'), '---');
         const h4Structure = withFallback(getValue('h4_structure'), '---');
@@ -320,6 +326,8 @@ function initAnalysisBuilder() {
             `200 SMA: ${d1Sma200}`,
             `Relative: ${d1Relative}`,
             `Rate: ${d1Rate}`,
+            `Pullback: ${d1Pullback}`,
+            `Company events: ${d1CompanyEvents}`,
             `Note: ${d1Note}`,
             '',
             '4H:',
@@ -397,6 +405,11 @@ function initAnalysisBuilder() {
         const d1Relative = withFallback(getValue('d1_relative'), '---');
         const d1Note = withFallback(getValue('d1_note'), '');
         const d1Rate = withFallback(getValue('d1_rate'), '');
+        const d1Pullback = withFallback(getValue('d1_pullback'), '');
+        const d1CompanyEvents = [
+            getCheckbox('d1_event_dividend') ? 'Dividends' : '',
+            getCheckbox('d1_event_earnings') ? 'Earnings' : ''
+        ].filter(Boolean).join(', ');
 
         const h4Bias = withFallback(getValue('h4_bias'), '---');
         const h4Structure = withFallback(getValue('h4_structure'), '---');
@@ -494,6 +507,8 @@ function initAnalysisBuilder() {
             d1Sma200 ? `200 SMA: ${d1Sma200}` : '',
             d1Relative,
             d1Rate ? `Rate: ${d1Rate}` : '',
+            d1Pullback ? `Pullback: ${d1Pullback}` : '',
+            d1CompanyEvents ? `Company events: ${d1CompanyEvents}` : '',
             d1Note ? d1Note : '',
             '4H',
             `${h4Bias.toLowerCase()} - ${h4Structure}`,
@@ -734,3 +749,370 @@ function initAnalysisBuilder() {
 
     refreshList();
 }
+
+const SPY_SCORING_FIELD_HELP = {
+    sc_spy_bias: { badge: 'RÊCZNIE', tooltipText: 'Wybierz kierunek, ktory widzisz na wykresie; jesli nie masz przewagi, wybierz Neutral.' },
+    sc_spy_regime: { badge: 'AUTO*', tooltipText: 'Trending gdy ruch jest kierunkowy, Ranging gdy cena chodzi bokiem, Volatile gdy czesto gwaltownie zawraca.' },
+    sc_spy_structure: { badge: 'AUTO*', tooltipText: 'HH/HL gdy dolki i szczyty ida wyzej, LL/LH gdy ida nizej, Mixed gdy brak konsekwencji.' },
+    sc_spy_vwap: { badge: 'AUTO', tooltipText: 'Above gdy cena zamkniecia jest nad VWAP, Below gdy jest pod VWAP.' },
+    sc_spy_rate: { badge: 'RÊCZNIE', tooltipText: 'Wpisz ocene sily rynku od 0 do 100 na podstawie tego, co widzisz na wykresie.' },
+    sc_spy_volume_gt_20d: { badge: 'AUTO', tooltipText: 'Zaznacz, gdy dzisiejszy wolumen jest wiekszy niz srednia z 20 dni.' },
+    sc_spy_volume_expansion: { badge: 'AUTO', tooltipText: 'Zaznacz, gdy wolumen jest wyraznie wiekszy niz na kilku poprzednich sesjach.' },
+    sc_spy_vix_trend: { badge: 'AUTO', tooltipText: 'Falling gdy VIX spada od kilku dni, Rising gdy rosnie, Flat gdy stoi blisko jednego poziomu.' },
+    sc_spy_vix_level: { badge: 'AUTO', tooltipText: 'Wybierz zakres zgodny z aktualnym VIX: ponizej 20, 20-25 lub powyzej 25.' },
+    sc_spy_breadth: { badge: 'AUTO*', tooltipText: 'Strong gdy wiekszosc rynku idzie w tym samym kierunku, Weak gdy tylko czesc spolek bierze udzial, Neutral gdy jest po rowno.' },
+    sc_spy_location: { badge: 'RÊCZNIE', tooltipText: 'Breaking range gdy cena wybija zakres konsolidacji, inaczej wybierz support, resistance albo srodek zakresu.' },
+    sc_spy_room: { badge: 'RÊCZNIE', tooltipText: 'Large gdy do kolejnego poziomu jest duzo miejsca, Limited gdy poziom jest blisko, None gdy miejsca praktycznie nie ma.' },
+    sc_spy_behavior_above_20_50: { badge: 'AUTO*', tooltipText: 'Zaznacz, gdy cena utrzymuje sie nad srednimi 20 i 50.' },
+    sc_spy_behavior_above_200: { badge: 'AUTO', tooltipText: 'Zaznacz, gdy cena zamyka sie powyzej SMA200.' },
+    sc_spy_behavior_trend: { badge: 'AUTO*', tooltipText: 'Higher lows gdy dolki rosna, Lower highs gdy szczyty spadaja, None gdy nie ma czytelnego sygnalu.' },
+    sc_spy_behavior_pullback_in_progress: { badge: 'AUTO*', tooltipText: 'Zaznacz, gdy po ruchu kierunkowym trwa korekta, ale struktura nie zostala zanegowana.' },
+    sc_spy_behavior_compression: { badge: 'AUTO*', tooltipText: 'Zaznacz, gdy ostatnie swiece maja coraz mniejszy zakres ruchu.' },
+    sc_spy_behavior_expansion_up: { badge: 'AUTO*', tooltipText: 'Zaznacz, gdy swieca ma duzy zakres i zamyka sie blisko maksimum.' },
+    sc_spy_behavior_expansion_down: { badge: 'AUTO*', tooltipText: 'Zaznacz, gdy swieca ma duzy zakres i zamyka sie blisko minimum.' }
+};
+
+function autofillSpyFields(tvPayload) {
+    // Placeholder pod przyszly webhook TradingView.
+    // Docelowo funkcja:
+    // 1) odbierze JSON z wartosciami (np. vwap_side, vix_level, above_200),
+    // 2) zmapuje je na nazwy pol formularza scoringu,
+    // 3) ustawi radio/checkbox i odpali ponowne przeliczenie score.
+    // Na razie nie zmienia stanu formularza.
+    void tvPayload;
+}
+
+function initScoringFieldHelp(form) {
+    const makeBadgeClass = (badge) => {
+        if (badge === 'AUTO') return 'badge-auto';
+        if (badge === 'AUTO*') return 'badge-autostar';
+        return 'badge-manual';
+    };
+
+    const appendMeta = (targetEl, fieldId, meta) => {
+        if (!targetEl || !meta) return;
+        if (targetEl.querySelector(`.source-badge[data-field-id="${fieldId}"]`)) return;
+
+        const badge = document.createElement('span');
+        badge.className = `source-badge ${makeBadgeClass(meta.badge)}`;
+        badge.dataset.fieldId = fieldId;
+        badge.textContent = meta.badge;
+
+        const help = document.createElement('span');
+        help.className = 'help-icon';
+        help.dataset.tooltip = meta.tooltipText;
+        help.textContent = '?';
+
+        targetEl.appendChild(badge);
+        targetEl.appendChild(help);
+    };
+
+    const appendToGroupLabel = (inputName) => {
+        const input = form.querySelector(`input[name="${inputName}"]`);
+        if (!input) return;
+        const label = input.closest('.form-group')?.querySelector(':scope > label');
+        appendMeta(label, inputName, SPY_SCORING_FIELD_HELP[inputName]);
+    };
+
+    const appendToOptionText = (inputName) => {
+        const input = form.querySelector(`input[name="${inputName}"]`);
+        if (!input) return;
+        const text = input.closest('label.checkbox-label')?.querySelector('.checkbox-text');
+        appendMeta(text, inputName, SPY_SCORING_FIELD_HELP[inputName]);
+    };
+
+    [
+        'sc_spy_bias',
+        'sc_spy_regime',
+        'sc_spy_structure',
+        'sc_spy_vwap',
+        'sc_spy_rate',
+        'sc_spy_vix_trend',
+        'sc_spy_vix_level',
+        'sc_spy_breadth',
+        'sc_spy_location',
+        'sc_spy_room',
+        'sc_spy_behavior_trend'
+    ].forEach(appendToGroupLabel);
+
+    [
+        'sc_spy_volume_gt_20d',
+        'sc_spy_volume_expansion',
+        'sc_spy_behavior_above_20_50',
+        'sc_spy_behavior_above_200',
+        'sc_spy_behavior_pullback_in_progress',
+        'sc_spy_behavior_compression',
+        'sc_spy_behavior_expansion_up',
+        'sc_spy_behavior_expansion_down'
+    ].forEach(appendToOptionText);
+}
+
+function calculateSpyScore(values) {
+    const bias = values.bias;
+    const structure = values.structure;
+    const vwap = values.vwap;
+    const regime = values.regime;
+    const breadth = values.breadth;
+    const vixTrend = values.vixTrend;
+    const vixLevel = values.vixLevel;
+    const room = values.room;
+    const location = values.location;
+    const behaviorTrend = values.behaviorTrend;
+
+    let directionScore = 0;
+    if (bias === 'bullish' || bias === 'bearish') directionScore += 1;
+    if (structure === 'hh_hl' || structure === 'll_lh') directionScore += 2;
+    if ((bias === 'bullish' && vwap === 'above') || (bias === 'bearish' && vwap === 'below')) directionScore += 1;
+    if (values.behaviorAbove200) directionScore += 1;
+    directionScore = Math.max(0, Math.min(directionScore, 5));
+
+    let rateScore = 0;
+    if (values.rate >= 80) rateScore = 3;
+    else if (values.rate >= 65) rateScore = 2;
+    else if (values.rate >= 50) rateScore = 1;
+
+    let strengthScore = 0;
+    strengthScore += rateScore;
+    if (values.volumeGt20d) strengthScore += 2;
+    if (values.volumeExpansion) strengthScore += 1;
+    if (breadth === 'strong') strengthScore += 2;
+    else if (breadth === 'neutral') strengthScore += 1;
+    strengthScore = Math.max(0, Math.min(strengthScore, 8));
+
+    let volatilityRegimeScore = 0;
+    if (vixLevel === 'lt20') volatilityRegimeScore += 3;
+    else if (vixLevel === '20_25') volatilityRegimeScore += 2;
+    if (vixTrend === 'falling') volatilityRegimeScore += 2;
+    else if (vixTrend === 'flat') volatilityRegimeScore += 1;
+    if (regime === 'trending') volatilityRegimeScore += 2;
+    else if (regime === 'ranging') volatilityRegimeScore += 1;
+    volatilityRegimeScore = Math.max(0, Math.min(volatilityRegimeScore, 6));
+
+    let locationScore = 0;
+    if (location === 'breaking_range') locationScore += 2;
+    if ((bias === 'bullish' && location === 'at_support') || (bias === 'bearish' && location === 'at_resistance')) {
+        locationScore += 1;
+    }
+    if (room === 'large') locationScore += 2;
+    else if (room === 'limited') locationScore += 1;
+    locationScore = Math.max(0, Math.min(locationScore, 6));
+
+    let penDir = 0;
+    let penVol = 0;
+    let penLoc = 0;
+    let penBrk = 0;
+    let penBeh = 0;
+    let penFallback = 0;
+
+    // Direction consistency penalties
+    if (bias === 'bullish' && structure === 'll_lh') penDir -= 2;
+    if (bias === 'bearish' && structure === 'hh_hl') penDir -= 2;
+    if (bias === 'bullish' && vwap === 'below') penDir -= 1;
+    if (bias === 'bearish' && vwap === 'above') penDir -= 1;
+
+    // Volatility + breadth penalties
+    const isRisingWeakSpecialCase = vixTrend === 'rising' && breadth === 'weak';
+    if (isRisingWeakSpecialCase) {
+        penVol -= 2;
+    } else {
+        if (vixTrend === 'rising') penVol -= 1;
+        if (breadth === 'weak' && bias === 'bullish') penVol -= 1;
+    }
+    if (breadth === 'strong' && bias === 'bearish') penVol -= 1;
+    if (regime === 'volatile') penVol -= 2;
+
+    // Location consistency penalties
+    if (bias === 'bullish' && location === 'at_resistance') penLoc -= 1;
+    if (bias === 'bearish' && location === 'at_support') penLoc -= 1;
+
+    // Volume quality penalties
+    const noVolumeConfirmation = !values.volumeGt20d;
+    if (noVolumeConfirmation && location === 'breaking_range') penBrk -= 2;
+    if (
+        location === 'breaking_range' &&
+        !values.behaviorExpansionUp &&
+        !values.behaviorExpansionDown &&
+        !values.behaviorCompression
+    ) {
+        penBrk -= 1;
+    }
+
+    // Directional behavior penalties
+    if (bias === 'bullish') {
+        if (behaviorTrend === 'lower_highs') penBeh -= 1;
+        if (values.behaviorExpansionDown) penBeh -= 1;
+    } else if (bias === 'bearish') {
+        if (behaviorTrend === 'higher_lows') penBeh -= 1;
+        if (values.behaviorExpansionUp) penBeh -= 1;
+    }
+    if (values.behaviorExpansionUp && values.behaviorExpansionDown) penFallback -= 1;
+
+    const penalties = penDir + penVol + penLoc + penBrk + penBeh + penFallback;
+
+    // Directional behavior bonuses
+    let behaviorBonus = 0;
+    if (bias === 'bullish') {
+        if (behaviorTrend === 'higher_lows') behaviorBonus += 1;
+        if (values.behaviorExpansionUp) behaviorBonus += 1;
+    } else if (bias === 'bearish') {
+        if (behaviorTrend === 'lower_highs') behaviorBonus += 1;
+        if (values.behaviorExpansionDown) behaviorBonus += 1;
+    }
+    if (structure === 'mixed') behaviorBonus = Math.min(behaviorBonus, 1);
+
+    const rawTotal = directionScore + strengthScore + volatilityRegimeScore + locationScore + behaviorBonus + penalties;
+    const boundedRawTotal = Math.max(0, Math.min(rawTotal, 25));
+
+    // Dynamic caps (apply the strictest one)
+    let cap = 25;
+    const capReasons = [];
+    if (bias === 'neutral') {
+        cap = Math.min(cap, 14);
+        capReasons.push('Neutral bias (cap 14)');
+    }
+    if (room === 'limited') cap = Math.min(cap, 14);
+    if (room === 'limited') capReasons.push('Room to move: Limited (cap 14)');
+    if (room === 'none') {
+        cap = Math.min(cap, 10);
+        capReasons.push('Room to move: None (cap 10)');
+    }
+    if (vixLevel === 'gt25') {
+        cap = Math.min(cap, 14);
+        capReasons.push('VIX level >25 (cap 14)');
+    }
+    if (vixTrend === 'rising' && regime === 'volatile' && (vixLevel === '20_25' || vixLevel === 'gt25')) {
+        cap = Math.min(cap, 10);
+        capReasons.push('VIX Rising + Volatile Regime with VIX >=20 (cap 10)');
+    }
+
+    const total = Math.min(boundedRawTotal, cap);
+    const capApplied = total < boundedRawTotal;
+
+    let interpretation = 'Observation only';
+    if (total >= 20) interpretation = 'A+ Market (Full aggression)';
+    else if (total >= 15) interpretation = 'Normal swing environment';
+    else if (total >= 10) interpretation = 'Selective / reduced size';
+
+    return {
+        total,
+        rawTotal: boundedRawTotal,
+        behaviorBonus,
+        penalties,
+        penBuckets: { penDir, penVol, penLoc, penBrk, penBeh, penFallback },
+        cap,
+        capApplied,
+        capReasons,
+        directionScore,
+        strengthScore,
+        volatilityRegimeScore,
+        locationScore,
+        interpretation
+    };
+}
+
+function initScoringBuilder() {
+    const form = document.getElementById('scoring-form');
+    if (!form) return;
+    initScoringFieldHelp(form);
+    window.autofillSpyFields = autofillSpyFields;
+
+    const totalEl = document.getElementById('scoring-total-score');
+    const rawEl = document.getElementById('scoring-raw-score');
+    const interpretationEl = document.getElementById('scoring-interpretation');
+    const breakdownEl = document.getElementById('scoring-breakdown');
+    const penVolSubtotalEl = document.getElementById('pen-vol-subtotal');
+    const capNoteEl = document.getElementById('scoring-cap-note');
+
+    const bindMutualExclusiveGroup = (names) => {
+        const inputs = names.map(name => form.querySelector(`input[name="${name}"]`)).filter(Boolean);
+        if (inputs.length < 2) return;
+        inputs.forEach(input => {
+            input.addEventListener('change', () => {
+                if (!input.checked) return;
+                inputs.forEach(other => {
+                    if (other !== input) other.checked = false;
+                });
+            });
+        });
+    };
+
+    const isChecked = (name) => {
+        const el = form.querySelector(`input[name="${name}"]`);
+        return Boolean(el && el.checked);
+    };
+    const getRadioValue = (name) => {
+        const el = form.querySelector(`input[name="${name}"]:checked`);
+        return el ? el.value : '';
+    };
+
+    const parseRate = () => {
+        const el = form.querySelector('input[name="sc_spy_rate"]');
+        if (!el) return 0;
+        const normalized = (el.value || '').replace(',', '.').trim();
+        const num = Number.parseFloat(normalized);
+        return Number.isFinite(num) ? num : 0;
+    };
+
+    const bindVolumeValidation = () => {
+        const avg = form.querySelector('input[name="sc_spy_volume_gt_20d"]');
+        const expansion = form.querySelector('input[name="sc_spy_volume_expansion"]');
+        if (!avg || !expansion) return;
+
+        expansion.addEventListener('change', () => {
+            if (expansion.checked) {
+                avg.checked = true;
+            }
+        });
+
+        avg.addEventListener('change', () => {
+            if (!avg.checked && expansion.checked) {
+                expansion.checked = false;
+            }
+        });
+    };
+
+    const renderScore = () => {
+        const score = calculateSpyScore({
+            bias: getRadioValue('sc_spy_bias'),
+            structure: getRadioValue('sc_spy_structure'),
+            vwap: getRadioValue('sc_spy_vwap'),
+            regime: getRadioValue('sc_spy_regime'),
+            volumeGt20d: isChecked('sc_spy_volume_gt_20d'),
+            volumeExpansion: isChecked('sc_spy_volume_expansion'),
+            breadth: getRadioValue('sc_spy_breadth'),
+            vixTrend: getRadioValue('sc_spy_vix_trend'),
+            vixLevel: getRadioValue('sc_spy_vix_level'),
+            location: getRadioValue('sc_spy_location'),
+            room: getRadioValue('sc_spy_room'),
+            behaviorTrend: getRadioValue('sc_spy_behavior_trend'),
+            behaviorAbove200: isChecked('sc_spy_behavior_above_200'),
+            behaviorCompression: isChecked('sc_spy_behavior_compression'),
+            behaviorExpansionUp: isChecked('sc_spy_behavior_expansion_up'),
+            behaviorExpansionDown: isChecked('sc_spy_behavior_expansion_down'),
+            rate: parseRate()
+        });
+
+        if (totalEl) totalEl.textContent = `${score.total} / 25`;
+        if (rawEl) rawEl.textContent = `${score.rawTotal} / 25`;
+        if (interpretationEl) interpretationEl.textContent = score.interpretation;
+        if (breakdownEl) {
+            breakdownEl.textContent = `Direction: ${score.directionScore}/5 | Strength: ${score.strengthScore}/8 | Volatility Regime: ${score.volatilityRegimeScore}/6 | Location: ${score.locationScore}/6 | Behavior bonus: ${score.behaviorBonus} | Penalties: ${score.penalties}`;
+        }
+        if (penVolSubtotalEl) {
+            penVolSubtotalEl.textContent = `Volatility penalties subtotal: ${score.penBuckets.penVol}`;
+        }
+        if (capNoteEl) {
+            capNoteEl.textContent = score.capApplied
+                ? `Cap active: max ${score.cap}. Reason: ${score.capReasons.join('; ')}.`
+                : '';
+        }
+    };
+
+    bindMutualExclusiveGroup(['sc_spy_behavior_expansion_up', 'sc_spy_behavior_expansion_down']);
+    bindVolumeValidation();
+
+    form.addEventListener('change', renderScore);
+    form.addEventListener('input', renderScore);
+    renderScore();
+}
+

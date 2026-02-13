@@ -173,6 +173,27 @@
                 <label for="d1_note">Note</label>
                 <textarea id="d1_note" name="d1_note" rows="2" placeholder="1 line"></textarea>
             </div>
+            <div class="form-group">
+                <label for="d1_pullback">Pullback</label>
+                <select id="d1_pullback" name="d1_pullback">
+                    <option value="">Select</option>
+                    <option value="Within the trend">Within the trend</option>
+                    <option value="Against">Against</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Stock-specific checks</label>
+                <div class="checkbox-group stock-specific-checks-grid">
+                    <label class="checkbox-label">
+                        <input type="checkbox" name="d1_event_dividend">
+                        <span class="checkbox-text">Company event: Dividends</span>
+                    </label>
+                    <label class="checkbox-label">
+                        <input type="checkbox" name="d1_event_earnings">
+                        <span class="checkbox-text">Company event: Earnings</span>
+                    </label>
+                </div>
+            </div>
         </div>
 
         <div class="analysis-subsection">
