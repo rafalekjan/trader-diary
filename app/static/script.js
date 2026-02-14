@@ -772,7 +772,33 @@ const SPY_SCORING_FIELD_HELP = {
     sc_spy_behavior_expansion_down: { tooltipText: 'Zaznacz, gdy swieca ma duzy zakres i zamyka sie blisko minimum.' }
 };
 
+const STOCK_SCORING_FIELD_HELP = {
+    ticker: { tooltipText: 'Symbol analizowanej spolki, np. NVDA. Sprawdz ticker na wykresie TradingView lub w platformie brokera.' },
+    d1_spy_alignment: { tooltipText: 'Porownanie kierunku spolki do SPY: Aligned gdy idzie zgodnie, Diverging gdy traci korelacje, Opposite gdy idzie przeciwnie.' },
+    d1_macro_wind: { tooltipText: 'Ocena tla makro: Tailwind gdy rynek wspiera ruch, Headwind gdy warunki przeszkadzaja. Sprawdz VIX oraz breadth.' },
+    d1_bias: { tooltipText: 'Glowny kierunek na 1D: Bullish, Bearish lub Neutral. Oceniaj po strukturze i polozeniu ceny.' },
+    d1_relative_vs_spy: { tooltipText: 'Sila wzgledna wobec SPY: Strong gdy spolka zachowuje sie lepiej, Weak gdy gorzej, Neutral gdy podobnie.' },
+    d1_rs_state: { tooltipText: 'Stan RS: Improving gdy przewaga rośnie, Deteriorating gdy slabnie, Stable gdy bez zmian.' },
+    d1_rate: { tooltipText: 'Twoja manualna ocena 0-100 jakosci kandydata na podstawie calosci kontekstu 1D.' },
+    d1_structure: { tooltipText: 'HH/HL dla trendu wzrostowego, LL/LH dla spadkowego, Mixed gdy brak czystej sekwencji.' },
+    d1_trend_state: { tooltipText: 'Intact gdy trend jest utrzymany, Weakening gdy traci dynamike, Broken gdy struktura zostala zanegowana.' },
+    d1_trend_quality: { tooltipText: 'Clean gdy ruch jest czytelny, Acceptable gdy umiarkowanie czytelny, Choppy gdy poszarpany i losowy.' },
+    d1_phase: { tooltipText: 'Impulse to ruch kierunkowy, Pullback to korekta, Base to konsolidacja przed wybiciem lub zanegowaniem.' },
+    d1_200_sma: { tooltipText: 'Pozycja ceny wzgledem SMA200. Dla longow zwykle lepiej Above, dla shortow zwykle lepiej Below.' },
+    d1_gap_risk: { tooltipText: 'Ryzyko luki cenowej na otwarciu. Im wyzsze, tym trudniej kontrolowac ryzyko opcyjne.' },
+    d1_event_dividend: { tooltipText: 'Zaznacz, jesli zbliza sie dywidenda. Sprawdz kalendarz wydarzen spolki.' },
+    d1_event_earnings: { tooltipText: 'Zaznacz, jesli zbliza sie raport wynikow. Sprawdz earnings date w kalendarzu.' },
+    d1_event_other_catalyst: { tooltipText: 'Inny zaplanowany katalizator (np. guidance, event branzowy, decyzja regulatora).' },
+    d1_level_position: { tooltipText: 'Polozenie ceny wzgledem poziomow: near support/resistance, mid-range lub range break.' },
+    d1_support: { tooltipText: 'Kluczowy poziom wsparcia z 1D. Wyznacz po dolkach, strefach reakcji i wolumenie.' },
+    d1_resistance: { tooltipText: 'Kluczowy poziom oporu z 1D. Wyznacz po szczytach, strefach podazy i reakcji ceny.' },
+    d1_candidate_grade: { tooltipText: 'Koncowa klasyfikacja kandydata: A mocny, B selektywny, C obserwacja lub pass.' },
+    d1_note: { tooltipText: 'Krotkie podsumowanie 1-2 linie: co wspiera setup i co jest najwiekszym ryzykiem.' }
+};
+
 function initScoringFieldHelp(form) {
+    const getFieldMeta = (fieldId) => SPY_SCORING_FIELD_HELP[fieldId] || STOCK_SCORING_FIELD_HELP[fieldId];
+
     const appendMeta = (targetEl, fieldId, meta) => {
         if (!targetEl || !meta) return;
         if (targetEl.querySelector(`.help-icon[data-field-id="${fieldId}"]`)) return;
@@ -787,17 +813,17 @@ function initScoringFieldHelp(form) {
     };
 
     const appendToGroupLabel = (inputName) => {
-        const input = form.querySelector(`input[name="${inputName}"]`);
-        if (!input) return;
-        const label = input.closest('.form-group')?.querySelector(':scope > label');
-        appendMeta(label, inputName, SPY_SCORING_FIELD_HELP[inputName]);
+        const field = form.querySelector(`input[name="${inputName}"], textarea[name="${inputName}"]`);
+        if (!field) return;
+        const label = field.closest('.form-group')?.querySelector(':scope > label');
+        appendMeta(label, inputName, getFieldMeta(inputName));
     };
 
     const appendToOptionText = (inputName) => {
         const input = form.querySelector(`input[name="${inputName}"]`);
         if (!input) return;
         const text = input.closest('label.checkbox-label')?.querySelector('.checkbox-text');
-        appendMeta(text, inputName, SPY_SCORING_FIELD_HELP[inputName]);
+        appendMeta(text, inputName, getFieldMeta(inputName));
     };
 
     [
@@ -815,6 +841,27 @@ function initScoringFieldHelp(form) {
     ].forEach(appendToGroupLabel);
 
     [
+        'ticker',
+        'd1_spy_alignment',
+        'd1_macro_wind',
+        'd1_bias',
+        'd1_relative_vs_spy',
+        'd1_rs_state',
+        'd1_rate',
+        'd1_structure',
+        'd1_trend_state',
+        'd1_trend_quality',
+        'd1_phase',
+        'd1_200_sma',
+        'd1_gap_risk',
+        'd1_level_position',
+        'd1_support',
+        'd1_resistance',
+        'd1_candidate_grade',
+        'd1_note'
+    ].forEach(appendToGroupLabel);
+
+    [
         'sc_spy_volume_gt_20d',
         'sc_spy_volume_expansion',
         'sc_spy_behavior_above_20_50',
@@ -823,6 +870,12 @@ function initScoringFieldHelp(form) {
         'sc_spy_behavior_compression',
         'sc_spy_behavior_expansion_up',
         'sc_spy_behavior_expansion_down'
+    ].forEach(appendToOptionText);
+
+    [
+        'd1_event_dividend',
+        'd1_event_earnings',
+        'd1_event_other_catalyst'
     ].forEach(appendToOptionText);
 }
 
@@ -989,6 +1042,87 @@ function calculateSpyScore(values) {
     };
 }
 
+function calculateStock1DScore(values) {
+    const clamp = (x, lo, hi) => Math.max(lo, Math.min(hi, x));
+
+    let scoreA = 0;
+    scoreA += values.spyAlignment === 'Aligned' ? 2 : values.spyAlignment === 'Diverging' ? 1 : 0;
+    scoreA += values.macroWind === 'Tailwind' ? 2 : values.macroWind === 'Neutral' ? 1 : 0;
+    scoreA = clamp(scoreA, 0, 4);
+
+    let scoreB = 0;
+    scoreB += (values.bias === 'Bullish' || values.bias === 'Bearish') ? 2 : 0;
+    scoreB += values.relativeVsSpy === 'Strong vs SPY' ? 2 : values.relativeVsSpy === 'Neutral' ? 1 : 0;
+    scoreB += values.rsState === 'Improving' ? 2 : values.rsState === 'Stable' ? 1 : 0;
+    scoreB = clamp(scoreB, 0, 6);
+
+    let scoreC = 0;
+    scoreC += (values.structure === 'HH/HL' || values.structure === 'LL/LH') ? 2 : 0;
+    scoreC += values.trendState === 'Intact' ? 2 : values.trendState === 'Weakening' ? 1 : 0;
+    scoreC += values.trendQuality === 'Clean' ? 2 : values.trendQuality === 'Acceptable' ? 1 : 0;
+    scoreC = clamp(scoreC, 0, 6);
+
+    let scoreD = 0;
+    const biasAlignedWith200 =
+        (values.bias === 'Bullish' && values.sma200 === 'Above') ||
+        (values.bias === 'Bearish' && values.sma200 === 'Below');
+    scoreD += biasAlignedWith200 ? 2 : 0;
+    scoreD += values.gapRisk === 'Low' ? 2 : values.gapRisk === 'Medium' ? 1 : 0;
+    scoreD = clamp(scoreD, 0, 4);
+
+    let penalties = 0;
+    if (values.bias === 'Bullish' && values.relativeVsSpy === 'Weak vs SPY') penalties -= 2;
+    if (values.bias === 'Bearish' && values.relativeVsSpy === 'Strong vs SPY') penalties -= 2;
+    if (values.trendState === 'Broken' && values.structure === 'Mixed') penalties -= 2;
+    if (values.macroWind === 'Headwind' && values.spyAlignment === 'Opposite') penalties -= 2;
+    if (values.earningsSoon) penalties -= 2;
+    if (values.dividendSoon) penalties -= 1;
+
+    const rawTotal = scoreA + scoreB + scoreC + scoreD + penalties;
+    const boundedRawTotal = clamp(rawTotal, 0, 20);
+
+    let cap = 20;
+    const capReasons = [];
+    if (values.macroWind === 'Headwind') {
+        cap = Math.min(cap, 12);
+        capReasons.push('Macro wind: Headwind (cap 12)');
+    }
+    if (values.macroWind === 'Headwind' && values.spyAlignment === 'Opposite') {
+        cap = Math.min(cap, 10);
+        capReasons.push('Opposite + Headwind (cap 10)');
+    }
+    if (values.gapRisk === 'High') {
+        cap = Math.min(cap, 12);
+        capReasons.push('Gap risk: High (cap 12)');
+    }
+    if (values.earningsSoon) {
+        cap = Math.min(cap, 12);
+        capReasons.push('Earnings soon (cap 12)');
+    }
+
+    const total = Math.min(boundedRawTotal, cap);
+    const capApplied = total < boundedRawTotal;
+
+    let grade = 'Pass / observation';
+    if (total >= 16) grade = 'A Candidate (worth planning)';
+    else if (total >= 12) grade = 'B Candidate (selective)';
+    else if (total >= 8) grade = 'C / Watchlist';
+
+    return {
+        total,
+        rawTotal: boundedRawTotal,
+        scoreA,
+        scoreB,
+        scoreC,
+        scoreD,
+        penalties,
+        cap,
+        capApplied,
+        capReasons,
+        grade
+    };
+}
+
 function initScoringBuilder() {
     const form = document.getElementById('scoring-form');
     if (!form) return;
@@ -1000,6 +1134,11 @@ function initScoringBuilder() {
     const breakdownEl = document.getElementById('scoring-breakdown');
     const penVolSubtotalEl = document.getElementById('pen-vol-subtotal');
     const capNoteEl = document.getElementById('scoring-cap-note');
+    const stockTotalEl = document.getElementById('stock1d-total-score');
+    const stockRawEl = document.getElementById('stock1d-raw-score');
+    const stockGradeEl = document.getElementById('stock1d-grade');
+    const stockBreakdownEl = document.getElementById('stock1d-breakdown');
+    const stockCapNoteEl = document.getElementById('stock1d-cap-note');
 
     const bindMutualExclusiveGroup = (names) => {
         const inputs = names.map(name => form.querySelector(`input[name="${name}"]`)).filter(Boolean);
@@ -1023,8 +1162,8 @@ function initScoringBuilder() {
         return el ? el.value : '';
     };
 
-    const parseRate = () => {
-        const el = form.querySelector('input[name="sc_spy_rate"]');
+    const parseRate = (fieldName) => {
+        const el = form.querySelector(`input[name="${fieldName}"]`);
         if (!el) return 0;
         const normalized = (el.value || '').replace(',', '.').trim();
         const num = Number.parseFloat(normalized);
@@ -1067,7 +1206,23 @@ function initScoringBuilder() {
             behaviorCompression: isChecked('sc_spy_behavior_compression'),
             behaviorExpansionUp: isChecked('sc_spy_behavior_expansion_up'),
             behaviorExpansionDown: isChecked('sc_spy_behavior_expansion_down'),
-            rate: parseRate()
+            rate: parseRate('sc_spy_rate')
+        });
+
+        const stockScore = calculateStock1DScore({
+            spyAlignment: getRadioValue('d1_spy_alignment'),
+            macroWind: getRadioValue('d1_macro_wind'),
+            bias: getRadioValue('d1_bias'),
+            relativeVsSpy: getRadioValue('d1_relative_vs_spy'),
+            rsState: getRadioValue('d1_rs_state'),
+            structure: getRadioValue('d1_structure'),
+            trendState: getRadioValue('d1_trend_state'),
+            trendQuality: getRadioValue('d1_trend_quality'),
+            sma200: getRadioValue('d1_200_sma'),
+            gapRisk: getRadioValue('d1_gap_risk'),
+            earningsSoon: isChecked('d1_event_earnings'),
+            dividendSoon: isChecked('d1_event_dividend'),
+            rate: parseRate('d1_rate')
         });
 
         if (totalEl) totalEl.textContent = `${score.total} / 25`;
@@ -1082,6 +1237,17 @@ function initScoringBuilder() {
         if (capNoteEl) {
             capNoteEl.textContent = score.capApplied
                 ? `Cap active: max ${score.cap}. Reason: ${score.capReasons.join('; ')}.`
+                : '';
+        }
+        if (stockTotalEl) stockTotalEl.textContent = `${stockScore.total} / 20`;
+        if (stockRawEl) stockRawEl.textContent = `${stockScore.rawTotal} / 20`;
+        if (stockGradeEl) stockGradeEl.textContent = stockScore.grade;
+        if (stockBreakdownEl) {
+            stockBreakdownEl.textContent = `A: ${stockScore.scoreA}/4 | B: ${stockScore.scoreB}/6 | C: ${stockScore.scoreC}/6 | D: ${stockScore.scoreD}/4 | Penalties: ${stockScore.penalties}`;
+        }
+        if (stockCapNoteEl) {
+            stockCapNoteEl.textContent = stockScore.capApplied
+                ? `Cap active: max ${stockScore.cap}. Reason: ${stockScore.capReasons.join('; ')}.`
                 : '';
         }
     };
