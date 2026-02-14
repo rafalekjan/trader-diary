@@ -1267,6 +1267,12 @@ main {
     border-radius: 7px;
 }
 
+#stock-1d-section #stk1d_ticker,
+#stock-1d-section #stk1d_rate {
+    width: 50%;
+    min-width: 130px;
+}
+
 .scoring-builder .form-group select {
     width: 190px;
     max-width: 100%;
@@ -1317,6 +1323,28 @@ main {
     height: 15px;
     margin-left: 4px;
     font-size: 0.62rem;
+}
+
+.scoring-guardrail {
+    margin-top: 0.3rem;
+    font-size: 0.78rem;
+    line-height: 1.25;
+    color: #8b5e34;
+    min-height: 1rem;
+}
+
+.scoring-readonly-value {
+    margin-top: 0.2rem;
+    padding: 0.4rem 0.55rem;
+    border-radius: 8px;
+    border: 1px solid rgba(180, 138, 60, 0.35);
+    background: #f7f1e6;
+    color: #5f503f;
+    font-size: 0.86rem;
+}
+
+#stk1d_pullback_group input[disabled] + .checkbox-text {
+    opacity: 0.55;
 }
 
 .spy-grid {
