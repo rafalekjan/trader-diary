@@ -35,6 +35,8 @@ services:
       POLYGON_API_KEY: gjTjXhjWZFEvePxkxh0kudtgXzjKzjev
       TRADIER_TOKEN: ${TRADIER_TOKEN:-}
       TRADIER_BASE_URL: ${TRADIER_BASE_URL:-https://api.tradier.com}
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OPENAI_MODEL: ${OPENAI_MODEL:-gpt-4.1-mini}
     depends_on:
       db:
         condition: service_healthy

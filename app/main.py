@@ -1,22 +1,27 @@
 from fastapi import FastAPI, Request, Depends, Form, HTTPException
-from fastapi.responses import HTMLResponse, RedirectResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
-from typing import Optional
+from typing import Optional, Any
 from decimal import Decimal
 from datetime import datetime, timedelta, date
+from pydantic import BaseModel
 import csv
 import json
 import time
 import urllib.parse
 import urllib.request
+import urllib.error
 import re
 import os
 from sqlalchemy import inspect, text
+from dotenv import load_dotenv
 
 from app.database import get_db, engine, Base
 from app import models, schemas, crud
+
+load_dotenv()
 
 Base.metadata.create_all(bind=engine)
 
@@ -571,6 +576,69 @@ def calculate_total_pnl(db: Session) -> Decimal:
 def calculate_equity(db: Session) -> Decimal:
     account = crud.get_account(db)
     return account.balance + calculate_total_pnl(db)
+
+
+class SpyChatRequest(BaseModel):
+    timeframe: str = "1D"
+    spy_inputs: dict[str, Any]
+    extra_context: Optional[str] = ""
+
+ALLOWED_SPY_SUGGESTIONS: dict[str, set[str]] = {
+    "sc_spy_bias": {"bullish", "bearish", "neutral"},
+    "sc_spy_regime": {"trending", "ranging", "volatile"},
+    "sc_spy_structure": {"hh_hl", "ll_lh", "mixed"},
+    "sc_spy_vwap": {"above", "below"},
+    "sc_spy_vix_trend": {"falling", "rising", "flat"},
+    "sc_spy_vix_level": {"lt20", "20_25", "gt25"},
+    "sc_spy_breadth": {"strong", "neutral", "weak"},
+    "sc_spy_location": {"at_resistance", "at_support", "mid_range", "breaking_range"},
+    "sc_spy_room": {"large", "limited", "none"},
+    "sc_spy_behavior_trend": {"higher_lows", "lower_highs", "none"},
+}
+
+
+def _build_spy_inputs_block(spy_inputs: dict[str, Any]) -> str:
+    lines: list[str] = []
+    for key in sorted(spy_inputs.keys()):
+        value = spy_inputs[key]
+        if value is None:
+            continue
+        if isinstance(value, str) and not value.strip():
+            continue
+        lines.append(f"- {key}: {value}")
+    return "\n".join(lines) if lines else "- Brak danych wejściowych."
+
+
+def _extract_response_text(data: dict[str, Any]) -> str:
+    text_chunks: list[str] = []
+    output_items = data.get("output")
+    if not isinstance(output_items, list):
+        return ""
+    for item in output_items:
+        if not isinstance(item, dict):
+            continue
+        content = item.get("content")
+        if not isinstance(content, list):
+            continue
+        for block in content:
+            if not isinstance(block, dict):
+                continue
+            if block.get("type") in {"output_text", "text"}:
+                maybe_text = block.get("text")
+                if isinstance(maybe_text, str):
+                    text_chunks.append(maybe_text)
+    return "\n".join([chunk.strip() for chunk in text_chunks if chunk.strip()]).strip()
+
+
+def _sanitize_spy_suggestions(raw: Any) -> dict[str, str]:
+    if not isinstance(raw, dict):
+        return {}
+    sanitized: dict[str, str] = {}
+    for field, allowed_values in ALLOWED_SPY_SUGGESTIONS.items():
+        value = raw.get(field)
+        if isinstance(value, str) and value in allowed_values:
+            sanitized[field] = value
+    return sanitized
 
 @app.get("/", response_class=HTMLResponse)
 async def home(request: Request, db: Session = Depends(get_db)):
@@ -1234,6 +1302,123 @@ async def api_list_trades(db: Session = Depends(get_db)):
 @app.get("/api/account", response_model=schemas.AccountResponse)
 async def api_get_account(db: Session = Depends(get_db)):
     return crud.get_account(db)
+
+
+@app.post("/api/spy/chat")
+async def api_spy_chat(payload: SpyChatRequest):
+    api_key = os.environ.get("OPENAI_API_KEY", "").strip()
+    if not api_key:
+        raise HTTPException(status_code=500, detail="OPENAI_API_KEY is not set")
+
+    model = os.environ.get("OPENAI_MODEL", "gpt-4.1-mini").strip() or "gpt-4.1-mini"
+    spy_block = _build_spy_inputs_block(payload.spy_inputs or {})
+    extra_context = (payload.extra_context or "").strip()
+
+    system_prompt = (
+        "Jestes asystentem tradingowym. Analizujesz tylko przekazane dane uzytkownika. "
+        "Nie masz bezposredniego dostepu do live wykresu TradingView."
+    )
+    user_prompt = (
+        f"TF: {payload.timeframe or '1D'}\n"
+        "Dane SPY z formularza:\n"
+        f"{spy_block}\n\n"
+        f"Dodatkowy kontekst uzytkownika: {extra_context or 'brak'}\n\n"
+        "Zwróć WYŁĄCZNIE JSON w tym schemacie:\n"
+        "{\n"
+        '  "summary_sentence": "jedno zdanie",\n'
+        '  "risk_sentence": "jedno zdanie",\n'
+        '  "opposite_sentence": "jedno zdanie",\n'
+        '  "suggestions": {\n'
+        '    "sc_spy_bias": "bullish|bearish|neutral",\n'
+        '    "sc_spy_regime": "trending|ranging|volatile",\n'
+        '    "sc_spy_structure": "hh_hl|ll_lh|mixed",\n'
+        '    "sc_spy_vwap": "above|below",\n'
+        '    "sc_spy_vix_trend": "falling|rising|flat",\n'
+        '    "sc_spy_vix_level": "lt20|20_25|gt25",\n'
+        '    "sc_spy_breadth": "strong|neutral|weak",\n'
+        '    "sc_spy_location": "at_resistance|at_support|mid_range|breaking_range",\n'
+        '    "sc_spy_room": "large|limited|none",\n'
+        '    "sc_spy_behavior_trend": "higher_lows|lower_highs|none"\n'
+        "  }\n"
+        "}\n"
+        "Nie dodawaj markdown, komentarzy ani dodatkowego tekstu."
+    )
+
+    body = {
+        "model": model,
+        "input": [
+            {
+                "role": "system",
+                "content": [{"type": "input_text", "text": system_prompt}],
+            },
+            {
+                "role": "user",
+                "content": [{"type": "input_text", "text": user_prompt}],
+            },
+        ],
+        "max_output_tokens": 220,
+    }
+
+    req = urllib.request.Request(
+        "https://api.openai.com/v1/responses",
+        data=json.dumps(body).encode("utf-8"),
+        headers={
+            "Authorization": f"Bearer {api_key}",
+            "Content-Type": "application/json",
+        },
+        method="POST",
+    )
+    try:
+        with urllib.request.urlopen(req, timeout=20) as response:
+            raw = response.read().decode("utf-8", errors="ignore")
+        data = json.loads(raw)
+    except urllib.error.HTTPError as exc:
+        err_body = ""
+        try:
+            err_body = exc.read().decode("utf-8", errors="ignore")
+        except Exception:
+            err_body = ""
+        return JSONResponse(
+            status_code=502,
+            content={
+                "ok": False,
+                "error": f"OpenAI HTTP {exc.code}: {exc.reason}",
+                "details": err_body,
+                "model": model,
+            },
+        )
+    except Exception as exc:
+        return JSONResponse(
+            status_code=502,
+            content={"ok": False, "error": f"OpenAI request failed: {exc}", "model": model},
+        )
+
+    response_text = _extract_response_text(data if isinstance(data, dict) else {})
+    parsed: dict[str, Any] = {}
+    if response_text:
+        try:
+            parsed = json.loads(response_text)
+        except Exception:
+            parsed = {}
+
+    summary_sentence = str(parsed.get("summary_sentence") or "").strip()
+    risk_sentence = str(parsed.get("risk_sentence") or "").strip()
+    opposite_sentence = str(parsed.get("opposite_sentence") or "").strip()
+    suggestions = _sanitize_spy_suggestions(parsed.get("suggestions"))
+
+    analysis_lines = [line for line in [summary_sentence, risk_sentence, opposite_sentence] if line]
+    if analysis_lines:
+        analysis_text = "\n".join(analysis_lines)
+    else:
+        analysis_text = response_text or "Brak odpowiedzi od modelu."
+
+    return {
+        "ok": True,
+        "analysis": analysis_text,
+        "suggestions": suggestions,
+        "model": model,
+        "timeframe": payload.timeframe or "1D",
+    }
 
 @app.get("/api/price/stock/{ticker}")
 async def api_stock_price(ticker: str, db: Session = Depends(get_db)):

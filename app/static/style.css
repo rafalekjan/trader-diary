@@ -1,4 +1,4 @@
-* {
+﻿* {
     margin: 0;
     padding: 0;
     box-sizing: border-box;
@@ -1333,6 +1333,58 @@ main {
     min-height: 1rem;
 }
 
+#stock-global-cap-note {
+    white-space: pre-line;
+}
+
+.spy-chat-actions {
+    display: flex;
+    gap: 0.4rem;
+    flex-wrap: wrap;
+}
+
+.spy-chat-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.55rem 0.7rem;
+}
+
+.spy-chat-btn {
+    min-width: 132px;
+    min-height: 36px;
+    padding: 0.4rem 0.7rem;
+    font-size: 0.9rem;
+}
+
+.spy-chat-collapsible > summary {
+    cursor: pointer;
+    font-weight: 600;
+    margin-bottom: 0.45rem;
+}
+
+.spy-chat-collapsible[open] > summary {
+    margin-bottom: 0.6rem;
+}
+
+@media (max-width: 900px) {
+    .spy-chat-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.spy-ai-hint,
+.stock-ai-hint {
+    display: inline-block;
+    margin-left: 0.35rem;
+    padding: 0.1rem 0.35rem;
+    border-radius: 10px;
+    font-size: 0.7rem;
+    line-height: 1.2;
+    color: #2f5f2f;
+    background: #e8f6e8;
+    border: 1px solid #b6dfb6;
+}
+
 .scoring-readonly-value {
     margin-top: 0.2rem;
     padding: 0.4rem 0.55rem;
@@ -1735,4 +1787,5 @@ footer {
     accent-color: var(--accent);
     cursor: pointer;
 }
+
 

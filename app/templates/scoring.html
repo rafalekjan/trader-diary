@@ -254,13 +254,40 @@
                 <textarea id="sc_spy_summary" name="sc_spy_summary" rows="3" placeholder="Short SPY context summary..."></textarea>
             </div>
         </div>
+
+        <details class="analysis-subsection spy-chat-collapsible">
+            <summary>Chat</summary>
+            <div class="spy-chat-grid">
+                <div class="form-group">
+                    <label for="spy-chat-extra-context">Additional context for AI (optional)</label>
+                    <textarea id="spy-chat-extra-context" name="spy_chat_extra_context" rows="2" placeholder="Optional note about what you see on the 1D chart..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="spy-chat-response-input">Paste ChatGPT response</label>
+                    <textarea id="spy-chat-response-input" rows="5" placeholder="Wklej odpowiedz z ChatGPT (tekst + JSON z suggestions)..."></textarea>
+                </div>
+                <div class="form-group">
+                    <div class="spy-chat-actions">
+                        <button id="spy-chat-generate" type="button" class="btn-secondary spy-chat-btn">Generate Prompt</button>
+                        <button id="spy-chat-copy" type="button" class="btn-secondary spy-chat-btn">Copy Prompt</button>
+                        <button id="spy-chat-apply" type="button" class="btn-secondary spy-chat-btn">Apply Suggestions</button>
+                    </div>
+                </div>
+            </div>
+        </details>
     </div>
 
     <div id="stock-1d-section" class="analysis-section">
-        <h3>Stock - Direction &amp; Context</h3>
+        <div class="scoring-header-row">
+            <h3>Stock - 1D Direction &amp; Context</h3>
+            <div class="scoring-header-summary">
+                <div><strong>SCORE:</strong> <span id="stock1d-header-score">0 / 20</span></div>
+                <div><strong>Grade:</strong> <span id="stock1d-header-grade">No data</span></div>
+            </div>
+        </div>
 
         <div class="analysis-subsection">
-            <h4>A. Identification & quick summary</h4>
+            <h4>1. Identification & quick summary + Direction</h4>
             <div class="scoring-stage-grid">
                 <div class="form-group">
                     <label for="stk1d_ticker">Ticker</label>
@@ -270,12 +297,6 @@
                     <label for="stk1d_rate">Rate</label>
                     <input id="stk1d_rate" name="stk1d_rate" type="number" min="0" max="99" step="1" placeholder="0-99">
                 </div>
-            </div>
-        </div>
-
-        <div class="analysis-subsection">
-            <h4>B. Direction</h4>
-            <div class="scoring-stage-grid">
                 <div class="form-group">
                     <label>Bias</label>
                     <div class="checkbox-group scoring-option-grid">
@@ -344,14 +365,8 @@
         </div>
 
         <div class="analysis-subsection">
-            <h4>C. Context (SPY and market)</h4>
+            <h4>2. Context (SPY and market)</h4>
             <div class="scoring-stage-grid">
-                <div class="form-group">
-                    <label>Market wind</label>
-                    <input type="hidden" name="stk1d_market_wind" value="">
-                    <div id="stk1d_market_wind_auto" class="scoring-readonly-value">Auto: N/A</div>
-                    <div id="stk1d_market_guardrail" class="scoring-guardrail"></div>
-                </div>
                 <div class="form-group">
                     <label>SPY alignment</label>
                     <div class="checkbox-group scoring-option-grid">
@@ -424,7 +439,7 @@
         </div>
 
         <div class="analysis-subsection">
-            <h4>D. Trend state and phase</h4>
+            <h4>3. Trend state and phase</h4>
             <div class="scoring-stage-grid">
                 <div class="form-group">
                     <label>Trend state</label>
@@ -534,7 +549,7 @@
         </div>
 
         <div class="analysis-subsection">
-            <h4>E. Context risk</h4>
+            <h4>4. Context risk</h4>
             <div class="scoring-stage-grid">
                 <div class="form-group">
                     <label>Events</label>
@@ -595,7 +610,7 @@
         </div>
 
         <div class="analysis-subsection">
-            <h4>F. Key levels</h4>
+            <h4>5. Key levels</h4>
             <div class="scoring-stage-grid">
                 <div class="form-group">
                     <label>Level position</label>
@@ -633,7 +648,7 @@
         </div>
 
         <div class="analysis-subsection">
-            <h4>G. Summary</h4>
+            <h4>6. Summary</h4>
             <div class="scoring-stage-grid">
                 <div class="form-group">
                     <label for="stk1d_summary">Stock summary</label>
@@ -643,47 +658,364 @@
         </div>
 
         <div class="analysis-subsection">
-            <h4>Stock Score</h4>
-            <div class="advanced-hint">Scoring is active (v1) and currently being tuned. Treat it as supportive, not decisive.</div>
+            <div class="scoring-header-row">
+                <h3>Stock - 4H Structure &amp; Planning</h3>
+                <div class="scoring-header-summary">
+                    <div><strong>SCORE:</strong> <span id="stock4h-header-score">0 / 20</span></div>
+                    <div><strong>Grade:</strong> <span id="stock4h-header-grade">No data</span></div>
+                </div>
+            </div>
+
+            <h4>A. Setup Snapshot (4H)</h4>
             <div class="scoring-stage-grid">
                 <div class="form-group">
-                    <label>TOTAL SCORE</label>
-                    <div id="stock1d-total-score">0 / 20</div>
+                    <label>Bias</label>
+                    <div class="checkbox-group scoring-option-grid">
+                        <label class="checkbox-label"><input type="radio" name="stk4h_bias" value="bullish"><span class="checkbox-text">Bullish</span></label>
+                        <label class="checkbox-label"><input type="radio" name="stk4h_bias" value="bearish"><span class="checkbox-text">Bearish</span></label>
+                        <label class="checkbox-label"><input type="radio" name="stk4h_bias" value="neutral"><span class="checkbox-text">Neutral</span></label>
+                    </div>
                 </div>
                 <div class="form-group">
-                    <label>Grade</label>
-                    <div id="stock1d-grade">No data</div>
+                    <label>Structure</label>
+                    <div class="checkbox-group scoring-option-grid">
+                        <label class="checkbox-label"><input type="radio" name="stk4h_structure" value="hh_hl"><span class="checkbox-text">HH/HL</span></label>
+                        <label class="checkbox-label"><input type="radio" name="stk4h_structure" value="ll_lh"><span class="checkbox-text">LL/LH</span></label>
+                        <label class="checkbox-label"><input type="radio" name="stk4h_structure" value="mixed"><span class="checkbox-text">Mixed</span></label>
+                    </div>
                 </div>
                 <div class="form-group">
-                    <label>RAW SCORE (before caps)</label>
-                    <div id="stock1d-raw-score">0 / 20</div>
+                    <label>Anchor state</label>
+                    <div class="checkbox-group scoring-option-grid">
+                        <label class="checkbox-label"><input type="radio" name="stk4h_anchor_state" value="above_anchor"><span class="checkbox-text">Above anchor</span></label>
+                        <label class="checkbox-label"><input type="radio" name="stk4h_anchor_state" value="around_anchor"><span class="checkbox-text">Around anchor</span></label>
+                        <label class="checkbox-label"><input type="radio" name="stk4h_anchor_state" value="below_anchor"><span class="checkbox-text">Below anchor</span></label>
+                    </div>
+                </div>
+            </div>
+
+            <h4>B. Location &amp; Levels (4H)</h4>
+            <div class="scoring-stage-grid">
+                <div class="form-group">
+                    <label>Location</label>
+                    <div class="checkbox-group scoring-option-grid">
+                        <label class="checkbox-label"><input type="radio" name="stk4h_location" value="near_support"><span class="checkbox-text">Near support</span></label>
+                        <label class="checkbox-label"><input type="radio" name="stk4h_location" value="mid_range"><span class="checkbox-text">Mid-range</span></label>
+                        <label class="checkbox-label"><input type="radio" name="stk4h_location" value="near_resistance"><span class="checkbox-text">Near resistance</span></label>
+                        <label class="checkbox-label"><input type="radio" name="stk4h_location" value="range_high"><span class="checkbox-text">Range high</span></label>
+                        <label class="checkbox-label"><input type="radio" name="stk4h_location" value="range_low"><span class="checkbox-text">Range low</span></label>
+                    </div>
                 </div>
                 <div class="form-group">
-                    <label>Breakdown</label>
-                    <div id="stock1d-breakdown">Direction: 0/8 | Context: 0/8 | Risk/Levels: 0/4 | Penalties: 0</div>
+                    <label>Key level type</label>
+                    <div class="checkbox-group scoring-option-grid scoring-option-grid-2">
+                        <label class="checkbox-label"><input type="checkbox" name="stk4h_key_level_prior_day"><span class="checkbox-text">Prior day high/low</span></label>
+                        <label class="checkbox-label"><input type="checkbox" name="stk4h_key_level_weekly"><span class="checkbox-text">Weekly high/low</span></label>
+                        <label class="checkbox-label"><input type="checkbox" name="stk4h_key_level_range"><span class="checkbox-text">4H range level</span></label>
+                        <label class="checkbox-label"><input type="checkbox" name="stk4h_key_level_major_ma"><span class="checkbox-text">Major MA (50/200)</span></label>
+                        <label class="checkbox-label"><input type="checkbox" name="stk4h_key_level_supply_demand"><span class="checkbox-text">HTF supply/demand</span></label>
+                    </div>
                 </div>
+            </div>
+
+            <h4>C. Setup Type</h4>
+            <div class="scoring-stage-grid">
+                <div class="form-group">
+                    <label>Planned setup</label>
+                    <div class="checkbox-group scoring-option-grid">
+                        <label class="checkbox-label"><input type="radio" name="stk4h_setup_type" value="breakout_continuation"><span class="checkbox-text">Breakout continuation</span></label>
+                        <label class="checkbox-label"><input type="radio" name="stk4h_setup_type" value="breakdown_continuation"><span class="checkbox-text">Breakdown continuation</span></label>
+                        <label class="checkbox-label"><input type="radio" name="stk4h_setup_type" value="pullback_within_trend"><span class="checkbox-text">Pullback within trend</span></label>
+                        <label class="checkbox-label"><input type="radio" name="stk4h_setup_type" value="reversal_attempt"><span class="checkbox-text">Reversal attempt</span></label>
+                        <label class="checkbox-label"><input type="radio" name="stk4h_setup_type" value="range_play"><span class="checkbox-text">Range play</span></label>
+                    </div>
+                    <div id="stk4h_setup_location_guardrail" class="scoring-guardrail"></div>
+                </div>
+            </div>
+
+            <h4>D. Trend Quality</h4>
+            <div class="scoring-stage-grid">
+                <div class="form-group">
+                    <label>Trend quality</label>
+                    <div class="checkbox-group scoring-option-grid">
+                        <label class="checkbox-label"><input type="radio" name="stk4h_trend_quality" value="clean"><span class="checkbox-text">Clean</span></label>
+                        <label class="checkbox-label"><input type="radio" name="stk4h_trend_quality" value="acceptable"><span class="checkbox-text">Acceptable</span></label>
+                        <label class="checkbox-label"><input type="radio" name="stk4h_trend_quality" value="choppy"><span class="checkbox-text">Choppy</span></label>
+                    </div>
+                    <div id="stk4h_choppy_guardrail" class="scoring-guardrail"></div>
+                </div>
+                <div class="form-group">
+                    <label>Volatility profile</label>
+                    <div class="checkbox-group scoring-option-grid">
+                        <label class="checkbox-label"><input type="radio" name="stk4h_volatility_profile" value="expanding"><span class="checkbox-text">Expanding</span></label>
+                        <label class="checkbox-label"><input type="radio" name="stk4h_volatility_profile" value="stable"><span class="checkbox-text">Stable</span></label>
+                        <label class="checkbox-label"><input type="radio" name="stk4h_volatility_profile" value="contracting"><span class="checkbox-text">Contracting</span></label>
+                    </div>
+                </div>
+            </div>
+
+            <h4>E. Risk Planning (No Execution)</h4>
+            <div class="scoring-stage-grid">
+                <div class="form-group">
+                    <label for="stk4h_invalidation_logic">Invalidation logic</label>
+                    <select id="stk4h_invalidation_logic" name="stk4h_invalidation_logic">
+                        <option value="">Select</option>
+                        <option value="structure_break">Structure break</option>
+                        <option value="loss_of_anchor">Loss of anchor</option>
+                        <option value="rejection_at_level">Rejection at level</option>
+                        <option value="volatility_collapse">Volatility collapse</option>
+                        <option value="time_decay_risk">Time decay risk</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Liquidity check</label>
+                    <div class="checkbox-group scoring-option-grid">
+                        <label class="checkbox-label"><input type="radio" name="stk4h_liquidity_check" value="good"><span class="checkbox-text">Good</span></label>
+                        <label class="checkbox-label"><input type="radio" name="stk4h_liquidity_check" value="medium"><span class="checkbox-text">Medium</span></label>
+                        <label class="checkbox-label"><input type="radio" name="stk4h_liquidity_check" value="poor"><span class="checkbox-text">Poor</span></label>
+                    </div>
+                    <div id="stk4h_vol_liq_guardrail" class="scoring-guardrail"></div>
+                </div>
+                <div class="form-group">
+                    <label for="stk4h_notes">Notes</label>
+                    <textarea id="stk4h_notes" name="stk4h_notes" rows="2" placeholder="Short 4H planning note..."></textarea>
+                </div>
+                <div class="form-group">
+                    <div id="stk4h_anchor_bias_guardrail" class="scoring-guardrail"></div>
+                </div>
+            </div>
+        </div>
+
+        <div class="analysis-subsection">
+            <div class="scoring-header-row">
+                <h3>Stock - 1H Structure &amp; Planning</h3>
+                <div class="scoring-header-summary">
+                    <div><strong>SCORE:</strong> <span id="stock1h-header-score">0 / 20</span></div>
+                    <div><strong>Grade:</strong> <span id="stock1h-header-grade">No data</span></div>
+                </div>
+            </div>
+
+            <h4>A. Micro Structure</h4>
+            <div class="scoring-stage-grid">
+                <div class="form-group">
+                    <label>Structure</label>
+                    <div class="checkbox-group scoring-option-grid">
+                        <label class="checkbox-label"><input type="radio" name="stk1h_structure" value="hh_hl"><span class="checkbox-text">HH/HL</span></label>
+                        <label class="checkbox-label"><input type="radio" name="stk1h_structure" value="ll_lh"><span class="checkbox-text">LL/LH</span></label>
+                        <label class="checkbox-label"><input type="radio" name="stk1h_structure" value="mixed"><span class="checkbox-text">Mixed</span></label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Anchor state</label>
+                    <div class="checkbox-group scoring-option-grid">
+                        <label class="checkbox-label"><input type="radio" name="stk1h_anchor_state" value="above"><span class="checkbox-text">Above</span></label>
+                        <label class="checkbox-label"><input type="radio" name="stk1h_anchor_state" value="around"><span class="checkbox-text">Around</span></label>
+                        <label class="checkbox-label"><input type="radio" name="stk1h_anchor_state" value="below"><span class="checkbox-text">Below</span></label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Range state</label>
+                    <div class="checkbox-group scoring-option-grid">
+                        <label class="checkbox-label"><input type="radio" name="stk1h_range_state" value="breaking_range"><span class="checkbox-text">Breaking range</span></label>
+                        <label class="checkbox-label"><input type="radio" name="stk1h_range_state" value="inside_range"><span class="checkbox-text">Inside range</span></label>
+                        <label class="checkbox-label"><input type="radio" name="stk1h_range_state" value="rejecting_level"><span class="checkbox-text">Rejecting level</span></label>
+                    </div>
+                </div>
+            </div>
+
+            <h4>B. Intraday Context</h4>
+            <div class="scoring-stage-grid">
+                <div class="form-group">
+                    <label>Intraday level reaction</label>
+                    <div class="checkbox-group scoring-option-grid scoring-option-grid-2">
+                        <label class="checkbox-label"><input type="checkbox" name="stk1h_intraday_premarket"><span class="checkbox-text">Premarket high/low</span></label>
+                        <label class="checkbox-label"><input type="checkbox" name="stk1h_intraday_opening_range"><span class="checkbox-text">Opening range high/low</span></label>
+                        <label class="checkbox-label"><input type="checkbox" name="stk1h_intraday_vwap_reclaim_loss"><span class="checkbox-text">VWAP reclaim/loss</span></label>
+                        <label class="checkbox-label"><input type="checkbox" name="stk1h_intraday_pdh_pdl"><span class="checkbox-text">PDH/PDL</span></label>
+                    </div>
+                </div>
+            </div>
+
+            <h4>C. Setup Alignment</h4>
+            <div class="scoring-stage-grid">
+                <div class="form-group">
+                    <label>Alignment with 4H</label>
+                    <div class="checkbox-group scoring-option-grid">
+                        <label class="checkbox-label"><input type="radio" name="stk1h_alignment_with_4h" value="aligned"><span class="checkbox-text">Aligned</span></label>
+                        <label class="checkbox-label"><input type="radio" name="stk1h_alignment_with_4h" value="minor_pullback"><span class="checkbox-text">Minor pullback</span></label>
+                        <label class="checkbox-label"><input type="radio" name="stk1h_alignment_with_4h" value="counter_trend"><span class="checkbox-text">Counter-trend</span></label>
+                    </div>
+                    <div id="stk1h_alignment_guardrail" class="scoring-guardrail"></div>
+                </div>
+            </div>
+
+            <h4>D. Micro Setup Type</h4>
+            <div class="scoring-stage-grid">
+                <div class="form-group">
+                    <label>Setup type</label>
+                    <div class="checkbox-group scoring-option-grid">
+                        <label class="checkbox-label"><input type="radio" name="stk1h_setup_type" value="breakout_hold"><span class="checkbox-text">Breakout hold</span></label>
+                        <label class="checkbox-label"><input type="radio" name="stk1h_setup_type" value="failed_breakout"><span class="checkbox-text">Failed breakout</span></label>
+                        <label class="checkbox-label"><input type="radio" name="stk1h_setup_type" value="pullback_continuation"><span class="checkbox-text">Pullback continuation</span></label>
+                        <label class="checkbox-label"><input type="radio" name="stk1h_setup_type" value="rejection_reversal"><span class="checkbox-text">Rejection reversal</span></label>
+                    </div>
+                </div>
+            </div>
+
+            <h4>E. Risk Planning (1H)</h4>
+            <div class="scoring-stage-grid">
+                <div class="form-group">
+                    <label>Risk model</label>
+                    <div class="checkbox-group scoring-option-grid">
+                        <label class="checkbox-label"><input type="radio" name="stk1h_risk_model" value="structure_based"><span class="checkbox-text">Structure based</span></label>
+                        <label class="checkbox-label"><input type="radio" name="stk1h_risk_model" value="level_based"><span class="checkbox-text">Level based</span></label>
+                        <label class="checkbox-label"><input type="radio" name="stk1h_risk_model" value="volatility_based"><span class="checkbox-text">Volatility based</span></label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="stk1h_notes">Notes</label>
+                    <textarea id="stk1h_notes" name="stk1h_notes" rows="2" placeholder="Short 1H planning note..."></textarea>
+                </div>
+            </div>
+        </div>
+
+        <details class="analysis-subsection spy-chat-collapsible">
+            <summary>Stock Chat (1D + 4H + 1H + 15m)</summary>
+            <div class="spy-chat-grid">
+                <div class="form-group">
+                    <label>Timeframes</label>
+                    <div class="checkbox-group scoring-option-grid">
+                        <label class="checkbox-label"><input type="checkbox" name="stock_chat_tf" value="1D" checked><span class="checkbox-text">1D</span></label>
+                        <label class="checkbox-label"><input type="checkbox" name="stock_chat_tf" value="4H" checked><span class="checkbox-text">4H</span></label>
+                        <label class="checkbox-label"><input type="checkbox" name="stock_chat_tf" value="1H" checked><span class="checkbox-text">1H</span></label>
+                        <label class="checkbox-label"><input type="checkbox" name="stock_chat_tf" value="15m" checked><span class="checkbox-text">15m (future)</span></label>
+                    </div>
+                    <label for="stock-chat-extra-context">Additional context for AI (optional)</label>
+                    <textarea id="stock-chat-extra-context" rows="2" placeholder="Optional note about stock context..."></textarea>
+                </div>
+                <div class="form-group">
+                    <label for="stock-chat-response-input">Paste ChatGPT response</label>
+                    <textarea id="stock-chat-response-input" rows="5" placeholder="Wklej odpowiedz z ChatGPT (tekst + JSON z suggestions)..."></textarea>
+                </div>
+                <div class="form-group">
+                    <div class="spy-chat-actions">
+                        <button id="stock-chat-generate" type="button" class="btn-secondary spy-chat-btn">Generate Prompt</button>
+                        <button id="stock-chat-copy" type="button" class="btn-secondary spy-chat-btn">Copy Prompt</button>
+                        <button id="stock-chat-apply" type="button" class="btn-secondary spy-chat-btn">Apply Suggestions</button>
+                    </div>
+                </div>
+            </div>
+        </details>
+    </div>
+
+    <div class="analysis-section">
+        <h3>Score Result</h3>
+        <div class="analysis-subsection">
+            <h4>SPY Score</h4>
+            <div class="form-group">
+                <label>RAW SCORE (before caps)</label>
+                <div id="scoring-raw-score">0 / 25</div>
+            </div>
+            <div class="form-group">
+                <label>Section Scores</label>
+                <div id="scoring-breakdown">
+                    Direction: 0/5 | Strength: 0/8 | Volatility Regime: 0/6 | Location: 0/6
+                </div>
+                <div id="pen-vol-subtotal">Volatility penalties subtotal: 0</div>
+            </div>
+            <div class="form-group">
+                <div id="scoring-cap-note"></div>
+            </div>
+        </div>
+
+        <div class="analysis-subsection">
+            <h4>Stock 1D Score</h4>
+            <div class="advanced-hint">Scoring is active (v1) and currently being tuned. Treat it as supportive, not decisive.</div>
+            <div class="form-group">
+                <label>TOTAL SCORE</label>
+                <div id="stock1d-total-score">0 / 20</div>
+            </div>
+            <div class="form-group">
+                <label>Interpretation/Grade</label>
+                <div id="stock1d-grade">No data</div>
+            </div>
+            <div class="form-group">
+                <label>RAW SCORE (before caps)</label>
+                <div id="stock1d-raw-score">0 / 20</div>
+            </div>
+            <div class="form-group">
+                <label>Breakdown</label>
+                <div id="stock1d-breakdown">Direction: 0/8 | Context: 0/8 | Risk/Levels: 0/4 | Penalties: 0</div>
             </div>
             <div class="form-group">
                 <div id="stock1d-cap-note"></div>
             </div>
         </div>
-    </div>
 
-    <div class="analysis-section">
-        <h3>Score Result</h3>
-        <div class="form-group">
-            <label>RAW SCORE (before caps)</label>
-            <div id="scoring-raw-score">0 / 25</div>
-        </div>
-        <div class="form-group">
-            <label>Section Scores</label>
-            <div id="scoring-breakdown">
-                Direction: 0/5 | Strength: 0/8 | Volatility Regime: 0/6 | Location: 0/6
+        <div class="analysis-subsection">
+            <h4>Stock 4H Score</h4>
+            <div class="form-group">
+                <label>TOTAL SCORE</label>
+                <div id="stock4h-total-score">0 / 20</div>
             </div>
-            <div id="pen-vol-subtotal">Volatility penalties subtotal: 0</div>
+            <div class="form-group">
+                <label>Interpretation/Grade</label>
+                <div id="stock4h-grade">No data</div>
+            </div>
+            <div class="form-group">
+                <label>RAW SCORE (before caps)</label>
+                <div id="stock4h-raw-score">0 / 20</div>
+            </div>
+            <div class="form-group">
+                <label>Breakdown</label>
+                <div id="stock4h-breakdown">Setup: 0/8 | Location/Levels: 0/6 | Quality/Risk: 0/6 | Penalties: 0</div>
+            </div>
+            <div class="form-group">
+                <div id="stock4h-cap-note"></div>
+            </div>
         </div>
-        <div class="form-group">
-            <div id="scoring-cap-note"></div>
+
+        <div class="analysis-subsection">
+            <h4>Stock 1H Score</h4>
+            <div class="form-group">
+                <label>TOTAL SCORE</label>
+                <div id="stock1h-total-score">0 / 20</div>
+            </div>
+            <div class="form-group">
+                <label>Interpretation/Grade</label>
+                <div id="stock1h-grade">No data</div>
+            </div>
+            <div class="form-group">
+                <label>RAW SCORE (before caps)</label>
+                <div id="stock1h-raw-score">0 / 20</div>
+            </div>
+            <div class="form-group">
+                <label>Breakdown</label>
+                <div id="stock1h-breakdown">Micro structure: 0/7 | Intraday context: 0/7 | Alignment/Risk: 0/6 | Penalties: 0</div>
+            </div>
+            <div class="form-group">
+                <div id="stock1h-cap-note"></div>
+            </div>
+        </div>
+
+        <div class="analysis-subsection">
+            <h4>Stock Global Score</h4>
+            <div class="advanced-hint">Global score currently sums 1D + 4H + 1H. A 15m component will be added in the next step.</div>
+            <div class="form-group">
+                <label>TOTAL SCORE</label>
+                <div id="stock-global-total-score">0 / 60</div>
+            </div>
+            <div class="form-group">
+                <label>Interpretation/Grade</label>
+                <div id="stock-global-grade">No data</div>
+            </div>
+            <div class="form-group">
+                <label>Breakdown</label>
+                <div id="stock-global-breakdown">1D: 0/20 | 4H: 0/20 | 1H: 0/20</div>
+            </div>
+            <div class="form-group">
+                <div id="stock-global-cap-note"></div>
+            </div>
         </div>
     </div>
 </form>

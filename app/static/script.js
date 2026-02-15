@@ -1,4 +1,4 @@
-// Auto-uppercase ticker input
+﻿// Auto-uppercase ticker input
 document.addEventListener('DOMContentLoaded', function() {
     const tickerInputs = document.querySelectorAll('input[name="ticker"], input[name="stk1d_ticker"]');
     tickerInputs.forEach(input => {
@@ -774,31 +774,56 @@ const SPY_SCORING_FIELD_HELP = {
 
 const STOCK_SCORING_FIELD_HELP = {
     stk1d_ticker: { tooltipText: 'Symbol akcji analizowanej na interwale dziennym (1D).' },
-    stk1d_rate: { tooltipText: 'Twoja ocena jakości kandydata (0-99) na podstawie zewnętrznej aplikacji lub własnej oceny.' },
-    stk1d_bias: { tooltipText: 'Ostateczny kierunek po uwzględnieniu struktury, 200 SMA, trend anchor i kontekstu SPY.' },
-    stk1d_relative_vs_spy: { tooltipText: 'Relative = dziś vs SPY (stan bieżący): Strength, Weakness albo Neutral.' },
-    stk1d_rs_trend: { tooltipText: 'RS trend = czy relacja Relative vs SPY poprawia się, jest stabilna, czy pogarsza.' },
-    stk1d_structure: { tooltipText: 'HH/HL = wyższe szczyty i dołki, LL/LH = niższe szczyty i dołki, Mixed = brak czytelnej struktury.' },
-    stk1d_sma200: { tooltipText: 'Above = cena powyżej SMA200 (często bullish kontekst), Below = poniżej (często bearish kontekst).' },
-    stk1d_trend_anchor: { tooltipText: 'Porównaj cenę do EMA20 na D1: Above = powyżej, Middle = dotyka/krąży, Below = poniżej.' },
-    stk1d_market_wind: { tooltipText: 'AUTO: zależy od SPY alignment i Beta - Opposite zawsze Headwind, Aligned Tailwind, a Diverging przy High beta traktujemy jak Headwind.' },
-    stk1d_spy_alignment: { tooltipText: 'Aligned = akcja idzie w tym samym kierunku co SPY, Diverging = wyraźnie inaczej, Opposite = przeciwnie do SPY.' },
-    stk1d_beta_sensitivity: { tooltipText: 'High beta = mocno reaguje na ruch SPY, Defensive = mniej zależna od rynku, Neutral = pośrodku.' },
-    stk1d_trend_state: { tooltipText: 'Intact = trend działa, Weakening = traci impet/łamie zasady, Broken = struktura trendu jest naruszona.' },
-    stk1d_trend_quality: { tooltipText: 'Wybierz Clean jeśli ruch jest gładki i respektuje poziomy; Choppy jeśli dużo szarpania i fałszywych świec.' },
-    stk1d_phase: { tooltipText: 'Impulse = silny ruch kierunkowy, Pullback = cofnięcie, Base = konsolidacja/budowanie bazy.' },
-    stk1d_pullback: { tooltipText: 'Within trend = cofnięcie zgodne z kierunkiem biasu, Against = cofnięcie przeciwne do biasu, None = brak cofnięcia.' },
-    stk1d_volatility_state: { tooltipText: 'Expanding gdy dzienne świece/zakres rosną, Contracting gdy zmienność się zwija i rynek usypia.' },
-    stk1d_extension_state: { tooltipText: 'Extended = daleko od EMA20/50 (łatwo o cofkę), Reset = po mocnym cofnięciu, Balanced = pośrodku.' },
-    stk1d_gap_risk: { tooltipText: 'Ocena ryzyka luki cenowej (gap) na podstawie historii zachowania i bieżących katalizatorów.' },
-    stk1d_options_liquidity: { tooltipText: 'Good = wąskie spready i duży obrót, Poor = szerokie spready/niska płynność (ryzyko pod swing options).' },
-    stk1d_event_earnings: { tooltipText: 'Wyniki mogą wywołać gwałtowny ruch i zmienić kontekst (ryzyko dla swing options).' },
-    stk1d_event_dividends: { tooltipText: 'Dywidenda może zmienić cenę odniesienia i zachowanie kursu w krótkim terminie.' },
-    stk1d_event_other: { tooltipText: 'Inny zaplanowany katalizator (np. decyzja sądowa, FDA, makro, split).' },
-    stk1d_support: { tooltipText: 'Najbliższy istotny poziom wsparcia na 1D.' },
-    stk1d_resistance: { tooltipText: 'Najbliższy istotny poziom oporu na 1D.' },
-    stk1d_level_position: { tooltipText: 'Gdzie jest cena względem kluczowych poziomów: przy wsparciu, w środku zakresu, przy oporze lub wybija zakres.' },
-    stk1d_summary: { tooltipText: 'W 1-2 zdaniach podaj, czy akcja jest kandydatem i dlaczego (bez planu wejścia/stop/target).' }
+    stk1d_rate: { tooltipText: 'Twoja ocena jakoĹ›ci kandydata (0-99) na podstawie zewnÄ™trznej aplikacji lub wĹ‚asnej oceny.' },
+    stk1d_bias: { tooltipText: 'Ostateczny kierunek po uwzglÄ™dnieniu struktury, 200 SMA, trend anchor i kontekstu SPY.' },
+    stk1d_relative_vs_spy: { tooltipText: 'Relative = dziĹ› vs SPY (stan bieĹĽÄ…cy): Strength, Weakness albo Neutral.' },
+    stk1d_rs_trend: { tooltipText: 'RS trend = czy relacja Relative vs SPY poprawia siÄ™, jest stabilna, czy pogarsza.' },
+    stk1d_structure: { tooltipText: 'HH/HL = wyĹĽsze szczyty i doĹ‚ki, LL/LH = niĹĽsze szczyty i doĹ‚ki, Mixed = brak czytelnej struktury.' },
+    stk1d_sma200: { tooltipText: 'Above = cena powyĹĽej SMA200 (czÄ™sto bullish kontekst), Below = poniĹĽej (czÄ™sto bearish kontekst).' },
+    stk1d_trend_anchor: { tooltipText: 'PorĂłwnaj cenÄ™ do EMA20 na D1: Above = powyĹĽej, Middle = dotyka/krÄ…ĹĽy, Below = poniĹĽej.' },
+    stk1d_spy_alignment: { tooltipText: 'Aligned = akcja idzie w tym samym kierunku co SPY, Diverging = wyraĹşnie inaczej, Opposite = przeciwnie do SPY.' },
+    stk1d_beta_sensitivity: { tooltipText: 'High beta = mocno reaguje na ruch SPY, Defensive = mniej zaleĹĽna od rynku, Neutral = poĹ›rodku.' },
+    stk1d_trend_state: { tooltipText: 'Intact = trend dziaĹ‚a, Weakening = traci impet/Ĺ‚amie zasady, Broken = struktura trendu jest naruszona.' },
+    stk1d_trend_quality: { tooltipText: 'Wybierz Clean jeĹ›li ruch jest gĹ‚adki i respektuje poziomy; Choppy jeĹ›li duĹĽo szarpania i faĹ‚szywych Ĺ›wiec.' },
+    stk1d_phase: { tooltipText: 'Impulse = silny ruch kierunkowy, Pullback = cofniÄ™cie, Base = konsolidacja/budowanie bazy.' },
+    stk1d_pullback: { tooltipText: 'Within trend = cofniÄ™cie zgodne z kierunkiem biasu, Against = cofniÄ™cie przeciwne do biasu, None = brak cofniÄ™cia.' },
+    stk1d_volatility_state: { tooltipText: 'Expanding gdy dzienne Ĺ›wiece/zakres rosnÄ…, Contracting gdy zmiennoĹ›Ä‡ siÄ™ zwija i rynek usypia.' },
+    stk1d_extension_state: { tooltipText: 'Extended = daleko od EMA20/50 (Ĺ‚atwo o cofkÄ™), Reset = po mocnym cofniÄ™ciu, Balanced = poĹ›rodku.' },
+    stk1d_gap_risk: { tooltipText: 'Ocena ryzyka luki cenowej (gap) na podstawie historii zachowania i bieĹĽÄ…cych katalizatorĂłw.' },
+    stk1d_options_liquidity: { tooltipText: 'Good = wÄ…skie spready i duĹĽy obrĂłt, Poor = szerokie spready/niska pĹ‚ynnoĹ›Ä‡ (ryzyko pod swing options).' },
+    stk1d_event_earnings: { tooltipText: 'Wyniki mogÄ… wywoĹ‚aÄ‡ gwaĹ‚towny ruch i zmieniÄ‡ kontekst (ryzyko dla swing options).' },
+    stk1d_event_dividends: { tooltipText: 'Dywidenda moĹĽe zmieniÄ‡ cenÄ™ odniesienia i zachowanie kursu w krĂłtkim terminie.' },
+    stk1d_event_other: { tooltipText: 'Inny zaplanowany katalizator (np. decyzja sÄ…dowa, FDA, makro, split).' },
+    stk1d_support: { tooltipText: 'NajbliĹĽszy istotny poziom wsparcia na 1D.' },
+    stk1d_resistance: { tooltipText: 'NajbliĹĽszy istotny poziom oporu na 1D.' },
+    stk1d_level_position: { tooltipText: 'Gdzie jest cena wzglÄ™dem kluczowych poziomĂłw: przy wsparciu, w Ĺ›rodku zakresu, przy oporze lub wybija zakres.' },
+    stk1d_summary: { tooltipText: 'W 1-2 zdaniach podaj, czy akcja jest kandydatem i dlaczego (bez planu wejscia/stop/target).' },
+    stk4h_bias: { tooltipText: 'Bias 4H to finalny kierunek po ocenie struktury i polozenia wzgledem anchor/poziomow. To filtr, nie sygnal wejscia.' },
+    stk4h_structure: { tooltipText: 'Struktura swingowa 4H: HH/HL trend wzrostowy, LL/LH trend spadkowy, Mixed brak czytelnej struktury.' },
+    stk4h_anchor_state: { tooltipText: 'Pozycja ceny wzgledem anchor na 4H (EMA20/VWAP proxy): powyzej, wokol lub ponizej.' },
+    stk4h_location: { tooltipText: 'Lokalizacja ceny wzgledem aktualnego range/swing, pomocna do oceny jakosci planu i przestrzeni ruchu.' },
+    stk4h_key_level_prior_day: { tooltipText: 'Zaznacz tylko poziomy, ktore realnie graja. To nie jest checklista wszystkiego.' },
+    stk4h_key_level_weekly: { tooltipText: 'Zaznacz tylko poziomy, ktore realnie graja. To nie jest checklista wszystkiego.' },
+    stk4h_key_level_range: { tooltipText: 'Zaznacz tylko poziomy, ktore realnie graja. To nie jest checklista wszystkiego.' },
+    stk4h_key_level_major_ma: { tooltipText: 'Zaznacz tylko poziomy, ktore realnie graja. To nie jest checklista wszystkiego.' },
+    stk4h_key_level_supply_demand: { tooltipText: 'Zaznacz tylko poziomy, ktore realnie graja. To nie jest checklista wszystkiego.' },
+    stk4h_setup_type: { tooltipText: 'Typ planowanego schematu 4H (continuation, pullback, reversal, range). Okresla co chcesz grac, bez triggera.' },
+    stk4h_trend_quality: { tooltipText: 'Jakosc trendu 4H: Clean, Acceptable lub Choppy. Choppy zwykle podnosi ryzyko theta i whipsaw.' },
+    stk4h_volatility_profile: { tooltipText: 'Profil zmiennosci 4H: Expanding, Stable, Contracting. Wplywa na zachowanie premii opcyjnych.' },
+    stk4h_invalidation_logic: { tooltipText: 'Logika uniewaznienia planu 4H. To nie jest stop-loss, tylko warunek utraty sensu setupu.' },
+    stk4h_liquidity_check: { tooltipText: 'Ocena optionability: czy spready i plynnosc sa akceptowalne dla swing options.' },
+    stk4h_notes: { tooltipText: 'Krotki opis planu 4H (1-2 linie), bez entry/stop/TP.' },
+    stk1h_structure: { tooltipText: 'Struktura 1H opisuje lokalny swing i moze byc inna niz 4H.' },
+    stk1h_anchor_state: { tooltipText: 'Pozycja ceny wzgledem anchor na 1H pomaga ocenic, czy momentum intraday wspiera plan 4H.' },
+    stk1h_range_state: { tooltipText: 'Stan 1H wzgledem range: wybicie, handel w srodku, albo odrzucenie poziomu.' },
+    stk1h_intraday_premarket: { tooltipText: 'Zaznacz tylko poziomy dnia, ktore realnie steruja ruchem (PMH/PML, OR, VWAP, PDH/PDL).' },
+    stk1h_intraday_opening_range: { tooltipText: 'Zaznacz tylko poziomy dnia, ktore realnie steruja ruchem (PMH/PML, OR, VWAP, PDH/PDL).' },
+    stk1h_intraday_vwap_reclaim_loss: { tooltipText: 'Zaznacz tylko poziomy dnia, ktore realnie steruja ruchem (PMH/PML, OR, VWAP, PDH/PDL).' },
+    stk1h_intraday_pdh_pdl: { tooltipText: 'Zaznacz tylko poziomy dnia, ktore realnie steruja ruchem (PMH/PML, OR, VWAP, PDH/PDL).' },
+    stk1h_alignment_with_4h: { tooltipText: 'Relacja 1H do planu 4H: Aligned, Minor pullback lub Counter-trend (wyzsze ryzyko fake move).' },
+    stk1h_setup_type: { tooltipText: 'Mikroschemat 1H (bez execution): breakout hold, failed breakout, pullback continuation, rejection reversal.' },
+    stk1h_risk_model: { tooltipText: 'Model ryzyka 1H: structure-based, level-based albo volatility-based.' },
+    stk1h_notes: { tooltipText: 'Krotki opis, co na 1H musi sie wydarzyc, aby plan 4H byl gotowy.' }
 };
 
 function initScoringFieldHelp(form, stockSection = form) {
@@ -818,7 +843,7 @@ function initScoringFieldHelp(form, stockSection = form) {
     };
 
     const appendToGroupLabel = (inputName, scope = form) => {
-        const field = scope.querySelector(`input[name="${inputName}"], textarea[name="${inputName}"]`);
+        const field = scope.querySelector(`input[name="${inputName}"], select[name="${inputName}"], textarea[name="${inputName}"]`);
         if (!field) return;
         const label = field.closest('.form-group')?.querySelector(':scope > label');
         appendMeta(label, inputName, getFieldMeta(inputName));
@@ -852,7 +877,6 @@ function initScoringFieldHelp(form, stockSection = form) {
         'stk1d_structure',
         'stk1d_sma200',
         'stk1d_trend_anchor',
-        'stk1d_market_wind',
         'stk1d_spy_alignment',
         'stk1d_relative_vs_spy',
         'stk1d_rs_trend',
@@ -868,7 +892,26 @@ function initScoringFieldHelp(form, stockSection = form) {
         'stk1d_support',
         'stk1d_resistance',
         'stk1d_level_position',
-        'stk1d_summary'
+        'stk1d_summary',
+        'stk4h_bias',
+        'stk4h_structure',
+        'stk4h_anchor_state',
+        'stk4h_location',
+        'stk4h_key_level_prior_day',
+        'stk4h_setup_type',
+        'stk4h_trend_quality',
+        'stk4h_volatility_profile',
+        'stk4h_invalidation_logic',
+        'stk4h_liquidity_check',
+        'stk4h_notes',
+        'stk1h_structure',
+        'stk1h_anchor_state',
+        'stk1h_range_state',
+        'stk1h_intraday_premarket',
+        'stk1h_alignment_with_4h',
+        'stk1h_setup_type',
+        'stk1h_risk_model',
+        'stk1h_notes'
     ].forEach((name) => appendToGroupLabel(name, stockSection));
 
     [
@@ -885,7 +928,16 @@ function initScoringFieldHelp(form, stockSection = form) {
     [
         'stk1d_event_earnings',
         'stk1d_event_dividends',
-        'stk1d_event_other'
+        'stk1d_event_other',
+        'stk4h_key_level_prior_day',
+        'stk4h_key_level_weekly',
+        'stk4h_key_level_range',
+        'stk4h_key_level_major_ma',
+        'stk4h_key_level_supply_demand',
+        'stk1h_intraday_premarket',
+        'stk1h_intraday_opening_range',
+        'stk1h_intraday_vwap_reclaim_loss',
+        'stk1h_intraday_pdh_pdl'
     ].forEach((name) => appendToOptionText(name, stockSection));
 }
 
@@ -1153,7 +1205,201 @@ function calculateStock1DScore(values) {
         cap,
         capApplied,
         capReasons,
-        grade
+        grade,
+        hasMinimumData: hasMinimumDirectionContext
+    };
+}
+
+function calculateStock4HScore(values) {
+    const clamp = (x, lo, hi) => Math.max(lo, Math.min(hi, x));
+    const hasDirectionalBias = values.bias === 'bullish' || values.bias === 'bearish';
+    const clearStructure = values.structure === 'hh_hl' || values.structure === 'll_lh';
+    const hasMinimumData = Boolean(values.bias && values.structure && values.setupType);
+
+    let setupScore = 0;
+    setupScore += hasDirectionalBias ? 2 : 0;
+    setupScore += clearStructure ? 2 : 0;
+    if (hasDirectionalBias) {
+        if ((values.bias === 'bullish' && values.anchorState === 'above_anchor') || (values.bias === 'bearish' && values.anchorState === 'below_anchor')) {
+            setupScore += 2;
+        } else if (values.anchorState === 'around_anchor') {
+            setupScore += 1;
+        }
+        if (values.bias === 'bullish') {
+            if (values.setupType === 'breakout_continuation' || values.setupType === 'pullback_within_trend') setupScore += 2;
+            else if (values.setupType === 'range_play' || values.setupType === 'reversal_attempt') setupScore += 1;
+        } else if (values.bias === 'bearish') {
+            if (values.setupType === 'breakdown_continuation' || values.setupType === 'pullback_within_trend') setupScore += 2;
+            else if (values.setupType === 'range_play' || values.setupType === 'reversal_attempt') setupScore += 1;
+        }
+    }
+    setupScore = clamp(setupScore, 0, 8);
+
+    let locationLevelsScore = 0;
+    if (values.bias === 'bullish') {
+        if (values.location === 'near_support' || values.location === 'range_low') locationLevelsScore += 2;
+        else if (values.location === 'mid_range') locationLevelsScore += 1;
+    } else if (values.bias === 'bearish') {
+        if (values.location === 'near_resistance' || values.location === 'range_high') locationLevelsScore += 2;
+        else if (values.location === 'mid_range') locationLevelsScore += 1;
+    } else if (values.bias === 'neutral') {
+        if (values.location === 'mid_range') locationLevelsScore += 1;
+    }
+    if (values.hardLevelsCount >= 2) locationLevelsScore += 2;
+    else if (values.selectedLevelsCount >= 2) locationLevelsScore += 1;
+    if (values.invalidationLogic) locationLevelsScore += 2;
+    locationLevelsScore = clamp(locationLevelsScore, 0, 6);
+
+    let qualityRiskScore = 0;
+    qualityRiskScore += values.trendQuality === 'clean' ? 2 : values.trendQuality === 'acceptable' ? 1 : 0;
+    qualityRiskScore += values.liquidityCheck === 'good' ? 2 : values.liquidityCheck === 'medium' ? 1 : 0;
+    qualityRiskScore += values.volatilityProfile === 'stable' ? 2 : values.volatilityProfile === 'contracting' ? 1 : 0;
+    qualityRiskScore = clamp(qualityRiskScore, 0, 6);
+
+    let penalties = 0;
+    if (values.bias === 'neutral') penalties -= 2;
+    if (values.structure === 'mixed') penalties -= 2;
+    if (values.trendQuality === 'choppy') penalties -= 2;
+    if (values.liquidityCheck === 'poor') penalties -= 3;
+    if (values.setupType === 'breakout_continuation' && (values.location === 'near_resistance' || values.location === 'range_high')) penalties -= 2;
+    if (values.setupType === 'breakdown_continuation' && (values.location === 'near_support' || values.location === 'range_low')) penalties -= 2;
+    if (values.bias === 'bullish' && values.anchorState === 'below_anchor') penalties -= 2;
+    if (values.bias === 'bearish' && values.anchorState === 'above_anchor') penalties -= 2;
+
+    const rawTotalUnbounded = setupScore + locationLevelsScore + qualityRiskScore + penalties;
+    const boundedRawTotal = clamp(rawTotalUnbounded, 0, 20);
+
+    let cap = 20;
+    const capReasons = [];
+    if (values.liquidityCheck === 'poor') {
+        cap = Math.min(cap, 10);
+        capReasons.push('Cap 10: Poor liquidity (4H)');
+    }
+    if (values.trendQuality === 'choppy') {
+        cap = Math.min(cap, 12);
+        capReasons.push('Cap 12: Choppy trend (4H)');
+    }
+    if (values.structure === 'mixed') {
+        cap = Math.min(cap, 12);
+        capReasons.push('Cap 12: Mixed structure (4H)');
+    }
+    if (values.bias === 'neutral') {
+        cap = Math.min(cap, 12);
+        capReasons.push('Cap 12: Neutral bias (4H)');
+    }
+    if (
+        values.volatilityProfile === 'expanding' &&
+        (values.setupType === 'reversal_attempt' || values.setupType === 'range_play')
+    ) {
+        cap = Math.min(cap, 12);
+        capReasons.push('Cap 12: Expanding volatility + reversal/range plan (4H)');
+    }
+
+    const total = Math.min(boundedRawTotal, cap);
+    const capApplied = total < boundedRawTotal;
+
+    let grade = 'No data';
+    if (hasMinimumData) {
+        grade = 'Pass';
+        if (total >= 16) grade = 'A (plan-ready)';
+        else if (total >= 12) grade = 'B (selective)';
+        else if (total >= 8) grade = 'C (watch)';
+    }
+
+    return {
+        total,
+        rawTotal: boundedRawTotal,
+        setupScore,
+        locationLevelsScore,
+        qualityRiskScore,
+        penalties,
+        cap,
+        capApplied,
+        capReasons,
+        grade,
+        hasMinimumData
+    };
+}
+
+function calculateStock1HScore(values) {
+    const clamp = (x, lo, hi) => Math.max(lo, Math.min(hi, x));
+    const clearStructure = values.structure === 'hh_hl' || values.structure === 'll_lh';
+    const hasMinimumData = Boolean(values.structure && values.rangeState && values.alignment4h && values.setupType);
+
+    let microStructureScore = 0;
+    microStructureScore += clearStructure ? 2 : 0;
+    if (values.structure === 'hh_hl' && values.anchorState === 'above') microStructureScore += 2;
+    else if (values.structure === 'll_lh' && values.anchorState === 'below') microStructureScore += 2;
+    else if (values.anchorState === 'around') microStructureScore += 1;
+    if (values.rangeState === 'breaking_range' || values.rangeState === 'rejecting_level') microStructureScore += 2;
+    else if (values.rangeState === 'inside_range') microStructureScore += 1;
+    if (values.structure !== 'mixed' && values.anchorState !== 'around' && values.rangeState !== 'inside_range') microStructureScore += 1;
+    microStructureScore = clamp(microStructureScore, 0, 7);
+
+    let intradayContextScore = 0;
+    if (values.intradayReactionCount >= 2) intradayContextScore += 3;
+    else if (values.intradayReactionCount === 1) intradayContextScore += 2;
+    if (values.hasVWAPReaction) intradayContextScore += 2;
+    if (values.hasPDHOrORReaction) intradayContextScore += 2;
+    intradayContextScore = clamp(intradayContextScore, 0, 7);
+
+    let alignmentRiskScore = 0;
+    alignmentRiskScore += values.alignment4h === 'aligned' ? 3 : values.alignment4h === 'minor_pullback' ? 2 : 0;
+    if (values.rangeState === 'breaking_range' && values.setupType === 'breakout_hold') alignmentRiskScore += 2;
+    else if (values.rangeState === 'breaking_range' && values.setupType === 'failed_breakout') alignmentRiskScore += 1;
+    else if (values.rangeState === 'rejecting_level' && values.setupType === 'rejection_reversal') alignmentRiskScore += 2;
+    else if (values.rangeState === 'inside_range' && values.setupType === 'pullback_continuation') alignmentRiskScore += 1;
+    if (values.riskModel) alignmentRiskScore += 1;
+    alignmentRiskScore = clamp(alignmentRiskScore, 0, 6);
+
+    let penalties = 0;
+    if (values.alignment4h === 'counter_trend') penalties -= 3;
+    if (values.structure === 'mixed') penalties -= 2;
+    if (values.rangeState === 'inside_range' && values.setupType === 'breakout_hold') penalties -= 2;
+    if (values.setupType === 'failed_breakout' && values.intradayReactionCount === 0) penalties -= 2;
+    if (values.anchorState === 'around' && values.structure === 'mixed') penalties -= 2;
+
+    const rawTotalUnbounded = microStructureScore + intradayContextScore + alignmentRiskScore + penalties;
+    const boundedRawTotal = clamp(rawTotalUnbounded, 0, 20);
+
+    let cap = 20;
+    const capReasons = [];
+    if (values.alignment4h === 'counter_trend') {
+        cap = Math.min(cap, 10);
+        capReasons.push('Cap 10: 1H counter-trend vs 4H');
+    }
+    if (values.structure === 'mixed') {
+        cap = Math.min(cap, 12);
+        capReasons.push('Cap 12: Mixed structure (1H)');
+    }
+    if (values.rangeState === 'inside_range' && values.intradayReactionCount === 0) {
+        cap = Math.min(cap, 12);
+        capReasons.push('Cap 12: Inside range + no intraday reaction (1H)');
+    }
+
+    const total = Math.min(boundedRawTotal, cap);
+    const capApplied = total < boundedRawTotal;
+
+    let grade = 'No data';
+    if (hasMinimumData) {
+        grade = 'Pass';
+        if (total >= 16) grade = 'A (execution-ready context)';
+        else if (total >= 12) grade = 'B (selective)';
+        else if (total >= 8) grade = 'C (watch)';
+    }
+
+    return {
+        total,
+        rawTotal: boundedRawTotal,
+        microStructureScore,
+        intradayContextScore,
+        alignmentRiskScore,
+        penalties,
+        cap,
+        capApplied,
+        capReasons,
+        grade,
+        hasMinimumData
     };
 }
 
@@ -1173,16 +1419,50 @@ function initScoringBuilder() {
     const stockTotalEl = document.getElementById('stock1d-total-score');
     const stockRawEl = document.getElementById('stock1d-raw-score');
     const stockGradeEl = document.getElementById('stock1d-grade');
+    const stock1dHeaderScoreEl = document.getElementById('stock1d-header-score');
+    const stock1dHeaderGradeEl = document.getElementById('stock1d-header-grade');
     const stockBreakdownEl = document.getElementById('stock1d-breakdown');
     const stockCapNoteEl = document.getElementById('stock1d-cap-note');
-    const marketWindAutoEl = document.getElementById('stk1d_market_wind_auto');
-    const marketWindHiddenEl = stockSection.querySelector('input[name="stk1d_market_wind"]');
-    const marketGuardrailEl = document.getElementById('stk1d_market_guardrail');
+    const stock4hTotalEl = document.getElementById('stock4h-total-score');
+    const stock4hRawEl = document.getElementById('stock4h-raw-score');
+    const stock4hGradeEl = document.getElementById('stock4h-grade');
+    const stock4hHeaderScoreEl = document.getElementById('stock4h-header-score');
+    const stock4hHeaderGradeEl = document.getElementById('stock4h-header-grade');
+    const stock4hBreakdownEl = document.getElementById('stock4h-breakdown');
+    const stock4hCapNoteEl = document.getElementById('stock4h-cap-note');
+    const stock1hTotalEl = document.getElementById('stock1h-total-score');
+    const stock1hRawEl = document.getElementById('stock1h-raw-score');
+    const stock1hGradeEl = document.getElementById('stock1h-grade');
+    const stock1hHeaderScoreEl = document.getElementById('stock1h-header-score');
+    const stock1hHeaderGradeEl = document.getElementById('stock1h-header-grade');
+    const stock1hBreakdownEl = document.getElementById('stock1h-breakdown');
+    const stock1hCapNoteEl = document.getElementById('stock1h-cap-note');
+    const stockGlobalTotalEl = document.getElementById('stock-global-total-score');
+    const stockGlobalGradeEl = document.getElementById('stock-global-grade');
+    const stockGlobalBreakdownEl = document.getElementById('stock-global-breakdown');
+    const stockGlobalCapNoteEl = document.getElementById('stock-global-cap-note');
     const trendQualityGuardrailEl = document.getElementById('stk1d_trend_quality_guardrail');
     const liquidityEventGuardrailEl = document.getElementById('stk1d_liquidity_event_guardrail');
     const volGapGuardrailEl = document.getElementById('stk1d_vol_gap_guardrail');
     const pullbackGroupEl = document.getElementById('stk1d_pullback_group');
     const pullbackNaEl = document.getElementById('stk1d_pullback_na');
+    const stk4hChoppyGuardrailEl = document.getElementById('stk4h_choppy_guardrail');
+    const stk4hSetupLocationGuardrailEl = document.getElementById('stk4h_setup_location_guardrail');
+    const stk1hAlignmentGuardrailEl = document.getElementById('stk1h_alignment_guardrail');
+    const stk4hVolLiqGuardrailEl = document.getElementById('stk4h_vol_liq_guardrail');
+    const stk4hAnchorBiasGuardrailEl = document.getElementById('stk4h_anchor_bias_guardrail');
+    const spyChatButtonEl = document.getElementById('spy-chat-generate');
+    const spyChatCopyButtonEl = document.getElementById('spy-chat-copy');
+    const spyChatApplyButtonEl = document.getElementById('spy-chat-apply');
+    const spyChatExtraContextEl = document.getElementById('spy-chat-extra-context');
+    const spyChatResponseInputEl = document.getElementById('spy-chat-response-input');
+    const stockChatButtonEl = document.getElementById('stock-chat-generate');
+    const stockChatCopyButtonEl = document.getElementById('stock-chat-copy');
+    const stockChatApplyButtonEl = document.getElementById('stock-chat-apply');
+    const stockChatExtraContextEl = document.getElementById('stock-chat-extra-context');
+    const stockChatResponseInputEl = document.getElementById('stock-chat-response-input');
+    let generatedSpyPrompt = '';
+    let generatedStockPrompt = '';
 
     const bindMutualExclusiveGroup = (names) => {
         const inputs = names.map(name => form.querySelector(`input[name="${name}"]`)).filter(Boolean);
@@ -1196,7 +1476,6 @@ function initScoringBuilder() {
             });
         });
     };
-
     const isChecked = (name) => {
         const el = form.querySelector(`input[name="${name}"]`);
         return Boolean(el && el.checked);
@@ -1204,6 +1483,10 @@ function initScoringBuilder() {
     const getRadioValue = (name) => {
         const el = form.querySelector(`input[name="${name}"]:checked`);
         return el ? el.value : '';
+    };
+    const getFieldValue = (name) => {
+        const el = form.querySelector(`[name="${name}"]`);
+        return el ? (el.value || '') : '';
     };
     const getStockRadioValue = (name) => {
         const el = stockSection.querySelector(`input[name="${name}"]:checked`);
@@ -1221,6 +1504,151 @@ function initScoringBuilder() {
         const num = Number.parseFloat(normalized);
         if (!Number.isFinite(num)) return 0;
         return Math.max(min, Math.min(max, num));
+    };
+
+    const collectSpyInputs = () => {
+        const result = {};
+        const spyFields = form.querySelectorAll('[name^="sc_spy_"]');
+        spyFields.forEach((field) => {
+            if (!field.name) return;
+            if (field.type === 'radio') {
+                if (field.checked) result[field.name] = field.value;
+                return;
+            }
+            if (field.type === 'checkbox') {
+                if (field.checked) result[field.name] = true;
+                return;
+            }
+            const value = (field.value || '').trim();
+            if (value) result[field.name] = value;
+        });
+        return result;
+    };
+
+    const clearChatHints = (hintClass) => {
+        const hintEls = form.querySelectorAll(`.${hintClass}`);
+        hintEls.forEach((el) => el.remove());
+    };
+
+    const applyChatHints = (suggestions, hintClass) => {
+        clearChatHints(hintClass);
+        if (!suggestions || typeof suggestions !== 'object') return;
+        Object.entries(suggestions).forEach(([name, value]) => {
+            const input = form.querySelector(`input[name="${name}"][value="${value}"]`);
+            if (!input) return;
+            const label = input.closest('.checkbox-label');
+            if (!label) return;
+            const hint = document.createElement('span');
+            hint.className = hintClass;
+            hint.textContent = 'Chat';
+            label.appendChild(hint);
+        });
+    };
+
+    const extractSuggestionsFromResponse = (rawText) => {
+        const text = (rawText || '').trim();
+        if (!text) return null;
+        let parsed = null;
+        try {
+            parsed = JSON.parse(text);
+        } catch (_) {
+            parsed = null;
+        }
+        if (!parsed) {
+            const start = text.lastIndexOf('{"suggestions"');
+            if (start >= 0) {
+                const maybeJson = text.slice(start).trim();
+                try {
+                    parsed = JSON.parse(maybeJson);
+                } catch (_) {
+                    parsed = null;
+                }
+            }
+        }
+        if (!parsed || typeof parsed !== 'object' || typeof parsed.suggestions !== 'object') {
+            return null;
+        }
+        return parsed.suggestions;
+    };
+
+    const runSpyChatAnalysis = async () => {
+        if (!spyChatButtonEl) return;
+        const extraContext = spyChatExtraContextEl ? (spyChatExtraContextEl.value || '').trim() : '';
+        generatedSpyPrompt = [
+            'Przeanalizuj SPY w TF 1D i wydaj NIEZALEZNA opinie.',
+            'Nie kopiuj i nie zgaduj moich wyborow z formularza. Oceń rynek samodzielnie.',
+            '',
+            'Dokladnie sprawdz te elementy:',
+            '- Kierunek biasu rynku (bullish / bearish / neutral).',
+            '- Rezim rynku: trend, range czy warunki niestabilne/volatile.',
+            '- Strukture ceny: HH/HL, LL/LH albo mixed.',
+            '- Polozenie ceny wzgledem VWAP: powyzej czy ponizej.',
+            '- Kierunek VIX: rising, falling albo flat.',
+            '- Poziom VIX: <20, 20-25, >25.',
+            '- Breadth rynku: strong / neutral / weak.',
+            '- Lokacje ceny: przy oporze, przy wsparciu, srodek zakresu, wybicie z zakresu.',
+            '- Miejsce na ruch (room to move): duze / ograniczone / brak.',
+            '- Zachowanie trendowe: higher lows, lower highs albo brak czytelnego sygnalu.',
+            '',
+            `Dodatkowy kontekst ode mnie (opcjonalny): ${extraContext || 'brak'}`,
+            '',
+            'Zwróc dokładnie 3 zdania po polsku:',
+            '1) Ogolny opis co dzieje sie na SPY.',
+            '2) Jedno zdanie o glownym zagrozeniu/risku.',
+            '3) Jedno zdanie odwrotne do risku: co musi sie wydarzyc, aby scenariusz byl po naszej stronie.',
+            '',
+            'Dodatkowo zwroc JSON z sugestiami dla pol (bez markdown):',
+            '{"suggestions":{"sc_spy_bias":"bullish|bearish|neutral","sc_spy_regime":"trending|ranging|volatile","sc_spy_structure":"hh_hl|ll_lh|mixed","sc_spy_vwap":"above|below","sc_spy_vix_trend":"falling|rising|flat","sc_spy_vix_level":"lt20|20_25|gt25","sc_spy_breadth":"strong|neutral|weak","sc_spy_location":"at_resistance|at_support|mid_range|breaking_range","sc_spy_room":"large|limited|none","sc_spy_behavior_trend":"higher_lows|lower_highs|none"}}'
+        ].join('\n');
+
+        clearChatHints('spy-ai-hint');
+        const originalLabel = spyChatButtonEl.textContent || 'Generate Prompt';
+        spyChatButtonEl.textContent = 'Prompt ready';
+        setTimeout(() => {
+            spyChatButtonEl.textContent = originalLabel;
+        }, 900);
+    };
+
+    const runStockChatAnalysis = async () => {
+        if (!stockChatButtonEl) return;
+        const extraContext = stockChatExtraContextEl ? (stockChatExtraContextEl.value || '').trim() : '';
+        const selectedTfs = Array.from(form.querySelectorAll('input[name="stock_chat_tf"]:checked')).map((el) => el.value);
+        const tfs = selectedTfs.length ? selectedTfs.join(', ') : '1D, 4H, 1H, 15m';
+        generatedStockPrompt = [
+            `Przeanalizuj STOCK w TF: ${tfs} i wydaj NIEZALEZNA opinie.`,
+            'Nie kopiuj i nie zgaduj moich wyborow z formularza. Oceń rynek samodzielnie.',
+            '',
+            'Dokladnie sprawdz te elementy na 1D:',
+            '- Bias kierunkowy, strukture HH/HL vs LL/LH vs mixed.',
+            '- Relacje do SMA200 i trend anchor (EMA20/VWAP proxy).',
+            '- Kontekst SPY alignment, relative strength vs SPY, phase i volatility state.',
+            '- Ryzyko eventowe oraz plynnosc opcji.',
+            '',
+            'Dokladnie sprawdz te elementy na 4H:',
+            '- Bias, structure, anchor state, location.',
+            '- Planned setup, trend quality i volatility profile.',
+            '- Invalidation logic i quality/liquidity warunkow.',
+            '',
+            'Dokladnie sprawdz te elementy na 1H:',
+            '- Micro structure, anchor state, range state.',
+            '- Intraday level reactions oraz alignment z 4H.',
+            '- Setup type i risk model.',
+            '',
+            'Dokladnie sprawdz te elementy na 15m (gdy bedzie dostepne):',
+            '- Timing setup, momentum, micro volatility, fake move risk.',
+            '',
+            `Dodatkowy kontekst ode mnie (opcjonalny): ${extraContext || 'brak'}`,
+            '',
+            'Zwróc krotkie podsumowanie (max 6-8 zdan) i na koncu JSON z sugestiami dla formularza (bez markdown):',
+            '{"suggestions":{"stk1d_bias":"bullish|bearish|neutral","stk1d_structure":"hh_hl|ll_lh|mixed","stk1d_sma200":"above|below","stk1d_trend_anchor":"above|middle|below","stk1d_spy_alignment":"aligned|diverging|opposite","stk1d_relative_vs_spy":"strength|weakness|neutral","stk1d_phase":"impulse|pullback|base|distribution","stk1d_volatility_state":"expanding|normal|contracting","stk1d_options_liquidity":"good|medium|poor","stk4h_bias":"bullish|bearish|neutral","stk4h_structure":"hh_hl|ll_lh|mixed","stk4h_anchor_state":"above_anchor|around_anchor|below_anchor","stk4h_location":"near_support|mid_range|near_resistance|range_high|range_low","stk4h_setup_type":"breakout_continuation|breakdown_continuation|pullback_within_trend|reversal_attempt|range_play","stk4h_trend_quality":"clean|acceptable|choppy","stk4h_volatility_profile":"expanding|stable|contracting","stk4h_liquidity_check":"good|medium|poor","stk1h_structure":"hh_hl|ll_lh|mixed","stk1h_anchor_state":"above|around|below","stk1h_range_state":"breaking_range|inside_range|rejecting_level","stk1h_alignment_with_4h":"aligned|minor_pullback|counter_trend","stk1h_setup_type":"breakout_hold|failed_breakout|pullback_continuation|rejection_reversal","stk1h_risk_model":"structure_based|level_based|volatility_based"}}'
+        ].join('\n');
+
+        clearChatHints('stock-ai-hint');
+        const originalLabel = stockChatButtonEl.textContent || 'Generate Prompt';
+        stockChatButtonEl.textContent = 'Prompt ready';
+        setTimeout(() => {
+            stockChatButtonEl.textContent = originalLabel;
+        }, 900);
     };
 
     const bindVolumeValidation = () => {
@@ -1292,6 +1720,46 @@ function initScoringBuilder() {
             otherCatalyst: isStockChecked('stk1d_event_other'),
             rate: parseRate('stk1d_rate', 0, 99)
         });
+        const stock4hScore = calculateStock4HScore({
+            bias: getRadioValue('stk4h_bias'),
+            structure: getRadioValue('stk4h_structure'),
+            anchorState: getRadioValue('stk4h_anchor_state'),
+            location: getRadioValue('stk4h_location'),
+            selectedLevelsCount: [
+                isChecked('stk4h_key_level_prior_day'),
+                isChecked('stk4h_key_level_weekly'),
+                isChecked('stk4h_key_level_range'),
+                isChecked('stk4h_key_level_major_ma'),
+                isChecked('stk4h_key_level_supply_demand')
+            ].filter(Boolean).length,
+            hardLevelsCount: [
+                isChecked('stk4h_key_level_weekly'),
+                isChecked('stk4h_key_level_supply_demand'),
+                isChecked('stk4h_key_level_major_ma')
+            ].filter(Boolean).length,
+            setupType: getRadioValue('stk4h_setup_type'),
+            trendQuality: getRadioValue('stk4h_trend_quality'),
+            volatilityProfile: getRadioValue('stk4h_volatility_profile'),
+            invalidationLogic: getFieldValue('stk4h_invalidation_logic'),
+            liquidityCheck: getRadioValue('stk4h_liquidity_check')
+        });
+        const intradayReactionCount = [
+            isChecked('stk1h_intraday_premarket'),
+            isChecked('stk1h_intraday_opening_range'),
+            isChecked('stk1h_intraday_vwap_reclaim_loss'),
+            isChecked('stk1h_intraday_pdh_pdl')
+        ].filter(Boolean).length;
+        const stock1hScore = calculateStock1HScore({
+            structure: getRadioValue('stk1h_structure'),
+            anchorState: getRadioValue('stk1h_anchor_state'),
+            rangeState: getRadioValue('stk1h_range_state'),
+            intradayReactionCount,
+            hasVWAPReaction: isChecked('stk1h_intraday_vwap_reclaim_loss'),
+            hasPDHOrORReaction: isChecked('stk1h_intraday_pdh_pdl') || isChecked('stk1h_intraday_opening_range'),
+            alignment4h: getRadioValue('stk1h_alignment_with_4h'),
+            setupType: getRadioValue('stk1h_setup_type'),
+            riskModel: getRadioValue('stk1h_risk_model')
+        });
 
         if (totalEl) totalEl.textContent = `${score.total} / 25`;
         if (rawEl) rawEl.textContent = `${score.rawTotal} / 25`;
@@ -1310,6 +1778,8 @@ function initScoringBuilder() {
         if (stockTotalEl) stockTotalEl.textContent = `${stockScore.total} / 20`;
         if (stockRawEl) stockRawEl.textContent = `${stockScore.rawTotal} / 20`;
         if (stockGradeEl) stockGradeEl.textContent = stockScore.grade;
+        if (stock1dHeaderScoreEl) stock1dHeaderScoreEl.textContent = `${stockScore.total} / 20`;
+        if (stock1dHeaderGradeEl) stock1dHeaderGradeEl.textContent = stockScore.grade;
         if (stockBreakdownEl) {
             stockBreakdownEl.textContent = `Direction: ${stockScore.directionScore}/8 | Context: ${stockScore.contextScore}/8 | Risk/Levels: ${stockScore.riskLevelsScore}/4 | Penalties: ${stockScore.penalties}`;
         }
@@ -1318,10 +1788,77 @@ function initScoringBuilder() {
                 ? `Cap active: max ${stockScore.cap}. Reason: ${stockScore.capReasons.join('; ')}.`
                 : '';
         }
+        if (stock4hTotalEl) stock4hTotalEl.textContent = `${stock4hScore.total} / 20`;
+        if (stock4hRawEl) stock4hRawEl.textContent = `${stock4hScore.rawTotal} / 20`;
+        if (stock4hGradeEl) stock4hGradeEl.textContent = stock4hScore.grade;
+        if (stock4hHeaderScoreEl) stock4hHeaderScoreEl.textContent = `${stock4hScore.total} / 20`;
+        if (stock4hHeaderGradeEl) stock4hHeaderGradeEl.textContent = stock4hScore.grade;
+        if (stock4hBreakdownEl) {
+            stock4hBreakdownEl.textContent = `Setup: ${stock4hScore.setupScore}/8 | Location/Levels: ${stock4hScore.locationLevelsScore}/6 | Quality/Risk: ${stock4hScore.qualityRiskScore}/6 | Penalties: ${stock4hScore.penalties}`;
+        }
+        if (stock4hCapNoteEl) {
+            stock4hCapNoteEl.textContent = stock4hScore.capApplied
+                ? stock4hScore.capReasons.join('; ')
+                : '';
+        }
+        if (stock1hTotalEl) stock1hTotalEl.textContent = `${stock1hScore.total} / 20`;
+        if (stock1hRawEl) stock1hRawEl.textContent = `${stock1hScore.rawTotal} / 20`;
+        if (stock1hGradeEl) stock1hGradeEl.textContent = stock1hScore.grade;
+        if (stock1hHeaderScoreEl) stock1hHeaderScoreEl.textContent = `${stock1hScore.total} / 20`;
+        if (stock1hHeaderGradeEl) stock1hHeaderGradeEl.textContent = stock1hScore.grade;
+        if (stock1hBreakdownEl) {
+            stock1hBreakdownEl.textContent = `Micro structure: ${stock1hScore.microStructureScore}/7 | Intraday context: ${stock1hScore.intradayContextScore}/7 | Alignment/Risk: ${stock1hScore.alignmentRiskScore}/6 | Penalties: ${stock1hScore.penalties}`;
+        }
+        if (stock1hCapNoteEl) {
+            stock1hCapNoteEl.textContent = stock1hScore.capApplied
+                ? stock1hScore.capReasons.join('; ')
+                : '';
+        }
+        const has1d = stockScore.hasMinimumData;
+        const has4h = stock4hScore.hasMinimumData;
+        const has1h = stock1hScore.hasMinimumData;
+        const hasAllGlobal = has1d && has4h && has1h;
+        const globalTotal = stockScore.total + stock4hScore.total + stock1hScore.total;
+        if (stockGlobalTotalEl) {
+            if (hasAllGlobal) stockGlobalTotalEl.textContent = `${globalTotal} / 60`;
+            else {
+                const missing = [];
+                if (!has1d) missing.push('1D');
+                if (!has4h) missing.push('4H');
+                if (!has1h) missing.push('1H');
+                stockGlobalTotalEl.textContent = `No data (need ${missing.join(' + ')})`;
+            }
+        }
+        if (stockGlobalBreakdownEl) {
+            stockGlobalBreakdownEl.textContent = `1D: ${has1d ? `${stockScore.total}/20` : 'No data'} | 4H: ${has4h ? `${stock4hScore.total}/20` : 'No data'} | 1H: ${has1h ? `${stock1hScore.total}/20` : 'No data'}`;
+        }
+        if (stockGlobalGradeEl) {
+            let globalGrade = 'No data';
+            if (hasAllGlobal) {
+                globalGrade = 'Pass';
+                if (globalTotal >= 48) globalGrade = 'A (global-ready)';
+                else if (globalTotal >= 36) globalGrade = 'B (selective)';
+                else if (globalTotal >= 24) globalGrade = 'C (watch)';
+            }
+            stockGlobalGradeEl.textContent = globalGrade;
+        }
+        if (stockGlobalCapNoteEl) {
+            const capLines = [];
+            if (stockScore.capApplied && stockScore.capReasons.length) {
+                capLines.push(`1D: ${stockScore.capReasons.join('; ')}`);
+            }
+            if (stock4hScore.capApplied && stock4hScore.capReasons.length) {
+                capLines.push(`4H: ${stock4hScore.capReasons.join('; ')}`);
+            }
+            if (stock1hScore.capApplied && stock1hScore.capReasons.length) {
+                capLines.push(`1H: ${stock1hScore.capReasons.join('; ')}`);
+            }
+            stockGlobalCapNoteEl.textContent = capLines.join('\n');
+        }
         if (trendQualityGuardrailEl) {
             const trendQuality = getStockRadioValue('stk1d_trend_quality');
             trendQualityGuardrailEl.textContent = trendQuality === 'choppy'
-                ? 'Uwaga: swing options często cierpią na theta w rynku choppy.'
+                ? 'Uwaga: swing options czÄ™sto cierpiÄ… na theta w rynku choppy.'
                 : '';
         }
         if (pullbackGroupEl) {
@@ -1337,40 +1874,55 @@ function initScoringBuilder() {
                 });
             }
             if (pullbackNaEl) {
-                pullbackNaEl.textContent = isPullbackPhase ? '' : 'Pullback: N/A (Phase ≠ Pullback)';
+                pullbackNaEl.textContent = isPullbackPhase ? '' : 'Pullback: N/A (Phase â‰  Pullback)';
             }
-        }
-        const derivedMarketWind = (() => {
-            const align = getStockRadioValue('stk1d_spy_alignment');
-            const beta = getStockRadioValue('stk1d_beta_sensitivity');
-            if (align === 'opposite') return 'headwind';
-            if (align === 'aligned') return 'tailwind';
-            if (align === 'diverging' && beta === 'high_beta') return 'headwind';
-            return 'neutral';
-        })();
-        if (marketWindHiddenEl) marketWindHiddenEl.value = derivedMarketWind;
-        if (marketWindAutoEl) {
-            const pretty = derivedMarketWind.charAt(0).toUpperCase() + derivedMarketWind.slice(1);
-            marketWindAutoEl.textContent = `Auto: ${pretty}`;
-        }
-        if (marketGuardrailEl) {
-            const bias = getStockRadioValue('stk1d_bias');
-            marketGuardrailEl.textContent = (derivedMarketWind === 'headwind' && bias === 'bullish')
-                ? 'Kontekst rynkowy nie sprzyja kierunkowi.'
-                : '';
         }
         if (liquidityEventGuardrailEl) {
             const earnings = isStockChecked('stk1d_event_earnings');
             const liq = getStockRadioValue('stk1d_options_liquidity');
             liquidityEventGuardrailEl.textContent = (earnings && liq === 'poor')
-                ? 'Uwaga: earnings + słaba płynność opcji, spready/IV/poślizg mogą mocno pogorszyć RR.'
+                ? 'Uwaga: earnings + sĹ‚aba pĹ‚ynnoĹ›Ä‡ opcji, spready/IV/poĹ›lizg mogÄ… mocno pogorszyÄ‡ RR.'
                 : '';
         }
         if (volGapGuardrailEl) {
             const vol = getStockRadioValue('stk1d_volatility_state');
             const gap = getStockRadioValue('stk1d_gap_risk');
             volGapGuardrailEl.textContent = (vol === 'expanding' && gap === 'high')
-                ? 'Uwaga: ekspansja zmienności i wysokie gap risk zwiększają ryzyko skoków ceny.'
+                ? 'Uwaga: ekspansja zmiennoĹ›ci i wysokie gap risk zwiÄ™kszajÄ… ryzyko skokĂłw ceny.'
+                : '';
+        }
+        if (stk4hChoppyGuardrailEl) {
+            const trendQuality4h = getRadioValue('stk4h_trend_quality');
+            stk4hChoppyGuardrailEl.textContent = trendQuality4h === 'choppy'
+                ? 'Szarpany rynek: rosnie theta + ryzyko whipsaw.'
+                : '';
+        }
+        if (stk4hSetupLocationGuardrailEl) {
+            const setupType4h = getRadioValue('stk4h_setup_type');
+            const location4h = getRadioValue('stk4h_location');
+            const breakoutLike = setupType4h === 'breakout_continuation' || setupType4h === 'breakdown_continuation';
+            stk4hSetupLocationGuardrailEl.textContent = (breakoutLike && location4h === 'near_resistance')
+                ? 'Uwaga: breakout przy Near resistance - sprawdĹş, czy to nie podwĂłjny szczyt.'
+                : '';
+        }
+        if (stk1hAlignmentGuardrailEl) {
+            const alignment1h = getRadioValue('stk1h_alignment_with_4h');
+            stk1hAlignmentGuardrailEl.textContent = alignment1h === 'counter_trend'
+                ? 'Ryzyko fake move: poczekaj na powrot 1H w kierunku 4H.'
+                : '';
+        }
+        if (stk4hVolLiqGuardrailEl) {
+            const volProfile4h = getRadioValue('stk4h_volatility_profile');
+            const liq4h = getRadioValue('stk4h_liquidity_check');
+            stk4hVolLiqGuardrailEl.textContent = (volProfile4h === 'expanding' && liq4h === 'poor')
+                ? 'Uwaga: Expanding volatility + Poor liquidity = wysokie ryzyko szerokich spreadĂłw.'
+                : '';
+        }
+        if (stk4hAnchorBiasGuardrailEl) {
+            const bias4h = getRadioValue('stk4h_bias');
+            const anchor4h = getRadioValue('stk4h_anchor_state');
+            stk4hAnchorBiasGuardrailEl.textContent = (bias4h === 'bullish' && anchor4h === 'below_anchor')
+                ? 'Uwaga: Bullish bias przy anchor below - momentum mismatch.'
                 : '';
         }
     };
@@ -1378,11 +1930,99 @@ function initScoringBuilder() {
     bindMutualExclusiveGroup(['sc_spy_behavior_expansion_up', 'sc_spy_behavior_expansion_down']);
     bindVolumeValidation();
     bindRateValidation();
+    if (spyChatButtonEl) {
+        spyChatButtonEl.addEventListener('click', runSpyChatAnalysis);
+    }
+    if (spyChatCopyButtonEl) {
+        spyChatCopyButtonEl.addEventListener('click', async () => {
+            if (!generatedSpyPrompt.trim()) {
+                runSpyChatAnalysis();
+            }
+            const text = generatedSpyPrompt.trim();
+            if (!text) return;
+            try {
+                await navigator.clipboard.writeText(text);
+                spyChatCopyButtonEl.textContent = 'Copied';
+                setTimeout(() => {
+                    spyChatCopyButtonEl.textContent = 'Copy Prompt';
+                }, 1200);
+            } catch (_) {
+                spyChatCopyButtonEl.textContent = 'Copy failed';
+                setTimeout(() => {
+                    spyChatCopyButtonEl.textContent = 'Copy Prompt';
+                }, 1200);
+            }
+        });
+    }
+    if (spyChatApplyButtonEl && spyChatResponseInputEl) {
+        spyChatApplyButtonEl.addEventListener('click', () => {
+            const suggestions = extractSuggestionsFromResponse(spyChatResponseInputEl.value);
+            if (!suggestions) {
+                const originalLabel = spyChatApplyButtonEl.textContent || 'Apply Suggestions';
+                spyChatApplyButtonEl.textContent = 'Invalid JSON';
+                setTimeout(() => {
+                    spyChatApplyButtonEl.textContent = originalLabel;
+                }, 1200);
+                return;
+            }
+            applyChatHints(suggestions, 'spy-ai-hint');
+            const originalLabel = spyChatApplyButtonEl.textContent || 'Apply Suggestions';
+            spyChatApplyButtonEl.textContent = 'Applied';
+            setTimeout(() => {
+                spyChatApplyButtonEl.textContent = originalLabel;
+            }, 1200);
+        });
+    }
+    if (stockChatButtonEl) {
+        stockChatButtonEl.addEventListener('click', runStockChatAnalysis);
+    }
+    if (stockChatCopyButtonEl) {
+        stockChatCopyButtonEl.addEventListener('click', async () => {
+            if (!generatedStockPrompt.trim()) {
+                runStockChatAnalysis();
+            }
+            const text = generatedStockPrompt.trim();
+            if (!text) return;
+            try {
+                await navigator.clipboard.writeText(text);
+                stockChatCopyButtonEl.textContent = 'Copied';
+                setTimeout(() => {
+                    stockChatCopyButtonEl.textContent = 'Copy Prompt';
+                }, 1200);
+            } catch (_) {
+                stockChatCopyButtonEl.textContent = 'Copy failed';
+                setTimeout(() => {
+                    stockChatCopyButtonEl.textContent = 'Copy Prompt';
+                }, 1200);
+            }
+        });
+    }
+    if (stockChatApplyButtonEl && stockChatResponseInputEl) {
+        stockChatApplyButtonEl.addEventListener('click', () => {
+            const suggestions = extractSuggestionsFromResponse(stockChatResponseInputEl.value);
+            if (!suggestions) {
+                const originalLabel = stockChatApplyButtonEl.textContent || 'Apply Suggestions';
+                stockChatApplyButtonEl.textContent = 'Invalid JSON';
+                setTimeout(() => {
+                    stockChatApplyButtonEl.textContent = originalLabel;
+                }, 1200);
+                return;
+            }
+            applyChatHints(suggestions, 'stock-ai-hint');
+            const originalLabel = stockChatApplyButtonEl.textContent || 'Apply Suggestions';
+            stockChatApplyButtonEl.textContent = 'Applied';
+            setTimeout(() => {
+                stockChatApplyButtonEl.textContent = originalLabel;
+            }, 1200);
+        });
+    }
 
     form.addEventListener('change', renderScore);
     form.addEventListener('input', renderScore);
     renderScore();
 }
+
+
 
 
 
