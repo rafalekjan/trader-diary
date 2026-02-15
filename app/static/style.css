@@ -1337,6 +1337,72 @@ main {
     white-space: pre-line;
 }
 
+.score-result-section .advanced-hint {
+    margin-bottom: 0.4rem;
+}
+
+.score-table-wrap {
+    margin-top: 0.65rem;
+}
+
+.score-result-table {
+    margin-top: 0;
+    table-layout: fixed;
+}
+
+.score-result-table th:nth-child(1),
+.score-result-table td:nth-child(1) {
+    width: 110px;
+}
+
+.score-result-table th:nth-child(2),
+.score-result-table td:nth-child(2),
+.score-result-table th:nth-child(3),
+.score-result-table td:nth-child(3),
+.score-result-table th:nth-child(4),
+.score-result-table td:nth-child(4) {
+    width: 115px;
+    white-space: nowrap;
+    font-weight: 600;
+}
+
+.score-result-table th:nth-child(5),
+.score-result-table td:nth-child(5) {
+    min-width: 300px;
+}
+
+.score-result-table th:nth-child(6),
+.score-result-table td:nth-child(6) {
+    min-width: 220px;
+}
+
+.score-result-table td {
+    vertical-align: top;
+}
+
+.score-result-table tbody tr:nth-child(odd) {
+    background: #fcfaf6;
+}
+
+.score-result-table tbody tr:hover {
+    background: #f6f1e9;
+}
+
+.score-result-table #pen-vol-subtotal {
+    margin-top: 0.3rem;
+    font-size: 0.86rem;
+    color: #6b7280;
+}
+
+.score-result-table #scoring-cap-note,
+.score-result-table #stock1d-cap-note,
+.score-result-table #stock4h-cap-note,
+.score-result-table #stock1h-cap-note,
+.score-result-table #stock-global-cap-note {
+    white-space: pre-line;
+    line-height: 1.35;
+}
+
 .spy-chat-actions {
     display: flex;
     gap: 0.4rem;
@@ -1644,6 +1710,10 @@ footer {
     .scoring-option-grid,
     .scoring-option-grid-2 {
         grid-template-columns: 1fr;
+    }
+
+    .score-result-table {
+        min-width: 980px;
     }
 }
 

@@ -1082,10 +1082,14 @@ function calculateSpyScore(values) {
     const total = Math.min(boundedRawTotal, cap);
     const capApplied = total < boundedRawTotal;
 
-    let interpretation = 'Observation only';
-    if (total >= 20) interpretation = 'A+ Market (Full aggression)';
-    else if (total >= 15) interpretation = 'Normal swing environment';
-    else if (total >= 10) interpretation = 'Selective / reduced size';
+    const hasMinimumData = Boolean(bias && structure && regime && location);
+    let interpretation = 'No data';
+    if (hasMinimumData) {
+        interpretation = 'Observation only';
+        if (total >= 20) interpretation = 'A+ Market (Full aggression)';
+        else if (total >= 15) interpretation = 'Normal swing environment';
+        else if (total >= 10) interpretation = 'Selective / reduced size';
+    }
 
     return {
         total,
@@ -1333,7 +1337,14 @@ function calculateStock1HScore(values) {
     else if (values.anchorState === 'around') microStructureScore += 1;
     if (values.rangeState === 'breaking_range' || values.rangeState === 'rejecting_level') microStructureScore += 2;
     else if (values.rangeState === 'inside_range') microStructureScore += 1;
-    if (values.structure !== 'mixed' && values.anchorState !== 'around' && values.rangeState !== 'inside_range') microStructureScore += 1;
+    if (
+        values.structure &&
+        values.anchorState &&
+        values.rangeState &&
+        values.structure !== 'mixed' &&
+        values.anchorState !== 'around' &&
+        values.rangeState !== 'inside_range'
+    ) microStructureScore += 1;
     microStructureScore = clamp(microStructureScore, 0, 7);
 
     let intradayContextScore = 0;
@@ -1403,6 +1414,125 @@ function calculateStock1HScore(values) {
     };
 }
 
+function calculateStock15MScore(values) {
+    const clamp = (x, lo, hi) => Math.max(lo, Math.min(hi, x));
+    const hasMinimumData = Boolean(values.structure && values.triggerType && values.triggerConfirmed && values.entryQuality);
+    const hasTriggerLevel = Boolean((values.triggerLevel || '').trim());
+    const hasInvalidationLevel = Boolean((values.invalidationLevel || '').trim());
+
+    let microContextScore = 0;
+    const hasDirectionalBias = values.bias === 'Bullish' || values.bias === 'Bearish';
+    const clearStructure = values.structure === 'HH/HL' || values.structure === 'LL/LH';
+    microContextScore += hasDirectionalBias ? 1 : 0;
+    microContextScore += clearStructure ? 2 : 0;
+    if (clearStructure) {
+        if ((values.structure === 'HH/HL' && values.vwap === 'Above') || (values.structure === 'LL/LH' && values.vwap === 'Below')) {
+            microContextScore += 2;
+        } else if (values.vwap === 'Middle') {
+            microContextScore += 1;
+        }
+    } else if (values.vwap === 'Middle') {
+        microContextScore += 1;
+    }
+    microContextScore += values.spyAlignment === 'Aligned' ? 1 : 0;
+    microContextScore = clamp(microContextScore, 0, 6);
+
+    let triggerConfirmScore = 0;
+    triggerConfirmScore += values.structureBreaks === 'Yes' ? 1 : 0;
+    if (values.triggerType === 'Fade') triggerConfirmScore += 1;
+    else if (['Breakout', 'Breakdown', 'Reclaim', 'Rejection'].includes(values.triggerType)) triggerConfirmScore += 2;
+    triggerConfirmScore += values.triggerConfirmed === 'Yes' ? 2 : 0;
+    triggerConfirmScore += hasTriggerLevel ? 1 : 0;
+    triggerConfirmScore = clamp(triggerConfirmScore, 0, 6);
+
+    let entryTimingScore = 0;
+    entryTimingScore += values.momentumState === 'Expanding with move' ? 2 : 0;
+    entryTimingScore += values.entryQuality === 'A+' ? 2 : values.entryQuality === 'OK' ? 1 : 0;
+    entryTimingScore += values.retestQuality === 'Clean retest' ? 1 : 0;
+    entryTimingScore += (values.sessionTiming === 'Open (first 30m)' || values.sessionTiming === 'Power hour') ? 1 : 0;
+    entryTimingScore = clamp(entryTimingScore, 0, 5);
+
+    let volLevelsOptionsScore = 0;
+    volLevelsOptionsScore += values.impulseVolumeConfirms ? 1 : 0;
+    volLevelsOptionsScore += values.pullbackVolumeDriesUp ? 1 : 0;
+    volLevelsOptionsScore += values.microSrCount >= 1 ? 1 : 0;
+    volLevelsOptionsScore += values.spreadFills === 'OK' ? 1 : 0;
+    volLevelsOptionsScore += (values.ivBehavior === 'IV rising' || values.ivBehavior === 'IV stable') ? 1 : 0;
+    volLevelsOptionsScore = clamp(volLevelsOptionsScore, 0, 3);
+
+    let penalties = 0;
+    if (values.structure === 'Mixed') penalties -= 2;
+    if (values.spyAlignment === 'Opposite') penalties -= 2;
+    if (values.momentumState === 'Diverging') penalties -= 2;
+    if (values.momentumState === 'Overextended') penalties -= 1;
+    if (values.momentumState === 'Failed reclaim / turn back down') penalties -= 2;
+    if (values.entryQuality === 'Late/Chase') penalties -= 2;
+    if (values.triggerConfirmed === 'No') penalties -= 1;
+    if (values.spreadFills === 'Wide') penalties -= 2;
+    if (values.ivBehavior === 'IV falling' && values.triggerType === 'Breakout') penalties -= 1;
+    if (!hasInvalidationLevel) penalties -= 1;
+
+    const rawTotalUnbounded = microContextScore + triggerConfirmScore + entryTimingScore + volLevelsOptionsScore + penalties;
+    const boundedRawTotal = clamp(rawTotalUnbounded, 0, 20);
+
+    let cap = 20;
+    const capReasons = [];
+    if (values.spyAlignment === 'Opposite') {
+        cap = Math.min(cap, 12);
+        capReasons.push('Cap 12: SPY alignment Opposite (15m)');
+    }
+    if (values.structure === 'Mixed') {
+        cap = Math.min(cap, 12);
+        capReasons.push('Cap 12: Mixed structure (15m)');
+    }
+    if (values.triggerConfirmed === 'No') {
+        cap = Math.min(cap, 14);
+        capReasons.push('Cap 14: Trigger not confirmed (15m)');
+    }
+    if (values.spreadFills === 'Wide') {
+        cap = Math.min(cap, 12);
+        capReasons.push('Cap 12: Wide spread/fills (15m)');
+    }
+    if (values.entryQuality === 'Late/Chase') {
+        cap = Math.min(cap, 14);
+        capReasons.push('Cap 14: Late/Chase entry (15m)');
+    }
+    if (values.momentumState === 'Overextended') {
+        cap = Math.min(cap, 14);
+        capReasons.push('Cap 14: Overextended momentum (15m)');
+    }
+    if (!hasTriggerLevel) {
+        cap = Math.min(cap, 15);
+        capReasons.push('Cap 15: Missing trigger level (15m)');
+    }
+
+    const total = Math.min(boundedRawTotal, cap);
+    const capApplied = total < boundedRawTotal;
+
+    let grade = 'No data';
+    if (hasMinimumData) {
+        grade = 'Pass / avoid';
+        if (total >= 16) grade = 'A (clean execution)';
+        else if (total >= 12) grade = 'B (acceptable execution)';
+        else if (total >= 8) grade = 'C (low-quality entry)';
+    }
+
+    return {
+        total,
+        rawTotal: boundedRawTotal,
+        microContextScore,
+        triggerConfirmScore,
+        entryTimingScore,
+        volLevelsOptionsScore,
+        penalties,
+        cap,
+        capApplied,
+        capReasons,
+        grade,
+        hasMinimumData
+    };
+}
+
 function initScoringBuilder() {
     const form = document.getElementById('scoring-form');
     if (!form) return;
@@ -1411,8 +1541,10 @@ function initScoringBuilder() {
     initScoringFieldHelp(form, stockSection);
 
     const totalEl = document.getElementById('scoring-total-score');
+    const totalResultEl = document.getElementById('scoring-total-score-result');
     const rawEl = document.getElementById('scoring-raw-score');
     const interpretationEl = document.getElementById('scoring-interpretation');
+    const interpretationResultEl = document.getElementById('scoring-interpretation-result');
     const breakdownEl = document.getElementById('scoring-breakdown');
     const penVolSubtotalEl = document.getElementById('pen-vol-subtotal');
     const capNoteEl = document.getElementById('scoring-cap-note');
@@ -1437,6 +1569,13 @@ function initScoringBuilder() {
     const stock1hHeaderGradeEl = document.getElementById('stock1h-header-grade');
     const stock1hBreakdownEl = document.getElementById('stock1h-breakdown');
     const stock1hCapNoteEl = document.getElementById('stock1h-cap-note');
+    const stock15mTotalEl = document.getElementById('stock15m-total-score');
+    const stock15mRawEl = document.getElementById('stock15m-raw-score');
+    const stock15mGradeEl = document.getElementById('stock15m-grade');
+    const stock15mHeaderScoreEl = document.getElementById('stock15m-header-score');
+    const stock15mHeaderGradeEl = document.getElementById('stock15m-header-grade');
+    const stock15mBreakdownEl = document.getElementById('stock15m-breakdown');
+    const stock15mCapNoteEl = document.getElementById('stock15m-cap-note');
     const stockGlobalTotalEl = document.getElementById('stock-global-total-score');
     const stockGlobalGradeEl = document.getElementById('stock-global-grade');
     const stockGlobalBreakdownEl = document.getElementById('stock-global-breakdown');
@@ -1456,13 +1595,11 @@ function initScoringBuilder() {
     const spyChatApplyButtonEl = document.getElementById('spy-chat-apply');
     const spyChatExtraContextEl = document.getElementById('spy-chat-extra-context');
     const spyChatResponseInputEl = document.getElementById('spy-chat-response-input');
-    const stockChatButtonEl = document.getElementById('stock-chat-generate');
     const stockChatCopyButtonEl = document.getElementById('stock-chat-copy');
     const stockChatApplyButtonEl = document.getElementById('stock-chat-apply');
     const stockChatExtraContextEl = document.getElementById('stock-chat-extra-context');
     const stockChatResponseInputEl = document.getElementById('stock-chat-response-input');
     let generatedSpyPrompt = '';
-    let generatedStockPrompt = '';
 
     const bindMutualExclusiveGroup = (names) => {
         const inputs = names.map(name => form.querySelector(`input[name="${name}"]`)).filter(Boolean);
@@ -1525,6 +1662,36 @@ function initScoringBuilder() {
         return result;
     };
 
+    const collectStockInputs = () => {
+        const result = {};
+        const stockFields = form.querySelectorAll('[name^="stk1d_"], [name^="stk4h_"], [name^="stk1h_"], [name^="m15_"]');
+        stockFields.forEach((field) => {
+            if (!field.name) return;
+            if (field.type === 'radio') {
+                if (field.checked) result[field.name] = field.value;
+                return;
+            }
+            if (field.type === 'checkbox') {
+                if (field.checked) result[field.name] = true;
+                return;
+            }
+            const value = (field.value || '').trim();
+            if (value) result[field.name] = value;
+        });
+        return result;
+    };
+
+    const buildInputsBlock = (inputs) => {
+        const lines = [];
+        Object.keys(inputs || {}).sort().forEach((key) => {
+            const value = inputs[key];
+            if (value === null || value === undefined) return;
+            if (typeof value === 'string' && !value.trim()) return;
+            lines.push(`- ${key}: ${value}`);
+        });
+        return lines.length ? lines.join('\n') : '- brak zaznaczen';
+    };
+
     const clearChatHints = (hintClass) => {
         const hintEls = form.querySelectorAll(`.${hintClass}`);
         hintEls.forEach((el) => el.remove());
@@ -1571,6 +1738,37 @@ function initScoringBuilder() {
         return parsed.suggestions;
     };
 
+    const extractCombinedSuggestionsFromResponse = (rawText) => {
+        const text = (rawText || '').trim();
+        if (!text) return null;
+        let parsed = null;
+        try {
+            parsed = JSON.parse(text);
+        } catch (_) {
+            parsed = null;
+        }
+        if (!parsed) {
+            const startSpy = text.lastIndexOf('{"spy_suggestions"');
+            const startStock = text.lastIndexOf('{"suggestions"');
+            const start = startSpy >= 0 ? startSpy : startStock;
+            if (start >= 0) {
+                const maybeJson = text.slice(start).trim();
+                try {
+                    parsed = JSON.parse(maybeJson);
+                } catch (_) {
+                    parsed = null;
+                }
+            }
+        }
+        if (!parsed || typeof parsed !== 'object') {
+            return null;
+        }
+        const stock = (parsed.suggestions && typeof parsed.suggestions === 'object') ? parsed.suggestions : null;
+        const spy = (parsed.spy_suggestions && typeof parsed.spy_suggestions === 'object') ? parsed.spy_suggestions : null;
+        if (!stock && !spy) return null;
+        return { stock, spy };
+    };
+
     const runSpyChatAnalysis = async () => {
         if (!spyChatButtonEl) return;
         const extraContext = spyChatExtraContextEl ? (spyChatExtraContextEl.value || '').trim() : '';
@@ -1609,46 +1807,62 @@ function initScoringBuilder() {
         }, 900);
     };
 
-    const runStockChatAnalysis = async () => {
-        if (!stockChatButtonEl) return;
+    const buildStockChatPrompt = () => {
         const extraContext = stockChatExtraContextEl ? (stockChatExtraContextEl.value || '').trim() : '';
-        const selectedTfs = Array.from(form.querySelectorAll('input[name="stock_chat_tf"]:checked')).map((el) => el.value);
-        const tfs = selectedTfs.length ? selectedTfs.join(', ') : '1D, 4H, 1H, 15m';
-        generatedStockPrompt = [
-            `Przeanalizuj STOCK w TF: ${tfs} i wydaj NIEZALEZNA opinie.`,
-            'Nie kopiuj i nie zgaduj moich wyborow z formularza. Oceń rynek samodzielnie.',
+        const spyExtraContext = spyChatExtraContextEl ? (spyChatExtraContextEl.value || '').trim() : '';
+        const tfs = '1D, 4H, 1H, 15m';
+        const ticker = (form.querySelector('input[name="stk1d_ticker"]')?.value || '').trim().toUpperCase() || 'BRAK_TICKERA';
+        const stockInputsBlock = buildInputsBlock(collectStockInputs());
+        const spyInputsBlock = buildInputsBlock(collectSpyInputs());
+        return [
+            'Przeanalizuj rynek na podstawie dostarczonych odczytow: SPY oraz STOCK.',
+            'Oceniaj niezaleznie. Nie kopiuj automatycznie moich zaznaczen, tylko porownaj je z Twoja analiza.',
             '',
-            'Dokladnie sprawdz te elementy na 1D:',
-            '- Bias kierunkowy, strukture HH/HL vs LL/LH vs mixed.',
-            '- Relacje do SMA200 i trend anchor (EMA20/VWAP proxy).',
-            '- Kontekst SPY alignment, relative strength vs SPY, phase i volatility state.',
-            '- Ryzyko eventowe oraz plynnosc opcji.',
+            `Ticker: ${ticker}`,
+            `TF SPY: 1D`,
+            `TF STOCK: ${tfs}`,
             '',
-            'Dokladnie sprawdz te elementy na 4H:',
-            '- Bias, structure, anchor state, location.',
-            '- Planned setup, trend quality i volatility profile.',
-            '- Invalidation logic i quality/liquidity warunkow.',
+            'Kontekst SPY z formularza:',
+            spyInputsBlock,
             '',
-            'Dokladnie sprawdz te elementy na 1H:',
-            '- Micro structure, anchor state, range state.',
-            '- Intraday level reactions oraz alignment z 4H.',
-            '- Setup type i risk model.',
+            'Moje zaznaczenia (stock):',
+            stockInputsBlock,
             '',
-            'Dokladnie sprawdz te elementy na 15m (gdy bedzie dostepne):',
-            '- Timing setup, momentum, micro volatility, fake move risk.',
+            `Dodatkowy kontekst SPY (opcjonalny): ${spyExtraContext || 'brak'}`,
+            `Dodatkowy kontekst STOCK (opcjonalny): ${extraContext || 'brak'}`,
             '',
-            `Dodatkowy kontekst ode mnie (opcjonalny): ${extraContext || 'brak'}`,
+            'Wymagany format odpowiedzi (bez markdown, bez dodatkowych sekcji):',
+            'SPY - Wskazniki:',
+            '- wypisz tylko roznice miedzy Twoja analiza a moimi zaznaczeniami SPY;',
+            '- kazdy punkt: [pole] -> moje: ... | twoje: ... | komentarz: ...',
             '',
-            'Zwróc krotkie podsumowanie (max 6-8 zdan) i na koncu JSON z sugestiami dla formularza (bez markdown):',
-            '{"suggestions":{"stk1d_bias":"bullish|bearish|neutral","stk1d_structure":"hh_hl|ll_lh|mixed","stk1d_sma200":"above|below","stk1d_trend_anchor":"above|middle|below","stk1d_spy_alignment":"aligned|diverging|opposite","stk1d_relative_vs_spy":"strength|weakness|neutral","stk1d_phase":"impulse|pullback|base|distribution","stk1d_volatility_state":"expanding|normal|contracting","stk1d_options_liquidity":"good|medium|poor","stk4h_bias":"bullish|bearish|neutral","stk4h_structure":"hh_hl|ll_lh|mixed","stk4h_anchor_state":"above_anchor|around_anchor|below_anchor","stk4h_location":"near_support|mid_range|near_resistance|range_high|range_low","stk4h_setup_type":"breakout_continuation|breakdown_continuation|pullback_within_trend|reversal_attempt|range_play","stk4h_trend_quality":"clean|acceptable|choppy","stk4h_volatility_profile":"expanding|stable|contracting","stk4h_liquidity_check":"good|medium|poor","stk1h_structure":"hh_hl|ll_lh|mixed","stk1h_anchor_state":"above|around|below","stk1h_range_state":"breaking_range|inside_range|rejecting_level","stk1h_alignment_with_4h":"aligned|minor_pullback|counter_trend","stk1h_setup_type":"breakout_hold|failed_breakout|pullback_continuation|rejection_reversal","stk1h_risk_model":"structure_based|level_based|volatility_based"}}'
+            'SPY - Ogolen:',
+            '- jedno zdanie o zachowaniu SPY.',
+            '',
+            'SPY - Mozliwosci na plus:',
+            '- 2-4 krotkie punkty.',
+            '',
+            'SPY - Mozliwosci na minus:',
+            '- 2-4 krotkie punkty.',
+            '',
+            'STOCK - Wskazniki:',
+            '- wypisz tylko roznice miedzy Twoja analiza a moimi zaznaczeniami;',
+            '- kazdy punkt: [pole] -> moje: ... | twoje: ... | komentarz: ...',
+            '- uwzglednij wszystkie TF stocka: 1D, 4H, 1H oraz 15m (Execution & Timing).',
+            '',
+            'STOCK - Ogolen:',
+            '- jedno zdanie o zachowaniu SPY i jego wplywie na ticker.',
+            '',
+            'STOCK - Mozliwosci na plus:',
+            '- 2-4 krotkie punkty: co musi sie wydarzyc, aby scenariusz byl korzystny.',
+            '',
+            'STOCK - Mozliwosci na minus:',
+            '- 2-4 krotkie punkty: co moze pojsc nie tak i zanegowac scenariusz.',
+            '',
+            'Na koncu dodaj jedna linie JSON (bez markdown), zaczynajaca sie dokladnie od {"suggestions":...}.',
+            'JSON ma zawierac dwa klucze: "spy_suggestions" oraz "suggestions".',
+            '{"spy_suggestions":{"sc_spy_bias":"bullish|bearish|neutral","sc_spy_regime":"trending|ranging|volatile","sc_spy_structure":"hh_hl|ll_lh|mixed","sc_spy_vwap":"above|below","sc_spy_vix_trend":"falling|rising|flat","sc_spy_vix_level":"lt20|20_25|gt25","sc_spy_breadth":"strong|neutral|weak","sc_spy_location":"at_resistance|at_support|mid_range|breaking_range","sc_spy_room":"large|limited|none","sc_spy_behavior_trend":"higher_lows|lower_highs|none"},"suggestions":{"stk1d_bias":"bullish|bearish|neutral","stk1d_structure":"hh_hl|ll_lh|mixed","stk1d_sma200":"above|below","stk1d_trend_anchor":"above|middle|below","stk1d_spy_alignment":"aligned|diverging|opposite","stk1d_relative_vs_spy":"strength|weakness|neutral","stk1d_phase":"impulse|pullback|base|distribution","stk1d_volatility_state":"expanding|normal|contracting","stk1d_options_liquidity":"good|medium|poor","stk4h_bias":"bullish|bearish|neutral","stk4h_structure":"hh_hl|ll_lh|mixed","stk4h_anchor_state":"above_anchor|around_anchor|below_anchor","stk4h_location":"near_support|mid_range|near_resistance|range_high|range_low","stk4h_setup_type":"breakout_continuation|breakdown_continuation|pullback_within_trend|reversal_attempt|range_play","stk4h_trend_quality":"clean|acceptable|choppy","stk4h_volatility_profile":"expanding|stable|contracting","stk4h_liquidity_check":"good|medium|poor","stk1h_structure":"hh_hl|ll_lh|mixed","stk1h_anchor_state":"above|around|below","stk1h_range_state":"breaking_range|inside_range|rejecting_level","stk1h_alignment_with_4h":"aligned|minor_pullback|counter_trend","stk1h_setup_type":"breakout_hold|failed_breakout|pullback_continuation|rejection_reversal","stk1h_risk_model":"structure_based|level_based|volatility_based","m15_bias":"Bullish|Bearish","m15_structure":"HH/HL|LL/LH|Mixed","m15_vwap":"Above|Middle|Below","m15_spy_alignment":"Aligned|Diverging|Opposite","m15_spy_vwap":"Above|Below","m15_structure_breaks":"Yes|No","m15_trigger_type":"Breakout|Breakdown|Reclaim|Rejection|Fade","m15_trigger_confirmed":"Yes|No","m15_momentum_state":"Expanding with move|Diverging|Overextended|Failed reclaim / turn back down","m15_entry_quality":"A+|OK|Late/Chase","m15_retest_quality":"Clean retest|Wicky|No retest","m15_session_timing":"Open (first 30m)|Midday|Power hour|Close","m15_event_timing":"Before news|After news|No scheduled risk","m15_spread_fills":"OK|Wide","m15_iv_behavior":"IV rising|IV stable|IV falling"}}'
         ].join('\n');
-
-        clearChatHints('stock-ai-hint');
-        const originalLabel = stockChatButtonEl.textContent || 'Generate Prompt';
-        stockChatButtonEl.textContent = 'Prompt ready';
-        setTimeout(() => {
-            stockChatButtonEl.textContent = originalLabel;
-        }, 900);
     };
 
     const bindVolumeValidation = () => {
@@ -1678,6 +1892,80 @@ function initScoringBuilder() {
             if (!Number.isFinite(parsed)) return;
             stockRate.value = String(Math.max(0, Math.min(99, Math.round(parsed))));
         });
+    };
+
+    const setText = (el, value) => {
+        if (el) el.textContent = value;
+    };
+
+    const formatScore = (value, max) => `${value} / ${max}`;
+
+    const formatCapNote = (score, withPrefix = true) => {
+        if (!score.capApplied) return '';
+        if (withPrefix) return `Cap active: max ${score.cap}. Reason: ${score.capReasons.join('; ')}.`;
+        return score.capReasons.join('; ');
+    };
+
+    const renderTfScore = ({
+        score,
+        max,
+        totalEl,
+        rawEl,
+        gradeEl,
+        headerScoreEl,
+        headerGradeEl,
+        breakdownEl,
+        breakdownText,
+        capNoteEl
+    }) => {
+        setText(totalEl, formatScore(score.total, max));
+        setText(rawEl, formatScore(score.rawTotal, max));
+        setText(gradeEl, score.grade);
+        setText(headerScoreEl, formatScore(score.total, max));
+        setText(headerGradeEl, score.grade);
+        setText(breakdownEl, breakdownText);
+        setText(capNoteEl, formatCapNote(score, true));
+    };
+
+    const renderGlobalStockScore = ({ stock1d, stock4h, stock1h, stock15m }) => {
+        const has1d = stock1d.hasMinimumData;
+        const has4h = stock4h.hasMinimumData;
+        const has1h = stock1h.hasMinimumData;
+        const has15m = stock15m.hasMinimumData;
+        const hasAllGlobal = has1d && has4h && has1h && has15m;
+        const globalTotal = stock1d.total + stock4h.total + stock1h.total + stock15m.total;
+
+        if (hasAllGlobal) {
+            setText(stockGlobalTotalEl, formatScore(globalTotal, 80));
+        } else {
+            const missing = [];
+            if (!has1d) missing.push('1D');
+            if (!has4h) missing.push('4H');
+            if (!has1h) missing.push('1H');
+            if (!has15m) missing.push('15m');
+            setText(stockGlobalTotalEl, `No data (need ${missing.join(' + ')})`);
+        }
+
+        setText(
+            stockGlobalBreakdownEl,
+            `1D: ${has1d ? `${stock1d.total}/20` : 'No data'} | 4H: ${has4h ? `${stock4h.total}/20` : 'No data'} | 1H: ${has1h ? `${stock1h.total}/20` : 'No data'} | 15m: ${has15m ? `${stock15m.total}/20` : 'No data'}`
+        );
+
+        let globalGrade = 'No data';
+        if (hasAllGlobal) {
+            globalGrade = 'Pass';
+            if (globalTotal >= 64) globalGrade = 'A (global-ready)';
+            else if (globalTotal >= 48) globalGrade = 'B (selective)';
+            else if (globalTotal >= 32) globalGrade = 'C (watch)';
+        }
+        setText(stockGlobalGradeEl, globalGrade);
+
+        const capLines = [];
+        if (stock1d.capApplied && stock1d.capReasons.length) capLines.push(`1D: ${stock1d.capReasons.join('; ')}`);
+        if (stock4h.capApplied && stock4h.capReasons.length) capLines.push(`4H: ${stock4h.capReasons.join('; ')}`);
+        if (stock1h.capApplied && stock1h.capReasons.length) capLines.push(`1H: ${stock1h.capReasons.join('; ')}`);
+        if (stock15m.capApplied && stock15m.capReasons.length) capLines.push(`15m: ${stock15m.capReasons.join('; ')}`);
+        setText(stockGlobalCapNoteEl, capLines.join('\n'));
     };
 
     const renderScore = () => {
@@ -1740,7 +2028,7 @@ function initScoringBuilder() {
             setupType: getRadioValue('stk4h_setup_type'),
             trendQuality: getRadioValue('stk4h_trend_quality'),
             volatilityProfile: getRadioValue('stk4h_volatility_profile'),
-            invalidationLogic: getFieldValue('stk4h_invalidation_logic'),
+            invalidationLogic: getRadioValue('stk4h_invalidation_logic'),
             liquidityCheck: getRadioValue('stk4h_liquidity_check')
         });
         const intradayReactionCount = [
@@ -1760,101 +2048,104 @@ function initScoringBuilder() {
             setupType: getRadioValue('stk1h_setup_type'),
             riskModel: getRadioValue('stk1h_risk_model')
         });
+        const stock15mScore = calculateStock15MScore({
+            bias: getRadioValue('m15_bias'),
+            structure: getRadioValue('m15_structure'),
+            vwap: getRadioValue('m15_vwap'),
+            spyAlignment: getRadioValue('m15_spy_alignment'),
+            structureBreaks: getRadioValue('m15_structure_breaks'),
+            triggerType: getRadioValue('m15_trigger_type'),
+            triggerConfirmed: getRadioValue('m15_trigger_confirmed'),
+            triggerLevel: getFieldValue('m15_trigger_level'),
+            invalidationLevel: getFieldValue('m15_invalidation_level'),
+            momentumState: getRadioValue('m15_momentum_state'),
+            entryQuality: getRadioValue('m15_entry_quality'),
+            retestQuality: getRadioValue('m15_retest_quality'),
+            sessionTiming: getRadioValue('m15_session_timing'),
+            impulseVolumeConfirms: isChecked('m15_impulse_volume_confirms'),
+            pullbackVolumeDriesUp: isChecked('m15_pullback_volume_dries_up'),
+            microSrCount: [
+                isChecked('m15_micro_sr_pdh_pdl'),
+                isChecked('m15_micro_sr_orh_orl'),
+                isChecked('m15_micro_sr_vwap'),
+                isChecked('m15_micro_sr_premarket_h_l'),
+                isChecked('m15_micro_sr_last_swing')
+            ].filter(Boolean).length,
+            spreadFills: getRadioValue('m15_spread_fills'),
+            ivBehavior: getRadioValue('m15_iv_behavior')
+        });
 
-        if (totalEl) totalEl.textContent = `${score.total} / 25`;
-        if (rawEl) rawEl.textContent = `${score.rawTotal} / 25`;
-        if (interpretationEl) interpretationEl.textContent = score.interpretation;
-        if (breakdownEl) {
-            breakdownEl.textContent = `Direction: ${score.directionScore}/5 | Strength: ${score.strengthScore}/8 | Volatility Regime: ${score.volatilityRegimeScore}/6 | Location: ${score.locationScore}/6 | Behavior bonus: ${score.behaviorBonus} | Penalties: ${score.penalties}`;
-        }
-        if (penVolSubtotalEl) {
-            penVolSubtotalEl.textContent = `Volatility penalties subtotal: ${score.penBuckets.penVol}`;
-        }
-        if (capNoteEl) {
-            capNoteEl.textContent = score.capApplied
-                ? `Cap active: max ${score.cap}. Reason: ${score.capReasons.join('; ')}.`
-                : '';
-        }
-        if (stockTotalEl) stockTotalEl.textContent = `${stockScore.total} / 20`;
-        if (stockRawEl) stockRawEl.textContent = `${stockScore.rawTotal} / 20`;
-        if (stockGradeEl) stockGradeEl.textContent = stockScore.grade;
-        if (stock1dHeaderScoreEl) stock1dHeaderScoreEl.textContent = `${stockScore.total} / 20`;
-        if (stock1dHeaderGradeEl) stock1dHeaderGradeEl.textContent = stockScore.grade;
-        if (stockBreakdownEl) {
-            stockBreakdownEl.textContent = `Direction: ${stockScore.directionScore}/8 | Context: ${stockScore.contextScore}/8 | Risk/Levels: ${stockScore.riskLevelsScore}/4 | Penalties: ${stockScore.penalties}`;
-        }
-        if (stockCapNoteEl) {
-            stockCapNoteEl.textContent = stockScore.capApplied
-                ? `Cap active: max ${stockScore.cap}. Reason: ${stockScore.capReasons.join('; ')}.`
-                : '';
-        }
-        if (stock4hTotalEl) stock4hTotalEl.textContent = `${stock4hScore.total} / 20`;
-        if (stock4hRawEl) stock4hRawEl.textContent = `${stock4hScore.rawTotal} / 20`;
-        if (stock4hGradeEl) stock4hGradeEl.textContent = stock4hScore.grade;
-        if (stock4hHeaderScoreEl) stock4hHeaderScoreEl.textContent = `${stock4hScore.total} / 20`;
-        if (stock4hHeaderGradeEl) stock4hHeaderGradeEl.textContent = stock4hScore.grade;
-        if (stock4hBreakdownEl) {
-            stock4hBreakdownEl.textContent = `Setup: ${stock4hScore.setupScore}/8 | Location/Levels: ${stock4hScore.locationLevelsScore}/6 | Quality/Risk: ${stock4hScore.qualityRiskScore}/6 | Penalties: ${stock4hScore.penalties}`;
-        }
-        if (stock4hCapNoteEl) {
-            stock4hCapNoteEl.textContent = stock4hScore.capApplied
-                ? stock4hScore.capReasons.join('; ')
-                : '';
-        }
-        if (stock1hTotalEl) stock1hTotalEl.textContent = `${stock1hScore.total} / 20`;
-        if (stock1hRawEl) stock1hRawEl.textContent = `${stock1hScore.rawTotal} / 20`;
-        if (stock1hGradeEl) stock1hGradeEl.textContent = stock1hScore.grade;
-        if (stock1hHeaderScoreEl) stock1hHeaderScoreEl.textContent = `${stock1hScore.total} / 20`;
-        if (stock1hHeaderGradeEl) stock1hHeaderGradeEl.textContent = stock1hScore.grade;
-        if (stock1hBreakdownEl) {
-            stock1hBreakdownEl.textContent = `Micro structure: ${stock1hScore.microStructureScore}/7 | Intraday context: ${stock1hScore.intradayContextScore}/7 | Alignment/Risk: ${stock1hScore.alignmentRiskScore}/6 | Penalties: ${stock1hScore.penalties}`;
-        }
-        if (stock1hCapNoteEl) {
-            stock1hCapNoteEl.textContent = stock1hScore.capApplied
-                ? stock1hScore.capReasons.join('; ')
-                : '';
-        }
-        const has1d = stockScore.hasMinimumData;
-        const has4h = stock4hScore.hasMinimumData;
-        const has1h = stock1hScore.hasMinimumData;
-        const hasAllGlobal = has1d && has4h && has1h;
-        const globalTotal = stockScore.total + stock4hScore.total + stock1hScore.total;
-        if (stockGlobalTotalEl) {
-            if (hasAllGlobal) stockGlobalTotalEl.textContent = `${globalTotal} / 60`;
-            else {
-                const missing = [];
-                if (!has1d) missing.push('1D');
-                if (!has4h) missing.push('4H');
-                if (!has1h) missing.push('1H');
-                stockGlobalTotalEl.textContent = `No data (need ${missing.join(' + ')})`;
-            }
-        }
-        if (stockGlobalBreakdownEl) {
-            stockGlobalBreakdownEl.textContent = `1D: ${has1d ? `${stockScore.total}/20` : 'No data'} | 4H: ${has4h ? `${stock4hScore.total}/20` : 'No data'} | 1H: ${has1h ? `${stock1hScore.total}/20` : 'No data'}`;
-        }
-        if (stockGlobalGradeEl) {
-            let globalGrade = 'No data';
-            if (hasAllGlobal) {
-                globalGrade = 'Pass';
-                if (globalTotal >= 48) globalGrade = 'A (global-ready)';
-                else if (globalTotal >= 36) globalGrade = 'B (selective)';
-                else if (globalTotal >= 24) globalGrade = 'C (watch)';
-            }
-            stockGlobalGradeEl.textContent = globalGrade;
-        }
-        if (stockGlobalCapNoteEl) {
-            const capLines = [];
-            if (stockScore.capApplied && stockScore.capReasons.length) {
-                capLines.push(`1D: ${stockScore.capReasons.join('; ')}`);
-            }
-            if (stock4hScore.capApplied && stock4hScore.capReasons.length) {
-                capLines.push(`4H: ${stock4hScore.capReasons.join('; ')}`);
-            }
-            if (stock1hScore.capApplied && stock1hScore.capReasons.length) {
-                capLines.push(`1H: ${stock1hScore.capReasons.join('; ')}`);
-            }
-            stockGlobalCapNoteEl.textContent = capLines.join('\n');
-        }
+        setText(totalEl, formatScore(score.total, 25));
+        setText(totalResultEl, formatScore(score.total, 25));
+        setText(rawEl, formatScore(score.rawTotal, 25));
+        setText(interpretationEl, score.interpretation);
+        setText(interpretationResultEl, score.interpretation);
+        setText(
+            breakdownEl,
+            `Direction: ${score.directionScore}/5 | Strength: ${score.strengthScore}/8 | Volatility Regime: ${score.volatilityRegimeScore}/6 | Location: ${score.locationScore}/6 | Behavior bonus: ${score.behaviorBonus} | Penalties: ${score.penalties}`
+        );
+        setText(penVolSubtotalEl, `Volatility penalties subtotal: ${score.penBuckets.penVol}`);
+        setText(capNoteEl, formatCapNote(score, true));
+
+        renderTfScore({
+            score: stockScore,
+            max: 20,
+            totalEl: stockTotalEl,
+            rawEl: stockRawEl,
+            gradeEl: stockGradeEl,
+            headerScoreEl: stock1dHeaderScoreEl,
+            headerGradeEl: stock1dHeaderGradeEl,
+            breakdownEl: stockBreakdownEl,
+            breakdownText: `Direction: ${stockScore.directionScore}/8 | Context: ${stockScore.contextScore}/8 | Risk/Levels: ${stockScore.riskLevelsScore}/4 | Penalties: ${stockScore.penalties}`,
+            capNoteEl: stockCapNoteEl
+        });
+
+        renderTfScore({
+            score: stock4hScore,
+            max: 20,
+            totalEl: stock4hTotalEl,
+            rawEl: stock4hRawEl,
+            gradeEl: stock4hGradeEl,
+            headerScoreEl: stock4hHeaderScoreEl,
+            headerGradeEl: stock4hHeaderGradeEl,
+            breakdownEl: stock4hBreakdownEl,
+            breakdownText: `Setup: ${stock4hScore.setupScore}/8 | Location/Levels: ${stock4hScore.locationLevelsScore}/6 | Quality/Risk: ${stock4hScore.qualityRiskScore}/6 | Penalties: ${stock4hScore.penalties}`,
+            capNoteEl: stock4hCapNoteEl
+        });
+
+        renderTfScore({
+            score: stock1hScore,
+            max: 20,
+            totalEl: stock1hTotalEl,
+            rawEl: stock1hRawEl,
+            gradeEl: stock1hGradeEl,
+            headerScoreEl: stock1hHeaderScoreEl,
+            headerGradeEl: stock1hHeaderGradeEl,
+            breakdownEl: stock1hBreakdownEl,
+            breakdownText: `Micro structure: ${stock1hScore.microStructureScore}/7 | Intraday context: ${stock1hScore.intradayContextScore}/7 | Alignment/Risk: ${stock1hScore.alignmentRiskScore}/6 | Penalties: ${stock1hScore.penalties}`,
+            capNoteEl: stock1hCapNoteEl
+        });
+
+        renderTfScore({
+            score: stock15mScore,
+            max: 20,
+            totalEl: stock15mTotalEl,
+            rawEl: stock15mRawEl,
+            gradeEl: stock15mGradeEl,
+            headerScoreEl: stock15mHeaderScoreEl,
+            headerGradeEl: stock15mHeaderGradeEl,
+            breakdownEl: stock15mBreakdownEl,
+            breakdownText: `Micro context: ${stock15mScore.microContextScore}/6 | Trigger/Confirm: ${stock15mScore.triggerConfirmScore}/6 | Entry/Timing: ${stock15mScore.entryTimingScore}/5 | Volume/Levels/Options: ${stock15mScore.volLevelsOptionsScore}/3 | Penalties: ${stock15mScore.penalties}`,
+            capNoteEl: stock15mCapNoteEl
+        });
+
+        renderGlobalStockScore({
+            stock1d: stockScore,
+            stock4h: stock4hScore,
+            stock1h: stock1hScore,
+            stock15m: stock15mScore
+        });
+
         if (trendQualityGuardrailEl) {
             const trendQuality = getStockRadioValue('stk1d_trend_quality');
             trendQualityGuardrailEl.textContent = trendQuality === 'choppy'
@@ -1973,34 +2264,28 @@ function initScoringBuilder() {
             }, 1200);
         });
     }
-    if (stockChatButtonEl) {
-        stockChatButtonEl.addEventListener('click', runStockChatAnalysis);
-    }
     if (stockChatCopyButtonEl) {
         stockChatCopyButtonEl.addEventListener('click', async () => {
-            if (!generatedStockPrompt.trim()) {
-                runStockChatAnalysis();
-            }
-            const text = generatedStockPrompt.trim();
+            const text = buildStockChatPrompt().trim();
             if (!text) return;
             try {
                 await navigator.clipboard.writeText(text);
                 stockChatCopyButtonEl.textContent = 'Copied';
                 setTimeout(() => {
-                    stockChatCopyButtonEl.textContent = 'Copy Prompt';
+                    stockChatCopyButtonEl.textContent = 'Copy Prompt (SPY + Stock)';
                 }, 1200);
             } catch (_) {
                 stockChatCopyButtonEl.textContent = 'Copy failed';
                 setTimeout(() => {
-                    stockChatCopyButtonEl.textContent = 'Copy Prompt';
+                    stockChatCopyButtonEl.textContent = 'Copy Prompt (SPY + Stock)';
                 }, 1200);
             }
         });
     }
     if (stockChatApplyButtonEl && stockChatResponseInputEl) {
         stockChatApplyButtonEl.addEventListener('click', () => {
-            const suggestions = extractSuggestionsFromResponse(stockChatResponseInputEl.value);
-            if (!suggestions) {
+            const combined = extractCombinedSuggestionsFromResponse(stockChatResponseInputEl.value);
+            if (!combined) {
                 const originalLabel = stockChatApplyButtonEl.textContent || 'Apply Suggestions';
                 stockChatApplyButtonEl.textContent = 'Invalid JSON';
                 setTimeout(() => {
@@ -2008,7 +2293,8 @@ function initScoringBuilder() {
                 }, 1200);
                 return;
             }
-            applyChatHints(suggestions, 'stock-ai-hint');
+            if (combined.stock) applyChatHints(combined.stock, 'stock-ai-hint');
+            if (combined.spy) applyChatHints(combined.spy, 'spy-ai-hint');
             const originalLabel = stockChatApplyButtonEl.textContent || 'Apply Suggestions';
             stockChatApplyButtonEl.textContent = 'Applied';
             setTimeout(() => {

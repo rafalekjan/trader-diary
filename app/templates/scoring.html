@@ -4,7 +4,7 @@
 <div class="page-header">
     <div>
         <h2>Scoring</h2>
-        <p class="page-subtitle">Scoring framework based on market context. Migration starts from SPY.</p>
+        <p class="page-subtitle">Unified multi-timeframe scoring framework for SPY and Stock execution context.</p>
     </div>
 </div>
 
@@ -14,7 +14,7 @@
             <h3>SPY</h3>
             <div class="scoring-header-summary">
                 <div><strong>TOTAL SCORE:</strong> <span id="scoring-total-score">0 / 25</span></div>
-                <div><strong>Interpretation:</strong> <span id="scoring-interpretation">Observation only</span></div>
+                <div><strong>Interpretation:</strong> <span id="scoring-interpretation">No data</span></div>
             </div>
         </div>
 
@@ -757,15 +757,14 @@
             <h4>E. Risk Planning (No Execution)</h4>
             <div class="scoring-stage-grid">
                 <div class="form-group">
-                    <label for="stk4h_invalidation_logic">Invalidation logic</label>
-                    <select id="stk4h_invalidation_logic" name="stk4h_invalidation_logic">
-                        <option value="">Select</option>
-                        <option value="structure_break">Structure break</option>
-                        <option value="loss_of_anchor">Loss of anchor</option>
-                        <option value="rejection_at_level">Rejection at level</option>
-                        <option value="volatility_collapse">Volatility collapse</option>
-                        <option value="time_decay_risk">Time decay risk</option>
-                    </select>
+                    <label>Invalidation logic</label>
+                    <div class="checkbox-group scoring-option-grid">
+                        <label class="checkbox-label"><input type="radio" name="stk4h_invalidation_logic" value="structure_break"><span class="checkbox-text">Structure break</span></label>
+                        <label class="checkbox-label"><input type="radio" name="stk4h_invalidation_logic" value="loss_of_anchor"><span class="checkbox-text">Loss of anchor</span></label>
+                        <label class="checkbox-label"><input type="radio" name="stk4h_invalidation_logic" value="rejection_at_level"><span class="checkbox-text">Rejection at level</span></label>
+                        <label class="checkbox-label"><input type="radio" name="stk4h_invalidation_logic" value="volatility_collapse"><span class="checkbox-text">Volatility collapse</span></label>
+                        <label class="checkbox-label"><input type="radio" name="stk4h_invalidation_logic" value="time_decay_risk"><span class="checkbox-text">Time decay risk</span></label>
+                    </div>
                 </div>
                 <div class="form-group">
                     <label>Liquidity check</label>
@@ -879,17 +878,192 @@
             </div>
         </div>
 
+        <div class="analysis-subsection">
+            <div class="scoring-header-row">
+                <h3>Stock - 15m Execution &amp; Timing</h3>
+                <div class="scoring-header-summary">
+                    <div><strong>SCORE:</strong> <span id="stock15m-header-score">0 / 20</span></div>
+                    <div><strong>Grade:</strong> <span id="stock15m-header-grade">No data</span></div>
+                </div>
+            </div>
+            <h4>A. Micro Context (15m)</h4>
+
+            <div class="scoring-stage-grid">
+                <div class="form-group">
+                    <label>Bias (15m) <span class="help-icon" data-tooltip="Kierunek na 15m dla wykonania. Jesli 15m jest w kontrze do 1D/4H, ryzyko whipsaw rośnie.">?</span></label>
+                    <div class="checkbox-group scoring-option-grid">
+                        <label class="checkbox-label"><input type="radio" name="m15_bias" value="Bullish"><span class="checkbox-text">Bullish</span></label>
+                        <label class="checkbox-label"><input type="radio" name="m15_bias" value="Bearish"><span class="checkbox-text">Bearish</span></label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="m15_rate">Rate (15m) <span class="help-icon" data-tooltip="Ocena jakości wykonania 0-99: trigger, momentum, wolumen, alignment ze SPY.">?</span></label>
+                    <input id="m15_rate" name="m15_rate" type="text" placeholder="Rate">
+                </div>
+                <div class="form-group">
+                    <label>Structure (15m) <span class="help-icon" data-tooltip="HH/HL = przewaga long, LL/LH = przewaga short, Mixed = chop i gorszy edge.">?</span></label>
+                    <div class="checkbox-group scoring-option-grid">
+                        <label class="checkbox-label"><input type="radio" name="m15_structure" value="HH/HL"><span class="checkbox-text">HH/HL</span></label>
+                        <label class="checkbox-label"><input type="radio" name="m15_structure" value="LL/LH"><span class="checkbox-text">LL/LH</span></label>
+                        <label class="checkbox-label"><input type="radio" name="m15_structure" value="Mixed"><span class="checkbox-text">Mixed</span></label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>VWAP (15m) <span class="help-icon" data-tooltip="Dla long lepiej Above/reclaim, dla short lepiej Below/rejection. Middle zwykle oznacza brak edge.">?</span></label>
+                    <div class="checkbox-group scoring-option-grid">
+                        <label class="checkbox-label"><input type="radio" name="m15_vwap" value="Above"><span class="checkbox-text">Above</span></label>
+                        <label class="checkbox-label"><input type="radio" name="m15_vwap" value="Middle"><span class="checkbox-text">Middle</span></label>
+                        <label class="checkbox-label"><input type="radio" name="m15_vwap" value="Below"><span class="checkbox-text">Below</span></label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>SPY 15m alignment <span class="help-icon" data-tooltip="Aligned = SPY pomaga, Diverging = brak wsparcia, Opposite = SPY gra przeciwko.">?</span></label>
+                    <div class="checkbox-group scoring-option-grid">
+                        <label class="checkbox-label"><input type="radio" name="m15_spy_alignment" value="Aligned"><span class="checkbox-text">Aligned</span></label>
+                        <label class="checkbox-label"><input type="radio" name="m15_spy_alignment" value="Diverging"><span class="checkbox-text">Diverging</span></label>
+                        <label class="checkbox-label"><input type="radio" name="m15_spy_alignment" value="Opposite"><span class="checkbox-text">Opposite</span></label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>SPY VWAP (15m) <span class="help-icon" data-tooltip="Pozycja SPY względem VWAP na 15m. Dla long lepiej Above, dla short lepiej Below.">?</span></label>
+                    <div class="checkbox-group scoring-option-grid">
+                        <label class="checkbox-label"><input type="radio" name="m15_spy_vwap" value="Above"><span class="checkbox-text">Above</span></label>
+                        <label class="checkbox-label"><input type="radio" name="m15_spy_vwap" value="Below"><span class="checkbox-text">Below</span></label>
+                    </div>
+                </div>
+            </div>
+            <h4>B. Trigger &amp; Confirmation</h4>
+
+            <div class="scoring-stage-grid">
+                <div class="form-group">
+                    <label>Structure breaks <span class="help-icon" data-tooltip="Czy struktura faktycznie pekla, a nie tylko dotknela poziomu.">?</span></label>
+                    <div class="checkbox-group scoring-option-grid">
+                        <label class="checkbox-label"><input type="radio" name="m15_structure_breaks" value="Yes"><span class="checkbox-text">Yes</span></label>
+                        <label class="checkbox-label"><input type="radio" name="m15_structure_breaks" value="No"><span class="checkbox-text">No</span></label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Trigger type (15m) <span class="help-icon" data-tooltip="Mechanika wejścia: wybicie, reclaim, rejection lub fade.">?</span></label>
+                    <div class="checkbox-group scoring-option-grid">
+                        <label class="checkbox-label"><input type="radio" name="m15_trigger_type" value="Breakout"><span class="checkbox-text">Breakout</span></label>
+                        <label class="checkbox-label"><input type="radio" name="m15_trigger_type" value="Breakdown"><span class="checkbox-text">Breakdown</span></label>
+                        <label class="checkbox-label"><input type="radio" name="m15_trigger_type" value="Reclaim"><span class="checkbox-text">Reclaim</span></label>
+                        <label class="checkbox-label"><input type="radio" name="m15_trigger_type" value="Rejection"><span class="checkbox-text">Rejection</span></label>
+                        <label class="checkbox-label"><input type="radio" name="m15_trigger_type" value="Fade"><span class="checkbox-text">Fade</span></label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Trigger confirmed? <span class="help-icon" data-tooltip="Yes gdy jest akceptacja poziomu: zamknięcie po właściwej stronie + follow-through/retest.">?</span></label>
+                    <div class="checkbox-group scoring-option-grid">
+                        <label class="checkbox-label"><input type="radio" name="m15_trigger_confirmed" value="Yes"><span class="checkbox-text">Yes</span></label>
+                        <label class="checkbox-label"><input type="radio" name="m15_trigger_confirmed" value="No"><span class="checkbox-text">No</span></label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="m15_trigger_level">Trigger level <span class="help-icon" data-tooltip="Konkretny poziom/zakres wejścia na 15m.">?</span></label>
+                    <input id="m15_trigger_level" name="m15_trigger_level" type="text" placeholder="np. 680.20-680.60">
+                </div>
+                <div class="form-group">
+                    <label for="m15_invalidation_level">Invalidation level <span class="help-icon" data-tooltip="Poziom, przy którym założenie jest błędne.">?</span></label>
+                    <input id="m15_invalidation_level" name="m15_invalidation_level" type="text" placeholder="np. 677.90">
+                </div>
+            </div>
+            <h4>C. Entry Quality &amp; Timing</h4>
+
+            <div class="scoring-stage-grid">
+                <div class="form-group">
+                    <label>Momentum state (15m) <span class="help-icon" data-tooltip="Expanding = paliwo, Diverging = ostrzeżenie, Overextended = chase risk, Failed reclaim = słabość.">?</span></label>
+                    <div class="checkbox-group scoring-option-grid">
+                        <label class="checkbox-label"><input type="radio" name="m15_momentum_state" value="Expanding with move"><span class="checkbox-text">Expanding with move</span></label>
+                        <label class="checkbox-label"><input type="radio" name="m15_momentum_state" value="Diverging"><span class="checkbox-text">Diverging</span></label>
+                        <label class="checkbox-label"><input type="radio" name="m15_momentum_state" value="Overextended"><span class="checkbox-text">Overextended</span></label>
+                        <label class="checkbox-label"><input type="radio" name="m15_momentum_state" value="Failed reclaim / turn back down"><span class="checkbox-text">Failed reclaim / turn back down</span></label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Entry quality <span class="help-icon" data-tooltip="A+ = przy poziomie i potwierdzeniu, OK = poprawne, Late = gonienie ruchu.">?</span></label>
+                    <div class="checkbox-group scoring-option-grid">
+                        <label class="checkbox-label"><input type="radio" name="m15_entry_quality" value="A+"><span class="checkbox-text">A+</span></label>
+                        <label class="checkbox-label"><input type="radio" name="m15_entry_quality" value="OK"><span class="checkbox-text">OK</span></label>
+                        <label class="checkbox-label"><input type="radio" name="m15_entry_quality" value="Late/Chase"><span class="checkbox-text">Late/Chase</span></label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Retest quality <span class="help-icon" data-tooltip="Clean retest = najlepsza jakość, Wicky = większy szum, No retest = większe ryzyko chase.">?</span></label>
+                    <div class="checkbox-group scoring-option-grid">
+                        <label class="checkbox-label"><input type="radio" name="m15_retest_quality" value="Clean retest"><span class="checkbox-text">Clean retest</span></label>
+                        <label class="checkbox-label"><input type="radio" name="m15_retest_quality" value="Wicky"><span class="checkbox-text">Wicky</span></label>
+                        <label class="checkbox-label"><input type="radio" name="m15_retest_quality" value="No retest"><span class="checkbox-text">No retest</span></label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Session timing <span class="help-icon" data-tooltip="Open = szybkie ruchy, Midday = słabszy wolumen, Power hour = często kontynuacje.">?</span></label>
+                    <div class="checkbox-group scoring-option-grid">
+                        <label class="checkbox-label"><input type="radio" name="m15_session_timing" value="Open (first 30m)"><span class="checkbox-text">Open (first 30m)</span></label>
+                        <label class="checkbox-label"><input type="radio" name="m15_session_timing" value="Midday"><span class="checkbox-text">Midday</span></label>
+                        <label class="checkbox-label"><input type="radio" name="m15_session_timing" value="Power hour"><span class="checkbox-text">Power hour</span></label>
+                        <label class="checkbox-label"><input type="radio" name="m15_session_timing" value="Close"><span class="checkbox-text">Close</span></label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Event timing <span class="help-icon" data-tooltip="Czy wejście jest przed/po newsach. Przed newsami częściej rośnie ryzyko fałszywych ruchów.">?</span></label>
+                    <div class="checkbox-group scoring-option-grid">
+                        <label class="checkbox-label"><input type="radio" name="m15_event_timing" value="Before news"><span class="checkbox-text">Before news</span></label>
+                        <label class="checkbox-label"><input type="radio" name="m15_event_timing" value="After news"><span class="checkbox-text">After news</span></label>
+                        <label class="checkbox-label"><input type="radio" name="m15_event_timing" value="No scheduled risk"><span class="checkbox-text">No scheduled risk</span></label>
+                    </div>
+                </div>
+            </div>
+            <h4>D. Volume, Levels &amp; Options Risk</h4>
+
+            <div class="scoring-stage-grid">
+                <div class="form-group">
+                    <label>Volume confirmation <span class="help-icon" data-tooltip="Idealnie: impuls ma wolumen, a pullback ma słabszy wolumen.">?</span></label>
+                    <div class="checkbox-group scoring-option-grid">
+                        <label class="checkbox-label"><input type="checkbox" name="m15_impulse_volume_confirms"><span class="checkbox-text">Impulse volume confirms</span></label>
+                        <label class="checkbox-label"><input type="checkbox" name="m15_pullback_volume_dries_up"><span class="checkbox-text">Pullback volume dries up</span></label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Micro S/R involved <span class="help-icon" data-tooltip="Zaznacz poziomy, które realnie uczestniczą w triggerze 15m.">?</span></label>
+                    <div class="checkbox-group scoring-option-grid scoring-option-grid-2">
+                        <label class="checkbox-label"><input type="checkbox" name="m15_micro_sr_pdh_pdl"><span class="checkbox-text">PDH/PDL</span></label>
+                        <label class="checkbox-label"><input type="checkbox" name="m15_micro_sr_orh_orl"><span class="checkbox-text">ORH/ORL</span></label>
+                        <label class="checkbox-label"><input type="checkbox" name="m15_micro_sr_vwap"><span class="checkbox-text">VWAP</span></label>
+                        <label class="checkbox-label"><input type="checkbox" name="m15_micro_sr_premarket_h_l"><span class="checkbox-text">Premarket H/L</span></label>
+                        <label class="checkbox-label"><input type="checkbox" name="m15_micro_sr_last_swing"><span class="checkbox-text">Last swing</span></label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Spread / fills <span class="help-icon" data-tooltip="Na opcjach wide spread mocno pogarsza wykonanie nawet przy dobrym kierunku.">?</span></label>
+                    <div class="checkbox-group scoring-option-grid">
+                        <label class="checkbox-label"><input type="radio" name="m15_spread_fills" value="OK"><span class="checkbox-text">OK</span></label>
+                        <label class="checkbox-label"><input type="radio" name="m15_spread_fills" value="Wide"><span class="checkbox-text">Wide</span></label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>IV behavior <span class="help-icon" data-tooltip="Dla opcji: rising pomaga long premium, falling może zjadać zysk mimo ruchu ceny.">?</span></label>
+                    <div class="checkbox-group scoring-option-grid">
+                        <label class="checkbox-label"><input type="radio" name="m15_iv_behavior" value="IV rising"><span class="checkbox-text">IV rising</span></label>
+                        <label class="checkbox-label"><input type="radio" name="m15_iv_behavior" value="IV stable"><span class="checkbox-text">IV stable</span></label>
+                        <label class="checkbox-label"><input type="radio" name="m15_iv_behavior" value="IV falling"><span class="checkbox-text">IV falling</span></label>
+                    </div>
+                </div>
+            </div>
+            <h4>E. Notes</h4>
+
+            <div class="form-group">
+                <label for="m15_note">Note <span class="help-icon" data-tooltip="1-2 linie: trigger, warunek wejścia i co unieważnia setup.">?</span></label>
+                <textarea id="m15_note" name="m15_note" rows="2" placeholder="1 line"></textarea>
+            </div>
+        </div>
+
         <details class="analysis-subsection spy-chat-collapsible">
-            <summary>Stock Chat (1D + 4H + 1H + 15m)</summary>
+            <summary>Stock + SPY Chat (all TF)</summary>
             <div class="spy-chat-grid">
                 <div class="form-group">
                     <label>Timeframes</label>
-                    <div class="checkbox-group scoring-option-grid">
-                        <label class="checkbox-label"><input type="checkbox" name="stock_chat_tf" value="1D" checked><span class="checkbox-text">1D</span></label>
-                        <label class="checkbox-label"><input type="checkbox" name="stock_chat_tf" value="4H" checked><span class="checkbox-text">4H</span></label>
-                        <label class="checkbox-label"><input type="checkbox" name="stock_chat_tf" value="1H" checked><span class="checkbox-text">1H</span></label>
-                        <label class="checkbox-label"><input type="checkbox" name="stock_chat_tf" value="15m" checked><span class="checkbox-text">15m (future)</span></label>
-                    </div>
+                    <div class="scoring-readonly-value">SPY: 1D | Stock: 1D, 4H, 1H, 15m</div>
                     <label for="stock-chat-extra-context">Additional context for AI (optional)</label>
                     <textarea id="stock-chat-extra-context" rows="2" placeholder="Optional note about stock context..."></textarea>
                 </div>
@@ -899,8 +1073,7 @@
                 </div>
                 <div class="form-group">
                     <div class="spy-chat-actions">
-                        <button id="stock-chat-generate" type="button" class="btn-secondary spy-chat-btn">Generate Prompt</button>
-                        <button id="stock-chat-copy" type="button" class="btn-secondary spy-chat-btn">Copy Prompt</button>
+                        <button id="stock-chat-copy" type="button" class="btn-secondary spy-chat-btn">Copy Prompt (SPY + Stock)</button>
                         <button id="stock-chat-apply" type="button" class="btn-secondary spy-chat-btn">Apply Suggestions</button>
                     </div>
                 </div>
@@ -908,114 +1081,76 @@
         </details>
     </div>
 
-    <div class="analysis-section">
+    <div class="analysis-section score-result-section">
         <h3>Score Result</h3>
-        <div class="analysis-subsection">
-            <h4>SPY Score</h4>
-            <div class="form-group">
-                <label>RAW SCORE (before caps)</label>
-                <div id="scoring-raw-score">0 / 25</div>
-            </div>
-            <div class="form-group">
-                <label>Section Scores</label>
-                <div id="scoring-breakdown">
-                    Direction: 0/5 | Strength: 0/8 | Volatility Regime: 0/6 | Location: 0/6
-                </div>
-                <div id="pen-vol-subtotal">Volatility penalties subtotal: 0</div>
-            </div>
-            <div class="form-group">
-                <div id="scoring-cap-note"></div>
-            </div>
-        </div>
-
-        <div class="analysis-subsection">
-            <h4>Stock 1D Score</h4>
-            <div class="advanced-hint">Scoring is active (v1) and currently being tuned. Treat it as supportive, not decisive.</div>
-            <div class="form-group">
-                <label>TOTAL SCORE</label>
-                <div id="stock1d-total-score">0 / 20</div>
-            </div>
-            <div class="form-group">
-                <label>Interpretation/Grade</label>
-                <div id="stock1d-grade">No data</div>
-            </div>
-            <div class="form-group">
-                <label>RAW SCORE (before caps)</label>
-                <div id="stock1d-raw-score">0 / 20</div>
-            </div>
-            <div class="form-group">
-                <label>Breakdown</label>
-                <div id="stock1d-breakdown">Direction: 0/8 | Context: 0/8 | Risk/Levels: 0/4 | Penalties: 0</div>
-            </div>
-            <div class="form-group">
-                <div id="stock1d-cap-note"></div>
-            </div>
-        </div>
-
-        <div class="analysis-subsection">
-            <h4>Stock 4H Score</h4>
-            <div class="form-group">
-                <label>TOTAL SCORE</label>
-                <div id="stock4h-total-score">0 / 20</div>
-            </div>
-            <div class="form-group">
-                <label>Interpretation/Grade</label>
-                <div id="stock4h-grade">No data</div>
-            </div>
-            <div class="form-group">
-                <label>RAW SCORE (before caps)</label>
-                <div id="stock4h-raw-score">0 / 20</div>
-            </div>
-            <div class="form-group">
-                <label>Breakdown</label>
-                <div id="stock4h-breakdown">Setup: 0/8 | Location/Levels: 0/6 | Quality/Risk: 0/6 | Penalties: 0</div>
-            </div>
-            <div class="form-group">
-                <div id="stock4h-cap-note"></div>
-            </div>
-        </div>
-
-        <div class="analysis-subsection">
-            <h4>Stock 1H Score</h4>
-            <div class="form-group">
-                <label>TOTAL SCORE</label>
-                <div id="stock1h-total-score">0 / 20</div>
-            </div>
-            <div class="form-group">
-                <label>Interpretation/Grade</label>
-                <div id="stock1h-grade">No data</div>
-            </div>
-            <div class="form-group">
-                <label>RAW SCORE (before caps)</label>
-                <div id="stock1h-raw-score">0 / 20</div>
-            </div>
-            <div class="form-group">
-                <label>Breakdown</label>
-                <div id="stock1h-breakdown">Micro structure: 0/7 | Intraday context: 0/7 | Alignment/Risk: 0/6 | Penalties: 0</div>
-            </div>
-            <div class="form-group">
-                <div id="stock1h-cap-note"></div>
-            </div>
-        </div>
-
-        <div class="analysis-subsection">
-            <h4>Stock Global Score</h4>
-            <div class="advanced-hint">Global score currently sums 1D + 4H + 1H. A 15m component will be added in the next step.</div>
-            <div class="form-group">
-                <label>TOTAL SCORE</label>
-                <div id="stock-global-total-score">0 / 60</div>
-            </div>
-            <div class="form-group">
-                <label>Interpretation/Grade</label>
-                <div id="stock-global-grade">No data</div>
-            </div>
-            <div class="form-group">
-                <label>Breakdown</label>
-                <div id="stock-global-breakdown">1D: 0/20 | 4H: 0/20 | 1H: 0/20</div>
-            </div>
-            <div class="form-group">
-                <div id="stock-global-cap-note"></div>
-            </div>
+        <div class="advanced-hint">Scoring is active (v1) and currently being tuned. Treat it as supportive, not decisive.</div>
+        <div class="advanced-hint">Global score sums Stock: 1D + 4H + 1H + 15m (execution).</div>
+        <div class="table-responsive score-table-wrap">
+            <table class="stats-table score-result-table">
+                <thead>
+                    <tr>
+                        <th scope="col">Segment</th>
+                        <th scope="col">Total</th>
+                        <th scope="col">Raw</th>
+                        <th scope="col">Ocena</th>
+                        <th scope="col">Breakdown</th>
+                        <th scope="col">Kary / Cap</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <tr>
+                        <td><strong>SPY</strong></td>
+                        <td><span id="scoring-total-score-result">0 / 25</span></td>
+                        <td><span id="scoring-raw-score">0 / 25</span></td>
+                        <td><span id="scoring-interpretation-result">No data</span></td>
+                        <td>
+                            <div id="scoring-breakdown">Direction: 0/5 | Strength: 0/8 | Volatility Regime: 0/6 | Location: 0/6</div>
+                            <div id="pen-vol-subtotal">Volatility penalties subtotal: 0</div>
+                        </td>
+                        <td><div id="scoring-cap-note"></div></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Stock 1D</strong></td>
+                        <td><span id="stock1d-total-score">0 / 20</span></td>
+                        <td><span id="stock1d-raw-score">0 / 20</span></td>
+                        <td><span id="stock1d-grade">No data</span></td>
+                        <td><div id="stock1d-breakdown">Direction: 0/8 | Context: 0/8 | Risk/Levels: 0/4 | Penalties: 0</div></td>
+                        <td><div id="stock1d-cap-note"></div></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Stock 4H</strong></td>
+                        <td><span id="stock4h-total-score">0 / 20</span></td>
+                        <td><span id="stock4h-raw-score">0 / 20</span></td>
+                        <td><span id="stock4h-grade">No data</span></td>
+                        <td><div id="stock4h-breakdown">Setup: 0/8 | Location/Levels: 0/6 | Quality/Risk: 0/6 | Penalties: 0</div></td>
+                        <td><div id="stock4h-cap-note"></div></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Stock 1H</strong></td>
+                        <td><span id="stock1h-total-score">0 / 20</span></td>
+                        <td><span id="stock1h-raw-score">0 / 20</span></td>
+                        <td><span id="stock1h-grade">No data</span></td>
+                        <td><div id="stock1h-breakdown">Micro structure: 0/7 | Intraday context: 0/7 | Alignment/Risk: 0/6 | Penalties: 0</div></td>
+                        <td><div id="stock1h-cap-note"></div></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Stock 15m</strong></td>
+                        <td><span id="stock15m-total-score">0 / 20</span></td>
+                        <td><span id="stock15m-raw-score">0 / 20</span></td>
+                        <td><span id="stock15m-grade">No data</span></td>
+                        <td><div id="stock15m-breakdown">Micro context: 0/6 | Trigger/Confirm: 0/6 | Entry/Timing: 0/5 | Volume/Levels/Options: 0/3 | Penalties: 0</div></td>
+                        <td><div id="stock15m-cap-note"></div></td>
+                    </tr>
+                    <tr>
+                        <td><strong>Stock Global</strong></td>
+                        <td><span id="stock-global-total-score">0 / 80</span></td>
+                        <td>-</td>
+                        <td><span id="stock-global-grade">No data</span></td>
+                        <td><div id="stock-global-breakdown">1D: 0/20 | 4H: 0/20 | 1H: 0/20 | 15m: 0/20</div></td>
+                        <td><div id="stock-global-cap-note"></div></td>
+                    </tr>
+                </tbody>
+            </table>
         </div>
     </div>
 </form>
