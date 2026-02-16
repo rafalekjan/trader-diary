@@ -255,26 +255,6 @@
             </div>
         </div>
 
-        <details class="analysis-subsection spy-chat-collapsible">
-            <summary>Chat</summary>
-            <div class="spy-chat-grid">
-                <div class="form-group">
-                    <label for="spy-chat-extra-context">Additional context for AI (optional)</label>
-                    <textarea id="spy-chat-extra-context" name="spy_chat_extra_context" rows="2" placeholder="Optional note about what you see on the 1D chart..."></textarea>
-                </div>
-                <div class="form-group">
-                    <label for="spy-chat-response-input">Paste ChatGPT response</label>
-                    <textarea id="spy-chat-response-input" rows="5" placeholder="Wklej odpowiedz z ChatGPT (tekst + JSON z suggestions)..."></textarea>
-                </div>
-                <div class="form-group">
-                    <div class="spy-chat-actions">
-                        <button id="spy-chat-generate" type="button" class="btn-secondary spy-chat-btn">Generate Prompt</button>
-                        <button id="spy-chat-copy" type="button" class="btn-secondary spy-chat-btn">Copy Prompt</button>
-                        <button id="spy-chat-apply" type="button" class="btn-secondary spy-chat-btn">Apply Suggestions</button>
-                    </div>
-                </div>
-            </div>
-        </details>
     </div>
 
     <div id="stock-1d-section" class="analysis-section">
@@ -1063,7 +1043,7 @@
             <div class="spy-chat-grid">
                 <div class="form-group">
                     <label>Timeframes</label>
-                    <div class="scoring-readonly-value">SPY: 1D | Stock: 1D, 4H, 1H, 15m</div>
+                    <div class="scoring-readonly-value">SPY: 1D | Stock: 1D, 4H, 1H, 15m | Options layer</div>
                     <label for="stock-chat-extra-context">Additional context for AI (optional)</label>
                     <textarea id="stock-chat-extra-context" rows="2" placeholder="Optional note about stock context..."></textarea>
                 </div>
@@ -1079,6 +1059,227 @@
                 </div>
             </div>
         </details>
+    </div>
+
+    <div class="analysis-section" id="options-layer-section">
+        <div class="scoring-header-row">
+            <h3>Options Layer (Swing)</h3>
+            <div class="scoring-header-summary">
+                <div><strong>Final decision:</strong> <span id="scoring-final-decision">Structure: No data | Options: No data | Decision: No data</span></div>
+                <div><strong>Options Suitability:</strong> <span id="options-header-score">0 / 20</span> | <span id="options-header-grade">No data</span></div>
+            </div>
+        </div>
+
+        <div class="analysis-subsection">
+            <h4>A. Contract and horizon (DTE)</h4>
+            <div class="scoring-stage-grid">
+                <div class="form-group">
+                    <label>DTE bucket</label>
+                    <div class="checkbox-group scoring-option-grid scoring-option-grid-2">
+                        <label class="checkbox-label"><input type="radio" name="opt_dte_bucket" value="0-7 DTE"><span class="checkbox-text">0-7 DTE</span></label>
+                        <label class="checkbox-label"><input type="radio" name="opt_dte_bucket" value="8-21 DTE"><span class="checkbox-text">8-21 DTE</span></label>
+                        <label class="checkbox-label"><input type="radio" name="opt_dte_bucket" value="22-45 DTE"><span class="checkbox-text">22-45 DTE</span></label>
+                        <label class="checkbox-label"><input type="radio" name="opt_dte_bucket" value="46-90 DTE"><span class="checkbox-text">46-90 DTE</span></label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Holding plan</label>
+                    <div class="checkbox-group scoring-option-grid scoring-option-grid-2">
+                        <label class="checkbox-label"><input type="radio" name="opt_holding_plan" value="Intraday -> 1-2 days"><span class="checkbox-text">Intraday -> 1-2 days</span></label>
+                        <label class="checkbox-label"><input type="radio" name="opt_holding_plan" value="3-7 days"><span class="checkbox-text">3-7 days</span></label>
+                        <label class="checkbox-label"><input type="radio" name="opt_holding_plan" value="2-4 weeks"><span class="checkbox-text">2-4 weeks</span></label>
+                        <label class="checkbox-label"><input type="radio" name="opt_holding_plan" value=">4 weeks"><span class="checkbox-text">&gt;4 weeks</span></label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Contract type</label>
+                    <div class="checkbox-group scoring-option-grid scoring-option-grid-2">
+                        <label class="checkbox-label"><input type="radio" name="opt_contract_type" value="Calls / Puts (directional)"><span class="checkbox-text">Calls / Puts (directional)</span></label>
+                        <label class="checkbox-label"><input type="radio" name="opt_contract_type" value="Debit spread"><span class="checkbox-text">Debit spread</span></label>
+                        <label class="checkbox-label"><input type="radio" name="opt_contract_type" value="Credit spread"><span class="checkbox-text">Credit spread</span></label>
+                        <label class="checkbox-label"><input type="radio" name="opt_contract_type" value="Calendar/Diagonal"><span class="checkbox-text">Calendar/Diagonal</span></label>
+                        <label class="checkbox-label"><input type="radio" name="opt_contract_type" value="Straddle/Strangle (volatility)"><span class="checkbox-text">Straddle/Strangle (volatility)</span></label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="analysis-subsection">
+            <h4>B. IV and volatility regime</h4>
+            <div class="scoring-stage-grid">
+                <div class="form-group">
+                    <label>IV level</label>
+                    <div class="checkbox-group scoring-option-grid">
+                        <label class="checkbox-label"><input type="radio" name="opt_iv_level" value="Low"><span class="checkbox-text">Low</span></label>
+                        <label class="checkbox-label"><input type="radio" name="opt_iv_level" value="Mid"><span class="checkbox-text">Mid</span></label>
+                        <label class="checkbox-label"><input type="radio" name="opt_iv_level" value="High"><span class="checkbox-text">High</span></label>
+                        <label class="checkbox-label"><input type="radio" name="opt_iv_level" value="Unknown (---)"><span class="checkbox-text">Unknown (---)</span></label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>IV trend</label>
+                    <div class="checkbox-group scoring-option-grid">
+                        <label class="checkbox-label"><input type="radio" name="opt_iv_trend" value="Rising"><span class="checkbox-text">Rising</span></label>
+                        <label class="checkbox-label"><input type="radio" name="opt_iv_trend" value="Stable"><span class="checkbox-text">Stable</span></label>
+                        <label class="checkbox-label"><input type="radio" name="opt_iv_trend" value="Falling"><span class="checkbox-text">Falling</span></label>
+                        <label class="checkbox-label"><input type="radio" name="opt_iv_trend" value="Unknown (---)"><span class="checkbox-text">Unknown (---)</span></label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>IV vs RV</label>
+                    <div class="checkbox-group scoring-option-grid scoring-option-grid-2">
+                        <label class="checkbox-label"><input type="radio" name="opt_iv_vs_rv" value="IV > RV (premium rich)"><span class="checkbox-text">IV &gt; RV (premium rich)</span></label>
+                        <label class="checkbox-label"><input type="radio" name="opt_iv_vs_rv" value="IV = RV"><span class="checkbox-text">IV ~= RV</span></label>
+                        <label class="checkbox-label"><input type="radio" name="opt_iv_vs_rv" value="IV < RV (premium cheap)"><span class="checkbox-text">IV &lt; RV (premium cheap)</span></label>
+                        <label class="checkbox-label"><input type="radio" name="opt_iv_vs_rv" value="Unknown (---)"><span class="checkbox-text">Unknown (---)</span></label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Vol play fit</label>
+                    <div class="checkbox-group scoring-option-grid scoring-option-grid-2">
+                        <label class="checkbox-label"><input type="radio" name="opt_vol_play_fit" value="Directional (delta)"><span class="checkbox-text">Directional (delta)</span></label>
+                        <label class="checkbox-label"><input type="radio" name="opt_vol_play_fit" value="Volatility expansion (vega)"><span class="checkbox-text">Volatility expansion (vega)</span></label>
+                        <label class="checkbox-label"><input type="radio" name="opt_vol_play_fit" value="Theta harvest"><span class="checkbox-text">Theta harvest</span></label>
+                        <label class="checkbox-label"><input type="radio" name="opt_vol_play_fit" value="None / unclear"><span class="checkbox-text">None / unclear</span></label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="analysis-subsection">
+            <h4>C. Expected Move vs Room to move</h4>
+            <div class="scoring-stage-grid">
+                <div class="form-group">
+                    <label>Expected move fit</label>
+                    <div class="checkbox-group scoring-option-grid">
+                        <label class="checkbox-label"><input type="radio" name="opt_expected_move_fit" value="Target inside EM"><span class="checkbox-text">Target inside EM</span></label>
+                        <label class="checkbox-label"><input type="radio" name="opt_expected_move_fit" value="Target near EM"><span class="checkbox-text">Target near EM</span></label>
+                        <label class="checkbox-label"><input type="radio" name="opt_expected_move_fit" value="Target beyond EM"><span class="checkbox-text">Target beyond EM</span></label>
+                        <label class="checkbox-label"><input type="radio" name="opt_expected_move_fit" value="Unknown (---)"><span class="checkbox-text">Unknown (---)</span></label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Room vs theta</label>
+                    <div class="checkbox-group scoring-option-grid">
+                        <label class="checkbox-label"><input type="radio" name="opt_room_vs_theta" value="Plenty of room (theta ok)"><span class="checkbox-text">Plenty of room (theta ok)</span></label>
+                        <label class="checkbox-label"><input type="radio" name="opt_room_vs_theta" value="Some room (selective)"><span class="checkbox-text">Some room (selective)</span></label>
+                        <label class="checkbox-label"><input type="radio" name="opt_room_vs_theta" value="Limited room (theta danger)"><span class="checkbox-text">Limited room (theta danger)</span></label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="analysis-subsection">
+            <h4>D. Liquidity and fills</h4>
+            <div class="scoring-stage-grid">
+                <div class="form-group">
+                    <label>Spread quality</label>
+                    <div class="checkbox-group scoring-option-grid">
+                        <label class="checkbox-label"><input type="radio" name="opt_spread_quality" value="Tight"><span class="checkbox-text">Tight</span></label>
+                        <label class="checkbox-label"><input type="radio" name="opt_spread_quality" value="Ok"><span class="checkbox-text">Ok</span></label>
+                        <label class="checkbox-label"><input type="radio" name="opt_spread_quality" value="Wide"><span class="checkbox-text">Wide</span></label>
+                        <label class="checkbox-label"><input type="radio" name="opt_spread_quality" value="Unknown (---)"><span class="checkbox-text">Unknown (---)</span></label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>OI / volume</label>
+                    <div class="checkbox-group scoring-option-grid">
+                        <label class="checkbox-label"><input type="radio" name="opt_oi_volume" value="Good"><span class="checkbox-text">Good</span></label>
+                        <label class="checkbox-label"><input type="radio" name="opt_oi_volume" value="Medium"><span class="checkbox-text">Medium</span></label>
+                        <label class="checkbox-label"><input type="radio" name="opt_oi_volume" value="Poor"><span class="checkbox-text">Poor</span></label>
+                        <label class="checkbox-label"><input type="radio" name="opt_oi_volume" value="Unknown (---)"><span class="checkbox-text">Unknown (---)</span></label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Slippage risk</label>
+                    <div class="checkbox-group scoring-option-grid">
+                        <label class="checkbox-label"><input type="radio" name="opt_slippage_risk" value="Low"><span class="checkbox-text">Low</span></label>
+                        <label class="checkbox-label"><input type="radio" name="opt_slippage_risk" value="Medium"><span class="checkbox-text">Medium</span></label>
+                        <label class="checkbox-label"><input type="radio" name="opt_slippage_risk" value="High"><span class="checkbox-text">High</span></label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="analysis-subsection">
+            <h4>E. Strike and moneyness</h4>
+            <div class="scoring-stage-grid">
+                <div class="form-group">
+                    <label>Moneyness</label>
+                    <div class="checkbox-group scoring-option-grid">
+                        <label class="checkbox-label"><input type="radio" name="opt_moneyness" value="ITM"><span class="checkbox-text">ITM</span></label>
+                        <label class="checkbox-label"><input type="radio" name="opt_moneyness" value="ATM"><span class="checkbox-text">ATM</span></label>
+                        <label class="checkbox-label"><input type="radio" name="opt_moneyness" value="OTM"><span class="checkbox-text">OTM</span></label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Delta bucket</label>
+                    <div class="checkbox-group scoring-option-grid scoring-option-grid-2">
+                        <label class="checkbox-label"><input type="radio" name="opt_delta_bucket" value="0.20-0.30"><span class="checkbox-text">0.20-0.30</span></label>
+                        <label class="checkbox-label"><input type="radio" name="opt_delta_bucket" value="0.30-0.45"><span class="checkbox-text">0.30-0.45</span></label>
+                        <label class="checkbox-label"><input type="radio" name="opt_delta_bucket" value="0.45-0.60"><span class="checkbox-text">0.45-0.60</span></label>
+                        <label class="checkbox-label"><input type="radio" name="opt_delta_bucket" value="0.60+"><span class="checkbox-text">0.60+</span></label>
+                        <label class="checkbox-label"><input type="radio" name="opt_delta_bucket" value="Unknown (---)"><span class="checkbox-text">Unknown (---)</span></label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Structure fit</label>
+                    <div class="checkbox-group scoring-option-grid">
+                        <label class="checkbox-label"><input type="radio" name="opt_structure_fit" value="Good (fits trend)"><span class="checkbox-text">Good (fits trend)</span></label>
+                        <label class="checkbox-label"><input type="radio" name="opt_structure_fit" value="Ok"><span class="checkbox-text">Ok</span></label>
+                        <label class="checkbox-label"><input type="radio" name="opt_structure_fit" value="Bad (mismatch)"><span class="checkbox-text">Bad (mismatch)</span></label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="analysis-subsection">
+            <h4>F. Catalysts and gap risk</h4>
+            <div class="scoring-stage-grid">
+                <div class="form-group">
+                    <label>Catalyst type</label>
+                    <div class="checkbox-group scoring-option-grid">
+                        <label class="checkbox-label"><input type="radio" name="opt_catalyst_type" value="Earnings"><span class="checkbox-text">Earnings</span></label>
+                        <label class="checkbox-label"><input type="radio" name="opt_catalyst_type" value="Macro/news"><span class="checkbox-text">Macro/news</span></label>
+                        <label class="checkbox-label"><input type="radio" name="opt_catalyst_type" value="None planned"><span class="checkbox-text">None planned</span></label>
+                        <label class="checkbox-label"><input type="radio" name="opt_catalyst_type" value="Unknown"><span class="checkbox-text">Unknown</span></label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>IV crush risk</label>
+                    <div class="checkbox-group scoring-option-grid">
+                        <label class="checkbox-label"><input type="radio" name="opt_iv_crush_risk" value="High"><span class="checkbox-text">High</span></label>
+                        <label class="checkbox-label"><input type="radio" name="opt_iv_crush_risk" value="Medium"><span class="checkbox-text">Medium</span></label>
+                        <label class="checkbox-label"><input type="radio" name="opt_iv_crush_risk" value="Low"><span class="checkbox-text">Low</span></label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Gap risk ack</label>
+                    <div class="checkbox-group scoring-option-grid">
+                        <label class="checkbox-label"><input type="radio" name="opt_gap_risk_ack" value="Acceptable"><span class="checkbox-text">Acceptable</span></label>
+                        <label class="checkbox-label"><input type="radio" name="opt_gap_risk_ack" value="Too high (avoid)"><span class="checkbox-text">Too high (avoid)</span></label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="analysis-subsection">
+            <h4>G. Final decision</h4>
+            <div class="scoring-stage-grid">
+                <div class="form-group">
+                    <label>Tradeable</label>
+                    <div class="checkbox-group scoring-option-grid">
+                        <label class="checkbox-label"><input type="radio" name="opt_tradeable" value="Yes (options)"><span class="checkbox-text">Yes (options)</span></label>
+                        <label class="checkbox-label"><input type="radio" name="opt_tradeable" value="Yes (but shares better)"><span class="checkbox-text">Yes (but shares better)</span></label>
+                        <label class="checkbox-label"><input type="radio" name="opt_tradeable" value="No (skip)"><span class="checkbox-text">No (skip)</span></label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="opt_strategy_note">Strategy note</label>
+                    <textarea id="opt_strategy_note" name="opt_strategy_note" rows="3" placeholder="Briefly: what structure and why (IV, DTE, EM, room, liquidity)."></textarea>
+                </div>
+            </div>
+        </div>
     </div>
 
     <div class="analysis-section score-result-section">
@@ -1149,8 +1350,66 @@
                         <td><div id="stock-global-breakdown">1D: 0/20 | 4H: 0/20 | 1H: 0/20 | 15m: 0/20</div></td>
                         <td><div id="stock-global-cap-note"></div></td>
                     </tr>
+                    <tr>
+                        <td><strong>Options Suitability</strong></td>
+                        <td><span id="options-total-score-result">0 / 20</span></td>
+                        <td><span id="options-raw-score">0 / 20</span></td>
+                        <td><span id="options-grade-result">No data</span></td>
+                        <td><div id="options-breakdown">Volatility edge: 0/6 | Structure fit: 0/6 | Liquidity: 0/4 | Risk/Catalyst: 0/4 | Penalties: 0</div></td>
+                        <td><div id="options-cap-note"></div></td>
+                    </tr>
                 </tbody>
             </table>
+        </div>
+    </div>
+
+    <div class="form-actions analysis-actions">
+        <button type="button" class="btn btn-primary" id="scoring-generate-report">Generate Report</button>
+        <button type="button" class="btn btn-secondary" id="scoring-copy-report">Copy to Clipboard</button>
+        <button type="button" class="btn btn-secondary" id="scoring-clear-report">Clear</button>
+    </div>
+
+    <div class="analysis-section">
+        <h3>Saved Scoring Analyses</h3>
+        <div class="form-grid trade-form-grid">
+            <div class="form-group">
+                <label for="scoring_name">Analysis name</label>
+                <input id="scoring_name" name="scoring_name" type="text" placeholder="e.g. NVDA SCORING 2026-02-16">
+            </div>
+            <div class="form-group">
+                <label for="scoring_list">Saved list</label>
+                <select id="scoring_list" name="scoring_list">
+                    <option value="">Select saved analysis</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="scoring_sort">Sort by</label>
+                <select id="scoring_sort" name="scoring_sort">
+                    <option value="updated_desc">Newest updated</option>
+                    <option value="updated_asc">Oldest updated</option>
+                    <option value="created_desc">Newest created</option>
+                    <option value="created_asc">Oldest created</option>
+                    <option value="name_asc">Name A-Z</option>
+                    <option value="name_desc">Name Z-A</option>
+                </select>
+            </div>
+        </div>
+        <div class="form-actions">
+            <button type="button" class="btn btn-secondary" id="scoring-save">Save Analysis</button>
+            <button type="button" class="btn btn-secondary" id="scoring-load">Load Selected</button>
+            <button type="button" class="btn btn-secondary" id="scoring-preview">Preview Selected</button>
+            <button type="button" class="btn btn-secondary" id="scoring-delete">Delete Selected</button>
+        </div>
+    </div>
+
+    <div class="analysis-output-grid">
+        <div class="analysis-output">
+            <label for="scoring-output">Generated Report</label>
+            <textarea id="scoring-output" rows="22" readonly></textarea>
+        </div>
+        <div class="analysis-output">
+            <label for="scoring-preview-output">Preview (read-only)</label>
+            <textarea id="scoring-preview-output" rows="22" readonly></textarea>
         </div>
     </div>
 </form>

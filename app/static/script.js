@@ -823,7 +823,27 @@ const STOCK_SCORING_FIELD_HELP = {
     stk1h_alignment_with_4h: { tooltipText: 'Relacja 1H do planu 4H: Aligned, Minor pullback lub Counter-trend (wyzsze ryzyko fake move).' },
     stk1h_setup_type: { tooltipText: 'Mikroschemat 1H (bez execution): breakout hold, failed breakout, pullback continuation, rejection reversal.' },
     stk1h_risk_model: { tooltipText: 'Model ryzyka 1H: structure-based, level-based albo volatility-based.' },
-    stk1h_notes: { tooltipText: 'Krotki opis, co na 1H musi sie wydarzyc, aby plan 4H byl gotowy.' }
+    stk1h_notes: { tooltipText: 'Krotki opis, co na 1H musi sie wydarzyc, aby plan 4H byl gotowy.' },
+    opt_dte_bucket: { tooltipText: 'Dopasuj DTE do planu trzymania: 0-7 agresywne (wysoka theta), 8-21 krotki swing, 22-45 klasyczny swing, 46-90 spokojniejsza pozycja. Zaznacz zakres zgodny z holding time.' },
+    opt_holding_plan: { tooltipText: 'To plan trzymania pozycji, nie timing wejscia. Wybierz realny horyzont ruchu z 4H/1D.' },
+    opt_contract_type: { tooltipText: 'Zaznacz konstrukcje, ktora realnie planujesz: Long Call/Put (kierunek), Debit Spread (kontrola kosztu), Credit Spread (short premium), Calendar/Diagonal (czas + IV).' },
+    opt_iv_level: { tooltipText: 'Low: IV historycznie nisko (czesto lepsze dla long premium). Mid: okolice mediany. High: IV wysoko, opcje drozsze niz zwykle. Unknown: nie sprawdziles IV rank/percentyla.' },
+    opt_iv_trend: { tooltipText: 'Rising: IV rosnie (vega pomaga long premium). Falling: IV spada (lepiej dla short premium/spreadow). Stable: brak wyraznego trendu.' },
+    opt_iv_vs_rv: { tooltipText: 'Porownaj implied vs realized volatility: IV < RV = long premium ma edge; IV ~= RV = fair; IV > RV = opcje drogie, czesciej preferuj credit/spread; Unknown = brak porownania.' },
+    opt_vol_play_fit: { tooltipText: 'Wybierz glowny edge opcyjny: kierunek (delta), zmiennosc (vega) albo theta. Ma to byc spojne z volatility state na 1D/4H.' },
+    opt_expected_move_fit: { tooltipText: 'Porownaj target z 1D/4H do expected move na danym DTE: Inside EM = realistycznie, Near EM = blisko granicy, Beyond EM = ruch moze nie zdazyc. Unknown = brak EM.' },
+    opt_room_vs_theta: { tooltipText: 'Sprawdz, czy jest miejsce na ruch zanim theta zacznie bolec: Plenty = komfort, Some = selektywnie, Limited = blisko poziomow i ryzyko zjedzenia premii przez czas.' },
+    opt_spread_quality: { tooltipText: 'Ocen bid-ask: Tight = latwiejsze wejscie/wyjscie, OK = akceptowalne, Wide = trudniejsze fille i mniejszy edge, Unknown = nie sprawdzone.' },
+    opt_oi_volume: { tooltipText: 'Plynnosc kontraktu: Good = wysokie OI i wolumen, Medium = umiarkowane, Poor = niska plynnosc i trudniejsze wyjscie/rolowanie, Unknown = brak danych.' },
+    opt_slippage_risk: { tooltipText: 'Ryzyko poslizgu w wejsciu/wyjsciu. High czesto przy wide spread + szybki move.' },
+    opt_moneyness: { tooltipText: 'Wybor moneyness. ITM = wieksza delta, mniej theta; OTM = tansze, ale wieksze ryzyko, ze ruch nie dojedzie.' },
+    opt_delta_bucket: { tooltipText: 'Delta jako proxy ryzyka. Nizsza delta = wieksza zaleznosc od szybkiego ruchu; wyzsza delta = bardziej stock-like.' },
+    opt_structure_fit: { tooltipText: 'Czy konstrukcja pasuje do Twojego 1D/4H (trend/volatility/liquidity). To szybka kontrola spojnosci.' },
+    opt_catalyst_type: { tooltipText: 'Bliskosc katalizatora: Earnings soon (<14 dni), duzy event (np. FOMC/FDA), brak duzego katalizatora lub Unknown. Im blizej wydarzenia, tym wieksze ryzyko zmian IV.' },
+    opt_iv_crush_risk: { tooltipText: 'Ryzyko spadku IV po wydarzeniu: High (czesto przed earnings), Medium (umiarkowane), Low (brak duzych eventow). High crush moze zdominowac long premium.' },
+    opt_gap_risk_ack: { tooltipText: 'Czy akceptujesz gap risk na opcjach. Jesli nie, wybieraj defined-risk (spread) albo omijaj.' },
+    opt_tradeable: { tooltipText: 'Finalna decyzja: czy opcje maja sens vs akcje. Czasem wykres jest swietny, ale opcje sa za drogie/za malo miejsca/za slaba plynnosc.' },
+    opt_strategy_note: { tooltipText: 'Krotko: jaka konstrukcja i dlaczego (IV, DTE, EM, room, liquidity). Bez detali entry.' }
 };
 
 function initScoringFieldHelp(form, stockSection = form) {
@@ -913,6 +933,29 @@ function initScoringFieldHelp(form, stockSection = form) {
         'stk1h_risk_model',
         'stk1h_notes'
     ].forEach((name) => appendToGroupLabel(name, stockSection));
+
+    [
+        'opt_dte_bucket',
+        'opt_holding_plan',
+        'opt_contract_type',
+        'opt_iv_level',
+        'opt_iv_trend',
+        'opt_iv_vs_rv',
+        'opt_vol_play_fit',
+        'opt_expected_move_fit',
+        'opt_room_vs_theta',
+        'opt_spread_quality',
+        'opt_oi_volume',
+        'opt_slippage_risk',
+        'opt_moneyness',
+        'opt_delta_bucket',
+        'opt_structure_fit',
+        'opt_catalyst_type',
+        'opt_iv_crush_risk',
+        'opt_gap_risk_ack',
+        'opt_tradeable',
+        'opt_strategy_note'
+    ].forEach((name) => appendToGroupLabel(name, form));
 
     [
         'sc_spy_volume_gt_20d',
@@ -1533,6 +1576,136 @@ function calculateStock15MScore(values) {
     };
 }
 
+function calculateOptionsSuitabilityScore(values) {
+    const clamp = (x, lo, hi) => Math.max(lo, Math.min(hi, x));
+    const contractType = values.contractType || '';
+    const dteBucket = values.dteBucket || '';
+    const ivLevel = values.ivLevel || '';
+    const spreadQuality = values.spreadQuality || '';
+    const ivVsRv = values.ivVsRv || '';
+    const ivTrend = values.ivTrend || '';
+    const holdingPlan = values.holdingPlan || '';
+    const expectedMoveFit = values.expectedMoveFit || '';
+    const roomVsTheta = values.roomVsTheta || '';
+    const oiVolume = values.oiVolume || '';
+    const catalystType = values.catalystType || '';
+    const ivCrushRisk = values.ivCrushRisk || '';
+    const moneyness = values.moneyness || '';
+
+    const isLongPremium = [
+        'Calls / Puts (directional)',
+        'Debit spread',
+        'Straddle/Strangle (volatility)'
+    ].includes(contractType);
+    const isDefinedRiskSpread = ['Debit spread', 'Credit spread'].includes(contractType);
+    const isDirectional = contractType === 'Calls / Puts (directional)';
+    const isShortDte = dteBucket === '0-7 DTE';
+
+    let volatilityEdgeScore = 0;
+    volatilityEdgeScore += ivLevel === 'Low' ? 2 : ivLevel === 'Mid' ? 1 : 0;
+    volatilityEdgeScore += ivVsRv === 'IV < RV (premium cheap)' ? 2 : ivVsRv === 'IV = RV' ? 1 : 0;
+    if ((ivTrend === 'Rising' && isLongPremium) || (ivTrend === 'Falling' && contractType === 'Credit spread')) {
+        volatilityEdgeScore += 2;
+    } else if (ivTrend === 'Stable') {
+        volatilityEdgeScore += 1;
+    }
+    volatilityEdgeScore = clamp(volatilityEdgeScore, 0, 6);
+
+    let structureFitScore = 0;
+    const dteHoldingMatrix = {
+        'Intraday -> 1-2 days': { best: ['0-7 DTE'], ok: ['8-21 DTE'] },
+        '3-7 days': { best: ['8-21 DTE'], ok: ['0-7 DTE', '22-45 DTE'] },
+        '2-4 weeks': { best: ['22-45 DTE'], ok: ['8-21 DTE', '46-90 DTE'] },
+        '>4 weeks': { best: ['46-90 DTE'], ok: ['22-45 DTE'] }
+    };
+    const dteFit = dteHoldingMatrix[holdingPlan];
+    if (dteFit) {
+        if (dteFit.best.includes(dteBucket)) structureFitScore += 2;
+        else if (dteFit.ok.includes(dteBucket)) structureFitScore += 1;
+    }
+    structureFitScore += expectedMoveFit === 'Target inside EM' ? 2 : expectedMoveFit === 'Target near EM' ? 1 : 0;
+    structureFitScore += roomVsTheta === 'Plenty of room (theta ok)' ? 2 : roomVsTheta === 'Some room (selective)' ? 1 : 0;
+    structureFitScore = clamp(structureFitScore, 0, 6);
+
+    let liquidityRealityScore = 0;
+    liquidityRealityScore += spreadQuality === 'Tight' ? 2 : spreadQuality === 'Ok' ? 1 : 0;
+    liquidityRealityScore += oiVolume === 'Good' ? 2 : oiVolume === 'Medium' ? 1 : 0;
+    liquidityRealityScore = clamp(liquidityRealityScore, 0, 4);
+
+    let riskCatalystScore = 0;
+    if (catalystType === 'Earnings') {
+        if (isLongPremium) riskCatalystScore += 0;
+        else if (isDefinedRiskSpread) riskCatalystScore += 1;
+    } else if (catalystType === 'None planned') {
+        riskCatalystScore += 2;
+    } else if (catalystType === 'Macro/news') {
+        riskCatalystScore += 1;
+    }
+    riskCatalystScore += ivCrushRisk === 'Low' ? 2 : ivCrushRisk === 'Medium' ? 1 : 0;
+    riskCatalystScore = clamp(riskCatalystScore, 0, 4);
+
+    let penalties = 0;
+    if (ivVsRv === 'IV > RV (premium rich)' && isLongPremium) penalties -= 2;
+    if (ivLevel === 'High' && isDirectional && moneyness === 'OTM') penalties -= 2;
+    if (spreadQuality === 'Wide' && moneyness === 'OTM') penalties -= 2;
+    if (roomVsTheta === 'Limited room (theta danger)' && isShortDte) penalties -= 2;
+    if (catalystType === 'Earnings' && isShortDte) penalties -= 3;
+    if (ivCrushRisk === 'High' && isLongPremium) penalties -= 2;
+
+    const rawOptionsUnbounded = volatilityEdgeScore + structureFitScore + liquidityRealityScore + riskCatalystScore + penalties;
+    const boundedRawOptions = clamp(rawOptionsUnbounded, 0, 20);
+
+    let capOptions = 20;
+    const capReasons = [];
+    if (ivCrushRisk === 'High') {
+        capOptions = Math.min(capOptions, 12);
+        capReasons.push('Cap 12: IV crush High');
+    }
+    if (spreadQuality === 'Wide') {
+        capOptions = Math.min(capOptions, 12);
+        capReasons.push('Cap 12: Wide spread');
+    }
+    if (oiVolume === 'Poor') {
+        capOptions = Math.min(capOptions, 10);
+        capReasons.push('Cap 10: OI/Volume Poor');
+    }
+    if (catalystType === 'Earnings' && isShortDte) {
+        capOptions = Math.min(capOptions, 10);
+        capReasons.push('Cap 10: Earnings + 0-7 DTE');
+    }
+    if (ivVsRv === 'IV > RV (premium rich)' && isLongPremium) {
+        capOptions = Math.min(capOptions, 12);
+        capReasons.push('Cap 12: IV>RV + long premium');
+    }
+
+    const total = Math.min(boundedRawOptions, capOptions);
+    const capApplied = total < boundedRawOptions;
+
+    const hasMinimumData = Boolean(contractType && dteBucket && ivLevel && spreadQuality);
+    let grade = 'No data';
+    if (hasMinimumData) {
+        grade = 'Avoid options';
+        if (total >= 16) grade = 'A (strong options edge)';
+        else if (total >= 12) grade = 'B (good)';
+        else if (total >= 8) grade = 'C (marginal)';
+    }
+
+    return {
+        total,
+        rawTotal: boundedRawOptions,
+        volatilityEdgeScore,
+        structureFitScore,
+        liquidityRealityScore,
+        riskCatalystScore,
+        penalties,
+        cap: capOptions,
+        capApplied,
+        capReasons,
+        grade,
+        hasMinimumData
+    };
+}
+
 function initScoringBuilder() {
     const form = document.getElementById('scoring-form');
     if (!form) return;
@@ -1580,6 +1753,14 @@ function initScoringBuilder() {
     const stockGlobalGradeEl = document.getElementById('stock-global-grade');
     const stockGlobalBreakdownEl = document.getElementById('stock-global-breakdown');
     const stockGlobalCapNoteEl = document.getElementById('stock-global-cap-note');
+    const finalDecisionEl = document.getElementById('scoring-final-decision');
+    const optionsTotalEl = document.getElementById('options-total-score-result');
+    const optionsRawEl = document.getElementById('options-raw-score');
+    const optionsGradeEl = document.getElementById('options-grade-result');
+    const optionsHeaderScoreEl = document.getElementById('options-header-score');
+    const optionsHeaderGradeEl = document.getElementById('options-header-grade');
+    const optionsBreakdownEl = document.getElementById('options-breakdown');
+    const optionsCapNoteEl = document.getElementById('options-cap-note');
     const trendQualityGuardrailEl = document.getElementById('stk1d_trend_quality_guardrail');
     const liquidityEventGuardrailEl = document.getElementById('stk1d_liquidity_event_guardrail');
     const volGapGuardrailEl = document.getElementById('stk1d_vol_gap_guardrail');
@@ -1599,7 +1780,21 @@ function initScoringBuilder() {
     const stockChatApplyButtonEl = document.getElementById('stock-chat-apply');
     const stockChatExtraContextEl = document.getElementById('stock-chat-extra-context');
     const stockChatResponseInputEl = document.getElementById('stock-chat-response-input');
+    const reportOutputEl = document.getElementById('scoring-output');
+    const previewOutputEl = document.getElementById('scoring-preview-output');
+    const generateReportBtn = document.getElementById('scoring-generate-report');
+    const copyReportBtn = document.getElementById('scoring-copy-report');
+    const clearReportBtn = document.getElementById('scoring-clear-report');
+    const saveBtn = document.getElementById('scoring-save');
+    const loadBtn = document.getElementById('scoring-load');
+    const deleteBtn = document.getElementById('scoring-delete');
+    const previewBtn = document.getElementById('scoring-preview');
+    const nameInput = document.getElementById('scoring_name');
+    const listSelect = document.getElementById('scoring_list');
+    const sortSelect = document.getElementById('scoring_sort');
     let generatedSpyPrompt = '';
+    const storageKey = 'scoring:latest';
+    const storageListKey = 'scoring:entries';
 
     const bindMutualExclusiveGroup = (names) => {
         const inputs = names.map(name => form.querySelector(`input[name="${name}"]`)).filter(Boolean);
@@ -1664,7 +1859,7 @@ function initScoringBuilder() {
 
     const collectStockInputs = () => {
         const result = {};
-        const stockFields = form.querySelectorAll('[name^="stk1d_"], [name^="stk4h_"], [name^="stk1h_"], [name^="m15_"]');
+        const stockFields = form.querySelectorAll('[name^="stk1d_"], [name^="stk4h_"], [name^="stk1h_"], [name^="m15_"], [name^="opt_"]');
         stockFields.forEach((field) => {
             if (!field.name) return;
             if (field.type === 'radio') {
@@ -1849,6 +2044,7 @@ function initScoringBuilder() {
             '- wypisz tylko roznice miedzy Twoja analiza a moimi zaznaczeniami;',
             '- kazdy punkt: [pole] -> moje: ... | twoje: ... | komentarz: ...',
             '- uwzglednij wszystkie TF stocka: 1D, 4H, 1H oraz 15m (Execution & Timing).',
+            '- uwzglednij warstwe opcyjna (DTE, IV regime, EM vs room, liquidity, structure fit, catalyst/gap).',
             '',
             'STOCK - Ogolen:',
             '- jedno zdanie o zachowaniu SPY i jego wplywie na ticker.',
@@ -2074,6 +2270,21 @@ function initScoringBuilder() {
             spreadFills: getRadioValue('m15_spread_fills'),
             ivBehavior: getRadioValue('m15_iv_behavior')
         });
+        const optionsScore = calculateOptionsSuitabilityScore({
+            contractType: getRadioValue('opt_contract_type'),
+            dteBucket: getRadioValue('opt_dte_bucket'),
+            holdingPlan: getRadioValue('opt_holding_plan'),
+            ivLevel: getRadioValue('opt_iv_level'),
+            ivVsRv: getRadioValue('opt_iv_vs_rv'),
+            ivTrend: getRadioValue('opt_iv_trend'),
+            expectedMoveFit: getRadioValue('opt_expected_move_fit'),
+            roomVsTheta: getRadioValue('opt_room_vs_theta'),
+            spreadQuality: getRadioValue('opt_spread_quality'),
+            oiVolume: getRadioValue('opt_oi_volume'),
+            catalystType: getRadioValue('opt_catalyst_type'),
+            ivCrushRisk: getRadioValue('opt_iv_crush_risk'),
+            moneyness: getRadioValue('opt_moneyness')
+        });
 
         setText(totalEl, formatScore(score.total, 25));
         setText(totalResultEl, formatScore(score.total, 25));
@@ -2146,6 +2357,44 @@ function initScoringBuilder() {
             stock15m: stock15mScore
         });
 
+        setText(optionsTotalEl, formatScore(optionsScore.total, 20));
+        setText(optionsRawEl, formatScore(optionsScore.rawTotal, 20));
+        setText(optionsGradeEl, optionsScore.grade);
+        setText(optionsHeaderScoreEl, formatScore(optionsScore.total, 20));
+        setText(optionsHeaderGradeEl, optionsScore.grade);
+        setText(
+            optionsBreakdownEl,
+            `Volatility edge: ${optionsScore.volatilityEdgeScore}/6 | Structure fit: ${optionsScore.structureFitScore}/6 | Liquidity: ${optionsScore.liquidityRealityScore}/4 | Risk/Catalyst: ${optionsScore.riskCatalystScore}/4 | Penalties: ${optionsScore.penalties}`
+        );
+        setText(optionsCapNoteEl, formatCapNote(optionsScore, true));
+
+        const hasAllStructureData =
+            stockScore.hasMinimumData &&
+            stock4hScore.hasMinimumData &&
+            stock1hScore.hasMinimumData &&
+            stock15mScore.hasMinimumData;
+        const structureText = hasAllStructureData
+            ? `${stock1dScore + stock4hScore + stock1hScore + stock15mScore} / 80 (${stockGlobalGradeEl ? stockGlobalGradeEl.textContent : 'No data'})`
+            : 'No data';
+        const optionsText = optionsScore.hasMinimumData
+            ? `${optionsScore.total} / 20 (${optionsScore.grade})`
+            : 'No data';
+
+        let decisionText = 'No data';
+        if (hasAllStructureData && optionsScore.hasMinimumData) {
+            const structureTotal = stockScore.total + stock4hScore.total + stock1hScore.total + stock15mScore.total;
+            if (structureTotal >= 48 && optionsScore.total >= 12) {
+                decisionText = 'Tradeable on options';
+            } else if (structureTotal >= 48 && optionsScore.total < 12) {
+                decisionText = 'Better via shares';
+            } else if (structureTotal < 48 && optionsScore.total >= 12) {
+                decisionText = 'Options edge present, but structure weak';
+            } else {
+                decisionText = 'Skip';
+            }
+        }
+        setText(finalDecisionEl, `Structure: ${structureText} | Options: ${optionsText} | Decision: ${decisionText}`);
+
         if (trendQualityGuardrailEl) {
             const trendQuality = getStockRadioValue('stk1d_trend_quality');
             trendQualityGuardrailEl.textContent = trendQuality === 'choppy'
@@ -2216,6 +2465,234 @@ function initScoringBuilder() {
                 ? 'Uwaga: Bullish bias przy anchor below - momentum mismatch.'
                 : '';
         }
+    };
+
+    const formatDate = (d) => {
+        const pad = (n) => String(n).padStart(2, '0');
+        return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+    };
+
+    const buildAutoName = () => {
+        const ticker = (getFieldValue('stk1d_ticker') || 'TICKER').toUpperCase();
+        return `${ticker} SCORING ${formatDate(new Date())}`;
+    };
+
+    const collectFormState = () => {
+        const data = {};
+        const fields = form.querySelectorAll('input, select, textarea');
+        fields.forEach(field => {
+            if (!field.name) return;
+            if (field.type === 'radio') {
+                if (field.checked) data[field.name] = field.value;
+                return;
+            }
+            if (field.type === 'checkbox') {
+                data[field.name] = field.checked;
+                return;
+            }
+            data[field.name] = field.value;
+        });
+        return data;
+    };
+
+    const applyFormState = (data) => {
+        if (!data) return;
+        const fields = form.querySelectorAll('input, select, textarea');
+        fields.forEach(field => {
+            if (!field.name || !(field.name in data)) return;
+            if (field.type === 'radio') {
+                field.checked = field.value === data[field.name];
+                return;
+            }
+            if (field.type === 'checkbox') {
+                field.checked = Boolean(data[field.name]);
+                return;
+            }
+            field.value = data[field.name] ?? '';
+        });
+    };
+
+    const prettifyFieldName = (name) => {
+        const stripped = name
+            .replace(/^sc_spy_/, '')
+            .replace(/^stk1d_/, '')
+            .replace(/^stk4h_/, '')
+            .replace(/^stk1h_/, '')
+            .replace(/^m15_/, '')
+            .replace(/_/g, ' ');
+        return stripped.replace(/\b\w/g, (m) => m.toUpperCase());
+    };
+
+    const collectReportFields = (prefixes) => {
+        const uniqueNames = Array.from(
+            new Set(
+                Array.from(form.querySelectorAll('[name]'))
+                    .map(el => el.name)
+                    .filter(name => prefixes.some(prefix => name.startsWith(prefix)))
+            )
+        );
+
+        const lines = [];
+        uniqueNames.sort().forEach((name) => {
+            const controls = form.querySelectorAll(`[name="${name}"]`);
+            if (!controls.length) return;
+            const first = controls[0];
+            if (first.type === 'radio') {
+                const selected = form.querySelector(`input[name="${name}"]:checked`);
+                if (selected) lines.push(`${prettifyFieldName(name)}: ${selected.value}`);
+                return;
+            }
+            if (first.type === 'checkbox') {
+                if (first.checked) lines.push(`${prettifyFieldName(name)}: Yes`);
+                return;
+            }
+            const value = (first.value || '').trim();
+            if (value) lines.push(`${prettifyFieldName(name)}: ${value}`);
+        });
+        return lines.length ? lines : ['- no data -'];
+    };
+
+    const buildReportSection = (title, lines) => {
+        return [
+            title,
+            ...lines,
+            ''
+        ].join('\n');
+    };
+
+    const buildScoringReport = () => {
+        const ticker = (getFieldValue('stk1d_ticker') || 'N/A').toUpperCase();
+        const generatedAt = new Date().toISOString();
+        const spyScore = totalResultEl ? totalResultEl.textContent : '0 / 25';
+        const spyRaw = rawEl ? rawEl.textContent : '0 / 25';
+        const spyGrade = interpretationResultEl ? interpretationResultEl.textContent : 'No data';
+        const stock1dScore = stockTotalEl ? stockTotalEl.textContent : '0 / 20';
+        const stock4hScore = stock4hTotalEl ? stock4hTotalEl.textContent : '0 / 20';
+        const stock1hScore = stock1hTotalEl ? stock1hTotalEl.textContent : '0 / 20';
+        const stock15mScore = stock15mTotalEl ? stock15mTotalEl.textContent : '0 / 20';
+        const stockGlobalScore = stockGlobalTotalEl ? stockGlobalTotalEl.textContent : '0 / 80';
+        const stockGlobalGrade = stockGlobalGradeEl ? stockGlobalGradeEl.textContent : 'No data';
+        const optionsScore = optionsTotalEl ? optionsTotalEl.textContent : '0 / 20';
+        const optionsGrade = optionsGradeEl ? optionsGradeEl.textContent : 'No data';
+
+        return [
+            '========================================',
+            'SCORING REPORT',
+            '========================================',
+            `Ticker: ${ticker}`,
+            `Generated at: ${generatedAt}`,
+            '',
+            'SCORES',
+            `SPY: ${spyScore} (raw: ${spyRaw}, grade: ${spyGrade})`,
+            `Stock 1D: ${stock1dScore}`,
+            `Stock 4H: ${stock4hScore}`,
+            `Stock 1H: ${stock1hScore}`,
+            `Stock 15m: ${stock15mScore}`,
+            `Stock Global: ${stockGlobalScore} (${stockGlobalGrade})`,
+            `Options Suitability: ${optionsScore} (${optionsGrade})`,
+            '',
+            buildReportSection('SPY INPUTS', collectReportFields(['sc_spy_'])),
+            buildReportSection('STOCK 1D INPUTS', collectReportFields(['stk1d_'])),
+            buildReportSection('STOCK 4H INPUTS', collectReportFields(['stk4h_'])),
+            buildReportSection('STOCK 1H INPUTS', collectReportFields(['stk1h_'])),
+            buildReportSection('STOCK 15m INPUTS', collectReportFields(['m15_'])),
+            buildReportSection('OPTIONS LAYER INPUTS', collectReportFields(['opt_'])),
+            'BREAKDOWN',
+            breakdownEl ? breakdownEl.textContent : '',
+            stockBreakdownEl ? stockBreakdownEl.textContent : '',
+            stock4hBreakdownEl ? stock4hBreakdownEl.textContent : '',
+            stock1hBreakdownEl ? stock1hBreakdownEl.textContent : '',
+            stock15mBreakdownEl ? stock15mBreakdownEl.textContent : '',
+            optionsBreakdownEl ? optionsBreakdownEl.textContent : '',
+            stockGlobalBreakdownEl ? stockGlobalBreakdownEl.textContent : '',
+            '',
+            'CAPS / GUARDRAILS',
+            capNoteEl ? capNoteEl.textContent : '',
+            stockCapNoteEl ? stockCapNoteEl.textContent : '',
+            stock4hCapNoteEl ? stock4hCapNoteEl.textContent : '',
+            stock1hCapNoteEl ? stock1hCapNoteEl.textContent : '',
+            stock15mCapNoteEl ? stock15mCapNoteEl.textContent : '',
+            optionsCapNoteEl ? optionsCapNoteEl.textContent : '',
+            stockGlobalCapNoteEl ? stockGlobalCapNoteEl.textContent : '',
+            ''
+        ].join('\n');
+    };
+
+    const readList = () => {
+        const raw = localStorage.getItem(storageListKey);
+        if (!raw) return [];
+        try {
+            const parsed = JSON.parse(raw);
+            return Array.isArray(parsed) ? parsed : [];
+        } catch (_) {
+            return [];
+        }
+    };
+
+    const writeList = (entries) => {
+        localStorage.setItem(storageListKey, JSON.stringify(entries));
+    };
+
+    const sortEntries = (entries) => {
+        const sortBy = sortSelect ? sortSelect.value : 'updated_desc';
+        const copy = [...entries];
+        const byName = (a, b) => a.name.localeCompare(b.name, undefined, { sensitivity: 'base' });
+        const byDate = (key, dir) => (a, b) => {
+            const aVal = a[key] || '';
+            const bVal = b[key] || '';
+            return dir === 'asc' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+        };
+        switch (sortBy) {
+            case 'updated_asc':
+                return copy.sort(byDate('updatedAt', 'asc'));
+            case 'created_desc':
+                return copy.sort(byDate('createdAt', 'desc'));
+            case 'created_asc':
+                return copy.sort(byDate('createdAt', 'asc'));
+            case 'name_desc':
+                return copy.sort((a, b) => byName(b, a));
+            case 'name_asc':
+                return copy.sort(byName);
+            case 'updated_desc':
+            default:
+                return copy.sort(byDate('updatedAt', 'desc'));
+        }
+    };
+
+    const refreshList = () => {
+        if (!listSelect) return;
+        const entries = sortEntries(readList());
+        listSelect.innerHTML = '<option value="">Select saved analysis</option>';
+        entries.forEach(entry => {
+            const option = document.createElement('option');
+            option.value = entry.id;
+            option.textContent = entry.name;
+            listSelect.appendChild(option);
+        });
+    };
+
+    const findEntry = (id) => {
+        const entries = readList();
+        return entries.find(entry => entry.id === id);
+    };
+
+    const previewSelected = () => {
+        const selected = listSelect ? listSelect.value : '';
+        if (!selected) {
+            if (previewOutputEl) previewOutputEl.value = '';
+            return;
+        }
+        const entry = findEntry(selected);
+        if (!entry) {
+            if (previewOutputEl) previewOutputEl.value = '';
+            return;
+        }
+        const currentState = collectFormState();
+        applyFormState(entry.data);
+        renderScore();
+        if (previewOutputEl) previewOutputEl.value = buildScoringReport();
+        applyFormState(currentState);
+        renderScore();
     };
 
     bindMutualExclusiveGroup(['sc_spy_behavior_expansion_up', 'sc_spy_behavior_expansion_down']);
@@ -2302,9 +2779,123 @@ function initScoringBuilder() {
             }, 1200);
         });
     }
+    if (generateReportBtn && reportOutputEl) {
+        generateReportBtn.addEventListener('click', () => {
+            renderScore();
+            reportOutputEl.value = buildScoringReport();
+        });
+    }
+    if (copyReportBtn && reportOutputEl) {
+        copyReportBtn.addEventListener('click', async () => {
+            if (!reportOutputEl.value.trim()) {
+                renderScore();
+                reportOutputEl.value = buildScoringReport();
+            }
+            try {
+                await navigator.clipboard.writeText(reportOutputEl.value);
+                copyReportBtn.textContent = 'Copied';
+                setTimeout(() => {
+                    copyReportBtn.textContent = 'Copy to Clipboard';
+                }, 1200);
+            } catch (_) {
+                alert('Copy failed. Please copy manually.');
+            }
+        });
+    }
+    if (clearReportBtn && reportOutputEl) {
+        clearReportBtn.addEventListener('click', () => {
+            reportOutputEl.value = '';
+        });
+    }
+    if (saveBtn) {
+        saveBtn.addEventListener('click', () => {
+            let name = nameInput ? nameInput.value.trim() : '';
+            if (!name) {
+                name = buildAutoName();
+                if (nameInput) nameInput.value = name;
+            }
+            const payload = collectFormState();
+            const entries = readList();
+            const existing = entries.find(entry => entry.name.toLowerCase() === name.toLowerCase());
+            if (existing) {
+                if (!confirm('Analysis name exists. Overwrite?')) return;
+                existing.data = payload;
+                existing.updatedAt = new Date().toISOString();
+            } else {
+                entries.unshift({
+                    id: `scoring_${Date.now()}`,
+                    name,
+                    data: payload,
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString()
+                });
+            }
+            writeList(entries);
+            localStorage.setItem(storageKey, JSON.stringify(payload));
+            refreshList();
+            saveBtn.textContent = 'Saved';
+            setTimeout(() => {
+                saveBtn.textContent = 'Save Analysis';
+            }, 1200);
+        });
+    }
+    if (loadBtn) {
+        loadBtn.addEventListener('click', () => {
+            const selected = listSelect ? listSelect.value : '';
+            if (!selected) {
+                alert('Select an analysis from the list.');
+                return;
+            }
+            const entry = findEntry(selected);
+            if (!entry) {
+                alert('Saved analysis not found.');
+                return;
+            }
+            applyFormState(entry.data);
+            renderScore();
+            if (nameInput) nameInput.value = entry.name;
+        });
+    }
+    if (previewBtn) {
+        previewBtn.addEventListener('click', () => {
+            if (!listSelect || !listSelect.value) {
+                alert('Select an analysis from the list.');
+                return;
+            }
+            previewSelected();
+        });
+    }
+    if (deleteBtn) {
+        deleteBtn.addEventListener('click', () => {
+            const selected = listSelect ? listSelect.value : '';
+            if (!selected) {
+                alert('Select an analysis to delete.');
+                return;
+            }
+            if (!confirm('Delete selected analysis?')) return;
+            const entries = readList().filter(entry => entry.id !== selected);
+            writeList(entries);
+            refreshList();
+            if (previewOutputEl) previewOutputEl.value = '';
+        });
+    }
+    if (sortSelect) {
+        sortSelect.addEventListener('change', refreshList);
+    }
+    if (listSelect) {
+        listSelect.addEventListener('change', previewSelected);
+    }
 
     form.addEventListener('change', renderScore);
     form.addEventListener('input', renderScore);
+    form.addEventListener('reset', () => {
+        setTimeout(() => {
+            renderScore();
+            if (reportOutputEl) reportOutputEl.value = '';
+            if (previewOutputEl) previewOutputEl.value = '';
+        }, 0);
+    });
+    refreshList();
     renderScore();
 }
 
