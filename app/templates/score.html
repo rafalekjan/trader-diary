@@ -1,0 +1,287 @@
+{% extends "base.html" %}
+{% block title %}Score{% endblock %}
+{% block content %}
+<div class="page-header">
+    <div>
+        <h2>Score</h2>
+        <p class="page-subtitle">SPY (1D) Market Gatekeeper: direction, regime, location, risk, and market permission.</p>
+    </div>
+</div>
+
+<form id="score-form" class="card analysis-builder scoring-builder" autocomplete="off">
+    <div class="analysis-section">
+        <div class="scoring-header-row">
+            <h3>SPY (1D) - Market Gatekeeper</h3>
+            <div class="scoring-header-summary">
+                <div><strong>Market Score:</strong> <span id="score-market-score">0 / 100</span></div>
+                <div><strong>Permission:</strong> <span id="score-market-permission">No data</span></div>
+                <div><strong>Risk State:</strong> <span id="score-risk-state">No data</span></div>
+                <div><strong>Size:</strong> <span id="score-size-modifier">-</span></div>
+            </div>
+        </div>
+
+        <div class="analysis-subsection">
+            <h4>A. Regime & Direction</h4>
+            <div class="scoring-stage-grid">
+                <div class="form-group">
+                    <label>Market Regime <span class="help-icon" data-tooltip="Trend = HH/HL lub LL/LH + nachylone MA. Range = overlap świec + płaskie MA. Volatile = duże świece/ATR% wysokie, częste zwroty. Reżim steruje tym, czy swing ma edge.">?</span></label>
+                    <div class="checkbox-group scoring-option-grid">
+                        <label class="checkbox-label"><input type="radio" name="score_spy_regime" value="trend_up"><span class="checkbox-text">Trend Up</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_spy_regime" value="trend_down"><span class="checkbox-text">Trend Down</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_spy_regime" value="range"><span class="checkbox-text">Range</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_spy_regime" value="volatile"><span class="checkbox-text">Volatile-Unstable</span></label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Bias <span class="help-icon" data-tooltip="Preferowany kierunek zagrań na akcjach. Nie 'co może', tylko 'co ma statystycznie sens' w tym reżimie.">?</span></label>
+                    <div class="checkbox-group scoring-option-grid">
+                        <label class="checkbox-label"><input type="radio" name="score_spy_bias" value="bullish"><span class="checkbox-text">Bullish</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_spy_bias" value="bearish"><span class="checkbox-text">Bearish</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_spy_bias" value="neutral"><span class="checkbox-text">Neutral</span></label>
+                    </div>
+                    <label class="checkbox-label" style="margin-top:8px;">
+                        <input type="checkbox" name="score_spy_bias_manual_override">
+                        <span class="checkbox-text">Manual override</span>
+                    </label>
+                    <div id="score-bias-auto" class="scoring-readonly-value">Auto bias: No data</div>
+                </div>
+                <div class="form-group">
+                    <label>Structure <span class="help-icon" data-tooltip="Układ swingów na D1: HH/HL (bull), LL/LH (bear), Mixed/Range (ostrożnie).">?</span></label>
+                    <div class="checkbox-group scoring-option-grid">
+                        <label class="checkbox-label"><input type="radio" name="score_spy_structure" value="hh_hl"><span class="checkbox-text">HH/HL</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_spy_structure" value="ll_lh"><span class="checkbox-text">LL/LH</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_spy_structure" value="mixed"><span class="checkbox-text">Mixed</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_spy_structure" value="range"><span class="checkbox-text">Range</span></label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Trend Strength <span class="help-icon" data-tooltip="Położenie vs 20EMA/50MA/200SMA jako filtr reżimu: powyżej = long-friendly, poniżej = short-friendly, wokół = ostrożność.">?</span></label>
+                    <div class="checkbox-group scoring-option-grid">
+                        <label class="checkbox-label"><input type="radio" name="score_spy_trend_strength" value="above_key_mas"><span class="checkbox-text">Above key MAs</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_spy_trend_strength" value="below_key_mas"><span class="checkbox-text">Below key MAs</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_spy_trend_strength" value="chop_around_mas"><span class="checkbox-text">Chop around MAs</span></label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>VWAP (optional) <span class="help-icon" data-tooltip="Na 1D to dodatkowy kontekst, nie filar decyzji kierunkowej.">?</span></label>
+                    <div class="checkbox-group scoring-option-grid">
+                        <label class="checkbox-label"><input type="radio" name="score_spy_vwap" value="above"><span class="checkbox-text">Above</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_spy_vwap" value="below"><span class="checkbox-text">Below</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_spy_vwap" value="na"><span class="checkbox-text">N/A</span></label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Momentum Condition (1D) <span class="help-icon" data-tooltip="Expanding: range rośnie i zamknięcia wspierają kierunek; Stable: trend trwa bez przyspieszenia; Diverging: cena idzie dalej, ale momentum nie potwierdza; Exhausted: po długim ruchu impet gaśnie i rośnie ryzyko mean reversion.">?</span></label>
+                    <div class="checkbox-group scoring-option-grid">
+                        <label class="checkbox-label"><input type="radio" name="score_spy_momentum_condition" value="expanding"><span class="checkbox-text">Expanding</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_spy_momentum_condition" value="stable"><span class="checkbox-text">Stable</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_spy_momentum_condition" value="diverging"><span class="checkbox-text">Diverging</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_spy_momentum_condition" value="exhausted"><span class="checkbox-text">Exhausted</span></label>
+                    </div>
+                </div>
+            </div>
+            <div id="score-inconsistency" class="scoring-guardrail"></div>
+        </div>
+
+        <div class="analysis-subsection">
+            <h4>B. Location & Blocks</h4>
+            <div class="scoring-stage-grid">
+                <div class="form-group">
+                    <label>Location <span class="help-icon" data-tooltip="Gdzie jest cena względem leveli: edge (wsparcie/opór) daje plan; środek range = brak przewagi.">?</span></label>
+                    <div class="checkbox-group scoring-option-grid">
+                        <label class="checkbox-label"><input type="radio" name="score_spy_location" value="at_support"><span class="checkbox-text">At Support</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_spy_location" value="at_resistance"><span class="checkbox-text">At Resistance</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_spy_location" value="middle_of_range"><span class="checkbox-text">Middle of Range</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_spy_location" value="breakout_attempt"><span class="checkbox-text">Breakout Attempt</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_spy_location" value="breakdown_attempt"><span class="checkbox-text">Breakdown Attempt</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_spy_location" value="post_break_retest"><span class="checkbox-text">Post-break Retest</span></label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Support status <span class="help-icon" data-tooltip="Stan poziomu: Holding / Broken / Reclaimed / Rejecting / Not tested.">?</span></label>
+                    <div class="checkbox-group scoring-option-grid">
+                        <label class="checkbox-label"><input type="radio" name="score_spy_support_status" value="holding"><span class="checkbox-text">Holding</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_spy_support_status" value="broken"><span class="checkbox-text">Broken</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_spy_support_status" value="reclaimed"><span class="checkbox-text">Reclaimed</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_spy_support_status" value="rejecting"><span class="checkbox-text">Rejecting</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_spy_support_status" value="not_tested"><span class="checkbox-text">Not tested</span></label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Resistance status <span class="help-icon" data-tooltip="Stan poziomu: Holding / Broken / Reclaimed / Rejecting / Not tested.">?</span></label>
+                    <div class="checkbox-group scoring-option-grid">
+                        <label class="checkbox-label"><input type="radio" name="score_spy_resistance_status" value="holding"><span class="checkbox-text">Holding</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_spy_resistance_status" value="broken"><span class="checkbox-text">Broken</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_spy_resistance_status" value="reclaimed"><span class="checkbox-text">Reclaimed</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_spy_resistance_status" value="rejecting"><span class="checkbox-text">Rejecting</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_spy_resistance_status" value="not_tested"><span class="checkbox-text">Not tested</span></label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Room to Move <span class="help-icon" data-tooltip="Ile miejsca jest do kolejnego poziomu. Małe room = słaby R/R dla swing.">?</span></label>
+                    <div class="checkbox-group scoring-option-grid">
+                        <label class="checkbox-label"><input type="radio" name="score_spy_room_to_move" value="large"><span class="checkbox-text">Large</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_spy_room_to_move" value="medium"><span class="checkbox-text">Medium</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_spy_room_to_move" value="limited"><span class="checkbox-text">Limited</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_spy_room_to_move" value="none"><span class="checkbox-text">None</span></label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Key Levels <span class="help-icon" data-tooltip="Poziomy, gdzie cena wcześniej reagowała (PDH/PDL, PWH/PWL, swing high/low, 20/50/200). Dają invalidację i cele.">?</span></label>
+                    <div class="timeframe-row-2cols">
+                        <input name="score_spy_key_support" type="text" placeholder="Support level/zone">
+                        <input name="score_spy_key_resistance" type="text" placeholder="Resistance level/zone">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Auto key levels (from Pine snapshot)</label>
+                    <div class="scoring-readonly-value" id="score-auto-levels">PDH: - | PDL: - | PWH: - | PWL: - | EMA20: - | SMA50: - | SMA200: - | DCH20: - | DCL20: -</div>
+                </div>
+                <div class="form-group">
+                    <label>Paste Pine Snapshot</label>
+                    <textarea id="score-pine-snapshot" rows="4" placeholder='JSON or key:value lines, e.g. {"pdh":602.2,"pdl":595.4,"atr":8.2,"distance_to_resistance_atr":1.1}'></textarea>
+                    <div class="form-actions">
+                        <button type="button" class="btn btn-secondary" id="score-apply-snapshot">Apply Snapshot</button>
+                    </div>
+                    <div id="score-snapshot-status" class="scoring-guardrail"></div>
+                </div>
+                <div class="form-group">
+                    <label>Auto Room Suggestion (ATR-based)</label>
+                    <div id="score-room-auto" class="scoring-readonly-value">No snapshot data</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="analysis-subsection">
+            <h4>C. Risk Conditions</h4>
+            <div class="scoring-stage-grid">
+                <div class="form-group">
+                    <label>VIX Level <span class="help-icon" data-tooltip="VIX wysoki i rosnący = większe ryzyko whipsaw; niski i spadający = stabilniej.">?</span></label>
+                    <div class="checkbox-group scoring-option-grid">
+                        <label class="checkbox-label"><input type="radio" name="score_spy_vix_level" value="lt20"><span class="checkbox-text">&lt;20</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_spy_vix_level" value="20_25"><span class="checkbox-text">20-25</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_spy_vix_level" value="gt25"><span class="checkbox-text">&gt;25</span></label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>VIX Trend <span class="help-icon" data-tooltip="Rising VIX zwykle pogarsza warunki dla spokojnych swingów; falling VIX sprzyja stabilniejszym trendom.">?</span></label>
+                    <div class="checkbox-group scoring-option-grid">
+                        <label class="checkbox-label"><input type="radio" name="score_spy_vix_trend" value="rising"><span class="checkbox-text">Rising</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_spy_vix_trend" value="falling"><span class="checkbox-text">Falling</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_spy_vix_trend" value="flat"><span class="checkbox-text">Flat</span></label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>ATR% Environment <span class="help-icon" data-tooltip="ATR% = typowa dzienna zmienność. Urealnia stop i targety.">?</span></label>
+                    <div class="checkbox-group scoring-option-grid">
+                        <label class="checkbox-label"><input type="radio" name="score_spy_atr_env" value="low"><span class="checkbox-text">Low</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_spy_atr_env" value="normal"><span class="checkbox-text">Normal</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_spy_atr_env" value="high"><span class="checkbox-text">High</span></label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Breadth <span class="help-icon" data-tooltip="Breadth = czy rynek niesie wiele spółek czy tylko kilka. Słaby breadth = większe ryzyko fałszywych ruchów.">?</span></label>
+                    <div class="checkbox-group scoring-option-grid">
+                        <label class="checkbox-label"><input type="radio" name="score_spy_breadth" value="strong"><span class="checkbox-text">Strong</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_spy_breadth" value="neutral"><span class="checkbox-text">Neutral</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_spy_breadth" value="weak"><span class="checkbox-text">Weak</span></label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>QQQ vs 200SMA</label>
+                    <div class="checkbox-group scoring-option-grid">
+                        <label class="checkbox-label"><input type="radio" name="score_qqq_200_state" value="above"><span class="checkbox-text">Above</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_qqq_200_state" value="below"><span class="checkbox-text">Below</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_qqq_200_state" value="na"><span class="checkbox-text">N/A</span></label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Event Risk <span class="help-icon" data-tooltip="Dni eventowe zwiększają ryzyko skoków i odwróceń. Swing options: mniejszy size albo czekanie po evencie.">?</span></label>
+                    <div class="checkbox-group scoring-option-grid scoring-option-grid-2">
+                        <label class="checkbox-label"><input type="checkbox" name="score_spy_event_cpi"><span class="checkbox-text">CPI</span></label>
+                        <label class="checkbox-label"><input type="checkbox" name="score_spy_event_fomc"><span class="checkbox-text">FOMC</span></label>
+                        <label class="checkbox-label"><input type="checkbox" name="score_spy_event_nfp"><span class="checkbox-text">NFP</span></label>
+                        <label class="checkbox-label"><input type="checkbox" name="score_spy_event_opex"><span class="checkbox-text">OPEX</span></label>
+                        <label class="checkbox-label"><input type="checkbox" name="score_spy_event_earnings_heavy"><span class="checkbox-text">Earnings-heavy day</span></label>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="analysis-subsection">
+            <h4>Output</h4>
+            <div class="scoring-stage-grid">
+                <div class="form-group">
+                    <label>Market Permission (auto)</label>
+                    <div id="score-market-permission-box" class="scoring-readonly-value">No data</div>
+                </div>
+                <div class="form-group">
+                    <label>Risk State (auto)</label>
+                    <div id="score-risk-state-box" class="scoring-readonly-value">No data</div>
+                </div>
+                <div class="form-group">
+                    <label>Size Modifier (auto)</label>
+                    <div id="score-size-modifier-box" class="scoring-readonly-value">-</div>
+                </div>
+                <div class="form-group">
+                    <label>Breakdown</label>
+                    <div id="score-breakdown" class="scoring-readonly-value">A: 0/40 | B: 0/35 | C: 0/25</div>
+                </div>
+                <div class="form-group">
+                    <label>Edge Type</label>
+                    <div id="score-edge-type-box" class="scoring-readonly-value">No data</div>
+                </div>
+                <div class="form-group">
+                    <label>Summary</label>
+                    <div id="score-summary" class="scoring-readonly-value">Fill fields to evaluate market gatekeeper.</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="analysis-section">
+        <div class="scoring-header-row">
+            <h3>History</h3>
+            <div class="scoring-header-summary">
+                <div><a class="btn btn-secondary" href="/score/snapshots/export.csv">Export CSV</a></div>
+            </div>
+        </div>
+        <div class="scoring-stage-grid">
+            <div class="form-group">
+                <label for="score-session-date">Session date</label>
+                <input id="score-session-date" name="score_session_date" type="date">
+            </div>
+            <div class="form-group">
+                <label>&nbsp;</label>
+                <div class="form-actions">
+                    <button type="button" class="btn btn-primary" id="score-save-snapshot">Save snapshot</button>
+                    <button type="button" class="btn btn-secondary" id="score-refresh-history">Refresh</button>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Status</label>
+                <div id="score-history-status" class="scoring-readonly-value">No snapshot saved yet.</div>
+            </div>
+        </div>
+        <div class="table-wrap">
+            <table class="score-result-table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Score</th>
+                        <th>Permission</th>
+                        <th>Size</th>
+                        <th>Risk State</th>
+                        <th>A/B/C</th>
+                        <th>View</th>
+                        <th>Load</th>
+                    </tr>
+                </thead>
+                <tbody id="score-history-body">
+                    <tr><td colspan="8">No data</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</form>
+{% endblock %}

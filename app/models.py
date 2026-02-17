@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Numeric, DateTime, Text, Enum as SQLEnum, Boolean, ForeignKey
+from sqlalchemy import Column, Integer, String, Numeric, DateTime, Text, Enum as SQLEnum, Boolean, ForeignKey, Date, UniqueConstraint
 from sqlalchemy.sql import func
 from datetime import datetime
 import enum
@@ -74,3 +74,29 @@ class Account(Base):
     stock_price_provider = Column(String(40), nullable=True)
     option_price_provider = Column(String(40), nullable=True)
     updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now())
+
+
+class ScoreSnapshot(Base):
+    __tablename__ = "score_snapshots"
+    __table_args__ = (
+        UniqueConstraint("symbol", "timeframe", "session_date", name="uq_score_snapshot_symbol_tf_date"),
+    )
+
+    id = Column(Integer, primary_key=True, index=True)
+    symbol = Column(String(20), nullable=False, index=True, default="SPY")
+    timeframe = Column(String(10), nullable=False, index=True, default="1D")
+    session_date = Column(Date, nullable=False, index=True)
+
+    score = Column(Integer, nullable=False)
+    permission = Column(String(20), nullable=False)
+    size_modifier = Column(String(10), nullable=False)
+    risk_state = Column(String(20), nullable=False)
+    section_a = Column(Integer, nullable=False, default=0)
+    section_b = Column(Integer, nullable=False, default=0)
+    section_c = Column(Integer, nullable=False, default=0)
+
+    warnings_json = Column(Text, nullable=False, default="[]")
+    inputs_json = Column(Text, nullable=False, default="{}")
+
+    created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime(timezone=True), server_default=func.now(), onupdate=func.now(), nullable=False)

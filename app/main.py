@@ -1,5 +1,5 @@
 from fastapi import FastAPI, Request, Depends, Form, HTTPException
-from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse
+from fastapi.responses import HTMLResponse, RedirectResponse, JSONResponse, Response
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
 from sqlalchemy.orm import Session
@@ -8,6 +8,7 @@ from decimal import Decimal
 from datetime import datetime, timedelta, date
 from pydantic import BaseModel
 import csv
+import io
 import json
 import time
 import urllib.parse
@@ -16,6 +17,7 @@ import urllib.error
 import re
 import os
 from sqlalchemy import inspect, text
+from sqlalchemy.exc import IntegrityError
 from dotenv import load_dotenv
 
 from app.database import get_db, engine, Base
@@ -582,6 +584,22 @@ class SpyChatRequest(BaseModel):
     timeframe: str = "1D"
     spy_inputs: dict[str, Any]
     extra_context: Optional[str] = ""
+
+
+class ScoreSnapshotCreateRequest(BaseModel):
+    symbol: str = "SPY"
+    timeframe: str = "1D"
+    session_date: str
+    score: int
+    permission: str
+    size_modifier: str
+    risk_state: str
+    section_a: int = 0
+    section_b: int = 0
+    section_c: int = 0
+    warnings: list[str] = []
+    inputs: dict[str, Any] = {}
+    overwrite: bool = False
 
 ALLOWED_SPY_SUGGESTIONS: dict[str, set[str]] = {
     "sc_spy_bias": {"bullish", "bearish", "neutral"},
@@ -1260,6 +1278,179 @@ async def scoring_page(request: Request, db: Session = Depends(get_db)):
         "account": account,
         "equity": calculate_equity(db)
     })
+
+@app.get("/score", response_class=HTMLResponse)
+async def score_page(request: Request, db: Session = Depends(get_db)):
+    """SPY market gatekeeper page."""
+    account = crud.get_account(db)
+    return templates.TemplateResponse("score.html", {
+        "request": request,
+        "account": account,
+        "equity": calculate_equity(db)
+    })
+
+
+def _safe_json_loads(value: Optional[str], fallback: Any) -> Any:
+    if not value:
+        return fallback
+    try:
+        return json.loads(value)
+    except Exception:
+        return fallback
+
+
+def _score_snapshot_to_dict(snapshot: models.ScoreSnapshot) -> dict[str, Any]:
+    return {
+        "id": snapshot.id,
+        "symbol": snapshot.symbol,
+        "timeframe": snapshot.timeframe,
+        "session_date": snapshot.session_date.isoformat(),
+        "score": int(snapshot.score or 0),
+        "permission": snapshot.permission,
+        "size_modifier": snapshot.size_modifier,
+        "risk_state": snapshot.risk_state,
+        "section_a": int(snapshot.section_a or 0),
+        "section_b": int(snapshot.section_b or 0),
+        "section_c": int(snapshot.section_c or 0),
+        "warnings": _safe_json_loads(snapshot.warnings_json, []),
+        "inputs": _safe_json_loads(snapshot.inputs_json, {}),
+        "created_at": snapshot.created_at.isoformat() if snapshot.created_at else None,
+        "updated_at": snapshot.updated_at.isoformat() if snapshot.updated_at else None,
+    }
+
+
+@app.get("/api/score/snapshots")
+async def api_list_score_snapshots(
+    symbol: str = "SPY",
+    timeframe: str = "1D",
+    limit: int = 200,
+    db: Session = Depends(get_db),
+):
+    query = (
+        db.query(models.ScoreSnapshot)
+        .filter(models.ScoreSnapshot.symbol == symbol.upper())
+        .filter(models.ScoreSnapshot.timeframe == timeframe.upper())
+        .order_by(models.ScoreSnapshot.session_date.desc(), models.ScoreSnapshot.id.desc())
+        .limit(max(1, min(limit, 1000)))
+    )
+    rows = query.all()
+    return {"items": [_score_snapshot_to_dict(row) for row in rows]}
+
+
+@app.get("/api/score/snapshots/{snapshot_id}")
+async def api_get_score_snapshot(snapshot_id: int, db: Session = Depends(get_db)):
+    row = db.query(models.ScoreSnapshot).filter(models.ScoreSnapshot.id == snapshot_id).first()
+    if not row:
+        raise HTTPException(status_code=404, detail="Snapshot not found")
+    return _score_snapshot_to_dict(row)
+
+
+@app.post("/api/score/snapshots")
+async def api_create_score_snapshot(payload: ScoreSnapshotCreateRequest, db: Session = Depends(get_db)):
+    try:
+        session_day = date.fromisoformat(payload.session_date)
+    except Exception:
+        raise HTTPException(status_code=400, detail="Invalid session_date format; expected YYYY-MM-DD")
+
+    symbol = (payload.symbol or "SPY").strip().upper()
+    timeframe = (payload.timeframe or "1D").strip().upper()
+
+    existing = (
+        db.query(models.ScoreSnapshot)
+        .filter(models.ScoreSnapshot.symbol == symbol)
+        .filter(models.ScoreSnapshot.timeframe == timeframe)
+        .filter(models.ScoreSnapshot.session_date == session_day)
+        .first()
+    )
+
+    if existing and not payload.overwrite:
+        return JSONResponse(
+            status_code=409,
+            content={
+                "error": "Snapshot already exists for symbol/timeframe/session_date",
+                "snapshot_id": existing.id,
+            },
+        )
+
+    target = existing if existing else models.ScoreSnapshot(
+        symbol=symbol,
+        timeframe=timeframe,
+        session_date=session_day,
+    )
+    target.score = int(payload.score)
+    target.permission = payload.permission
+    target.size_modifier = payload.size_modifier
+    target.risk_state = payload.risk_state
+    target.section_a = int(payload.section_a)
+    target.section_b = int(payload.section_b)
+    target.section_c = int(payload.section_c)
+    target.warnings_json = json.dumps(payload.warnings, ensure_ascii=False)
+    target.inputs_json = json.dumps(payload.inputs, ensure_ascii=False)
+
+    if not existing:
+        db.add(target)
+
+    try:
+        db.commit()
+    except IntegrityError:
+        db.rollback()
+        raise HTTPException(status_code=409, detail="Snapshot uniqueness conflict")
+    db.refresh(target)
+    return _score_snapshot_to_dict(target)
+
+
+@app.get("/score/snapshots/export.csv")
+async def api_export_score_snapshots_csv(
+    symbol: str = "SPY",
+    timeframe: str = "1D",
+    db: Session = Depends(get_db),
+):
+    rows = (
+        db.query(models.ScoreSnapshot)
+        .filter(models.ScoreSnapshot.symbol == symbol.upper())
+        .filter(models.ScoreSnapshot.timeframe == timeframe.upper())
+        .order_by(models.ScoreSnapshot.session_date.desc(), models.ScoreSnapshot.id.desc())
+        .all()
+    )
+
+    buffer = io.StringIO()
+    writer = csv.writer(buffer)
+    writer.writerow([
+        "session_date",
+        "symbol",
+        "timeframe",
+        "score",
+        "permission",
+        "size_modifier",
+        "risk_state",
+        "section_a",
+        "section_b",
+        "section_c",
+        "warnings",
+    ])
+
+    for row in rows:
+        warnings = _safe_json_loads(row.warnings_json, [])
+        warning_txt = " | ".join([str(w) for w in warnings]) if isinstance(warnings, list) else ""
+        values = [
+            row.session_date.isoformat(),
+            row.symbol,
+            row.timeframe,
+            str(int(row.score or 0)),
+            row.permission or "",
+            row.size_modifier or "",
+            row.risk_state or "",
+            str(int(row.section_a or 0)),
+            str(int(row.section_b or 0)),
+            str(int(row.section_c or 0)),
+            warning_txt.replace(",", ";"),
+        ]
+        writer.writerow(values)
+
+    csv_body = buffer.getvalue()
+    filename = f"score_snapshots_{symbol.upper()}_{timeframe.upper()}.csv"
+    headers = {"Content-Disposition": f"attachment; filename={filename}"}
+    return Response(content=csv_body, media_type="text/csv; charset=utf-8", headers=headers)
 
 @app.get("/calendar", response_class=HTMLResponse)
 async def calendar_page(request: Request, db: Session = Depends(get_db)):
