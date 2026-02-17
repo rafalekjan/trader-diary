@@ -129,25 +129,25 @@
                 <div class="form-group">
                     <label>Key Levels <span class="help-icon" data-tooltip="Poziomy, gdzie cena wcześniej reagowała (PDH/PDL, PWH/PWL, swing high/low, 20/50/200). Dają invalidację i cele.">?</span></label>
                     <div class="timeframe-row-2cols">
-                        <input name="score_spy_key_support" type="text" placeholder="Support level/zone">
-                        <input name="score_spy_key_resistance" type="text" placeholder="Resistance level/zone">
+                        <input id="score_spy_key_support" name="score_spy_key_support" type="text" placeholder="Support">
+                        <input id="score_spy_key_resistance" name="score_spy_key_resistance" type="text" placeholder="Resistance">
                     </div>
                 </div>
                 <div class="form-group">
-                    <label>Auto key levels (from Pine snapshot)</label>
+                    <label>Pine values (manual copy)</label>
                     <div class="scoring-readonly-value" id="score-auto-levels">PDH: - | PDL: - | PWH: - | PWL: - | EMA20: - | SMA50: - | SMA200: - | DCH20: - | DCL20: -</div>
                 </div>
                 <div class="form-group">
-                    <label>Paste Pine Snapshot</label>
-                    <textarea id="score-pine-snapshot" rows="4" placeholder='JSON or key:value lines, e.g. {"pdh":602.2,"pdl":595.4,"atr":8.2,"distance_to_resistance_atr":1.1}'></textarea>
-                    <div class="form-actions">
-                        <button type="button" class="btn btn-secondary" id="score-apply-snapshot">Apply Snapshot</button>
+                    <label>Manual values for Room Suggestion: `Close`, `ATR (14)` <span class="help-icon" data-tooltip="Wpisz dokładnie wartości: Close oraz ATR(14) z tabeli TV. Następnie uzupełnij Key Levels (Support/Resistance), aby dostać Auto Room Suggestion (ATR-based).">?</span></label>
+                    <div class="timeframe-row-2cols">
+                        <input name="score_spy_manual_close" type="text" placeholder="Close (TV)">
+                        <input name="score_spy_manual_atr" type="text" placeholder="ATR (14) (TV)">
                     </div>
-                    <div id="score-snapshot-status" class="scoring-guardrail"></div>
+                    <div id="score-snapshot-status" class="scoring-guardrail">Manual mode active: enter Key Levels + Close + ATR.</div>
                 </div>
                 <div class="form-group">
                     <label>Auto Room Suggestion (ATR-based)</label>
-                    <div id="score-room-auto" class="scoring-readonly-value">No snapshot data</div>
+                    <div id="score-room-auto" class="scoring-readonly-value">Enter manual Close, ATR and Key Levels</div>
                 </div>
             </div>
         </div>

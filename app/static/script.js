@@ -768,11 +768,11 @@ function initScoreGatekeeper() {
     const summaryEl = document.getElementById('score-summary');
     const autoLevelsEl = document.getElementById('score-auto-levels');
     const roomAutoEl = document.getElementById('score-room-auto');
-    const snapshotTextEl = document.getElementById('score-pine-snapshot');
-    const snapshotApplyBtn = document.getElementById('score-apply-snapshot');
     const snapshotStatusEl = document.getElementById('score-snapshot-status');
-
-    const snapshotState = {};
+    const manualCloseEl = form.querySelector('input[name="score_spy_manual_close"]');
+    const manualAtrEl = form.querySelector('input[name="score_spy_manual_atr"]');
+    const keySupportEl = form.querySelector('input[name="score_spy_key_support"]');
+    const keyResistanceEl = form.querySelector('input[name="score_spy_key_resistance"]');
     let latestComputed = null;
     let latestWarnings = [];
 
@@ -834,39 +834,25 @@ function initScoreGatekeeper() {
 
     const clamp = (value, min, max) => Math.min(max, Math.max(min, value));
 
-    const parseSnapshot = (rawText) => {
-        const text = (rawText || '').trim();
-        if (!text) return {};
-        try {
-            const parsed = JSON.parse(text);
-            if (parsed && typeof parsed === 'object') return parsed;
-        } catch (_) {
-            // Fallback below.
-        }
-        const out = {};
-        text.split(/\r?\n/).forEach((line) => {
-            const idx = line.indexOf(':');
-            if (idx < 0) return;
-            const key = line.slice(0, idx).trim();
-            const valRaw = line.slice(idx + 1).trim();
-            if (!key) return;
-            const num = Number(valRaw);
-            out[key] = Number.isFinite(num) ? num : valRaw;
-        });
-        return out;
-    };
-
-    const valueFromSnapshot = (obj, keys) => {
-        for (const key of keys) {
-            if (obj[key] !== undefined && obj[key] !== null && obj[key] !== '') return obj[key];
-        }
-        return null;
-    };
-
     const fmt = (v) => {
         if (v === null || v === undefined || v === '') return '-';
         const n = Number(v);
         return Number.isFinite(n) ? String(n) : String(v);
+    };
+
+    const parseLevel = (raw) => {
+        const text = String(raw || '').trim();
+        if (!text) return null;
+        const rangeMatch = text.match(/(-?\d+(?:\.\d+)?)\s*[-:]\s*(-?\d+(?:\.\d+)?)/);
+        if (rangeMatch) {
+            const a = Number(rangeMatch[1]);
+            const b = Number(rangeMatch[2]);
+            if (Number.isFinite(a) && Number.isFinite(b)) return (a + b) / 2;
+        }
+        const numMatch = text.match(/-?\d+(?:\.\d+)?/);
+        if (!numMatch) return null;
+        const n = Number(numMatch[0]);
+        return Number.isFinite(n) ? n : null;
     };
 
     const classifyRoomFromAtr = (distanceAtr) => {
@@ -884,6 +870,45 @@ function initScoreGatekeeper() {
         if (room === 'limited') return 'Limited';
         if (room === 'none') return 'None';
         return '-';
+    };
+
+    const updateRoomSuggestionManual = (effectiveBias) => {
+        const closeVal = parseLevel(manualCloseEl ? manualCloseEl.value : '');
+        const atrVal = parseLevel(manualAtrEl ? manualAtrEl.value : '');
+        const supportVal = parseLevel(keySupportEl ? keySupportEl.value : '');
+        const resistanceVal = parseLevel(keyResistanceEl ? keyResistanceEl.value : '');
+
+        if (autoLevelsEl) {
+            autoLevelsEl.textContent = `Manual levels: Support ${fmt(supportVal)} | Resistance ${fmt(resistanceVal)} | Close ${fmt(closeVal)} | ATR ${fmt(atrVal)}`;
+        }
+        if (snapshotStatusEl) {
+            snapshotStatusEl.textContent = 'Manual mode: copy Close + ATR + Key Levels from TV table.';
+        }
+
+        if (!Number.isFinite(closeVal) || !Number.isFinite(atrVal) || atrVal <= 0) {
+            if (roomAutoEl) roomAutoEl.textContent = 'Enter numeric Close and ATR(14) to get suggestion';
+            return null;
+        }
+
+        let dist = null;
+        if (effectiveBias === 'bullish' && Number.isFinite(resistanceVal)) dist = Math.abs(resistanceVal - closeVal);
+        else if (effectiveBias === 'bearish' && Number.isFinite(supportVal)) dist = Math.abs(closeVal - supportVal);
+        else {
+            const candidates = [];
+            if (Number.isFinite(supportVal)) candidates.push(Math.abs(closeVal - supportVal));
+            if (Number.isFinite(resistanceVal)) candidates.push(Math.abs(resistanceVal - closeVal));
+            if (candidates.length > 0) dist = Math.min(...candidates);
+        }
+
+        if (!Number.isFinite(dist)) {
+            if (roomAutoEl) roomAutoEl.textContent = 'Enter Support/Resistance levels to compute room';
+            return null;
+        }
+
+        const distanceAtr = dist / atrVal;
+        const room = classifyRoomFromAtr(distanceAtr);
+        if (roomAutoEl) roomAutoEl.textContent = `Auto suggestion: ${roomLabel(room)} (${distanceAtr.toFixed(2)} ATR)`;
+        return room;
     };
 
     const collectFormInputs = () => {
@@ -1081,6 +1106,7 @@ function initScoreGatekeeper() {
         const effectiveBias = values.biasManualOverride && values.manualBias ? values.manualBias : autoBias;
         values.bias = effectiveBias;
         values.biasMode = values.biasManualOverride ? 'manual_override' : 'auto';
+        values.roomSuggestion = updateRoomSuggestionManual(effectiveBias);
 
         if (biasAutoEl) {
             const modeLabel = values.biasManualOverride ? 'Manual override' : 'Auto';
@@ -1133,53 +1159,6 @@ function initScoreGatekeeper() {
         else if (values.bias === 'bearish') invalidation = 'daily close above resistance/reclaim zone or loss of bearish MA context';
         if (values.vixLevel === 'gt25' && values.vixTrend === 'rising') invalidation = 'VIX stays >25 and rising (risk-off continuation)';
         summaryEl.textContent = `Regime: ${values.regime}, Bias: ${values.bias || 'n/a'} (${values.biasMode}), Structure: ${values.structure}, Momentum: ${values.momentumCondition}, VIX: ${values.vixLevel}/${values.vixTrend}, Events: ${values.eventCount}. ${result.reasons.join('; ') || 'No hard-rule overrides.'} Invalidation tomorrow: ${invalidation}.`;
-    };
-
-    const applySnapshot = () => {
-        if (!snapshotTextEl) return;
-        const parsed = parseSnapshot(snapshotTextEl.value);
-        Object.keys(snapshotState).forEach((k) => delete snapshotState[k]);
-        Object.assign(snapshotState, parsed);
-
-        const pdh = valueFromSnapshot(parsed, ['pdh', 'prior_day_high']);
-        const pdl = valueFromSnapshot(parsed, ['pdl', 'prior_day_low']);
-        const pwh = valueFromSnapshot(parsed, ['pwh', 'prior_week_high']);
-        const pwl = valueFromSnapshot(parsed, ['pwl', 'prior_week_low']);
-        const ema20 = valueFromSnapshot(parsed, ['ema20', 'ema_20']);
-        const sma50 = valueFromSnapshot(parsed, ['sma50', 'sma_50', 'ma50']);
-        const sma200 = valueFromSnapshot(parsed, ['sma200', 'sma_200', 'ma200']);
-        const dch20 = valueFromSnapshot(parsed, ['dch20', 'donchian20_high']);
-        const dcl20 = valueFromSnapshot(parsed, ['dcl20', 'donchian20_low']);
-
-        if (autoLevelsEl) {
-            autoLevelsEl.textContent = `PDH: ${fmt(pdh)} | PDL: ${fmt(pdl)} | PWH: ${fmt(pwh)} | PWL: ${fmt(pwl)} | EMA20: ${fmt(ema20)} | SMA50: ${fmt(sma50)} | SMA200: ${fmt(sma200)} | DCH20: ${fmt(dch20)} | DCL20: ${fmt(dcl20)}`;
-        }
-
-        const bias = getRadio('score_spy_bias');
-        const distRes = valueFromSnapshot(parsed, ['distance_to_resistance_atr', 'dist_res_atr']);
-        const distSup = valueFromSnapshot(parsed, ['distance_to_support_atr', 'dist_sup_atr']);
-        const distAny = valueFromSnapshot(parsed, ['distance_to_nearest_level_atr', 'dist_nearest_atr']);
-        const distanceAtr = bias === 'bullish' ? (distRes ?? distAny) : bias === 'bearish' ? (distSup ?? distAny) : distAny;
-        const room = classifyRoomFromAtr(distanceAtr);
-        if (roomAutoEl) {
-            roomAutoEl.textContent = room
-                ? `Auto suggestion: ${roomLabel(room)} (${Number(distanceAtr).toFixed(2)} ATR)`
-                : 'No ATR distance found in snapshot';
-        }
-
-        const roomSelected = getRadio('score_spy_room_to_move');
-        if (!roomSelected && room) {
-            const roomInput = form.querySelector(`input[name="score_spy_room_to_move"][value="${room}"]`);
-            if (roomInput) roomInput.checked = true;
-        }
-
-        if (snapshotStatusEl) {
-            snapshotStatusEl.textContent = Object.keys(parsed).length
-                ? `Snapshot applied (${Object.keys(parsed).length} fields parsed).`
-                : 'No valid snapshot data parsed.';
-        }
-
-        render();
     };
 
     const renderHistoryTable = (items) => {
@@ -1300,7 +1279,6 @@ function initScoreGatekeeper() {
         }
     };
 
-    if (snapshotApplyBtn) snapshotApplyBtn.addEventListener('click', applySnapshot);
     if (biasOverrideEl) biasOverrideEl.addEventListener('change', () => {
         updateBiasOverrideUI();
         render();
