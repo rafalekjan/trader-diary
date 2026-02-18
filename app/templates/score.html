@@ -358,6 +358,9 @@
                     </label>
                     <div id="score-stk1d-room-effective" class="scoring-readonly-value">Auto room: No data | Effective: No data</div>
                 </div>
+                <div class="analysis-subsection" style="grid-column: 1 / -1;">
+                    <h4>Output</h4>
+                </div>
                 <div class="form-group stk1d-permission-box">
                     <label>Ticker Permission (auto) <span class="help-icon" data-tooltip="Automatyczna decyzja dla tickera: Allowed / Reduced / No-trade.">?</span></label>
                     <div id="score-stk1d-permission" class="scoring-readonly-value">No data</div>
@@ -380,174 +383,306 @@
             </div>
         </div>
         <div class="analysis-subsection">
-            <h4>Ticker (4H) - Structure &amp; Planning</h4>
             <div class="scoring-stage-grid">
                 <div class="form-group">
-                    <label>Part 1 (AUTO from PINE)</label>
-                    <div class="scoring-readonly-value">Wpisz fakty z tabeli Pine 4H (AUTO/HINT).</div>
-                </div>
-                <div class="form-group">
-                    <label>Bias vs 1D (hint)</label>
-                    <select name="score_stk4h_bias_vs_1d_hint">
-                        <option value="">Select</option>
-                        <option value="in_direction_1d">In direction of 1D</option>
-                        <option value="counter_trend">Counter-trend</option>
-                        <option value="neutral">Neutral</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Bias 1D (auto)</label>
-                    <select name="score_stk4h_bias_1d_auto">
-                        <option value="">Select</option>
-                        <option value="bullish">Bullish</option>
-                        <option value="bearish">Bearish</option>
-                        <option value="neutral">Neutral</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Bias 4H (auto)</label>
-                    <select name="score_stk4h_bias_4h_auto">
-                        <option value="">Select</option>
-                        <option value="bullish">Bullish</option>
-                        <option value="bearish">Bearish</option>
-                        <option value="neutral">Neutral</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>4H Structure (auto)</label>
-                    <select name="score_stk4h_structure_auto">
-                        <option value="">Select</option>
-                        <option value="hh_hl">HH/HL</option>
-                        <option value="ll_lh">LL/LH</option>
-                        <option value="compression">Compression</option>
-                        <option value="range">Range</option>
-                        <option value="transition">Transition</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Trend Strength (auto)</label>
-                    <select name="score_stk4h_trend_strength_auto">
-                        <option value="">Select</option>
-                        <option value="above_key_mas">Above key MAs</option>
-                        <option value="below_key_mas">Below key MAs</option>
-                        <option value="chop_around_mas">Chop around MAs</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Trend Quality (auto)</label>
-                    <select name="score_stk4h_trend_quality_auto">
-                        <option value="">Select</option>
-                        <option value="clean_trend">Clean trend</option>
-                        <option value="overlapping_messy">Overlapping / messy</option>
-                        <option value="exhausted">Exhausted</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Regime (auto)</label>
-                    <select name="score_stk4h_regime_auto">
-                        <option value="">Select</option>
-                        <option value="trend_up">Trend Up</option>
-                        <option value="trend_down">Trend Down</option>
-                        <option value="range">Range</option>
-                        <option value="volatile">Volatile</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>VWAP state (auto)</label>
-                    <select name="score_stk4h_vwap_state_auto">
-                        <option value="">Select</option>
-                        <option value="above">Above</option>
-                        <option value="below">Below</option>
-                        <option value="around">Around</option>
-                        <option value="na">N/A</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Location (hint)</label>
-                    <select name="score_stk4h_location_hint">
-                        <option value="">Select</option>
-                        <option value="at_4h_support">At 4H support</option>
-                        <option value="at_4h_resistance">At 4H resistance</option>
-                        <option value="at_htf_level">At HTF level (1D)</option>
-                        <option value="middle_of_structure">Middle of structure</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Liquidity hint</label>
-                    <select name="score_stk4h_liquidity_hint">
-                        <option value="">Select</option>
-                        <option value="sweep_low">Sweep of low</option>
-                        <option value="sweep_high">Sweep of high</option>
-                        <option value="inside_bar_compression">Inside bar compression</option>
-                        <option value="none">None</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>AUTO values (from Pine)</label>
-                    <div class="timeframe-row-2cols">
-                        <input name="score_stk4h_close" type="text" placeholder="Close">
-                        <input name="score_stk4h_atr14" type="text" placeholder="ATR(14)">
-                    </div>
-                    <div class="timeframe-row-2cols" style="margin-top:6px;">
-                        <input name="score_stk4h_support_auto" type="text" placeholder="Support (auto)">
-                        <input name="score_stk4h_resistance_auto" type="text" placeholder="Resistance (auto)">
-                    </div>
-                    <div class="timeframe-row-2cols" style="margin-top:6px;">
-                        <input name="score_stk4h_pwh" type="text" placeholder="PWH (optional)">
-                        <input name="score_stk4h_pwl" type="text" placeholder="PWL (optional)">
+                    <label>Bias vs 1D <span class="help-icon" data-tooltip="Relacja kierunku 4H do 1D. In direction of 1D = najbezpieczniej, Counter-trend = przeciw 1D, Neutral = brak zgodności/chop.">?</span></label>
+                    <div class="checkbox-group scoring-option-grid">
+                        <label class="checkbox-label"><input type="radio" name="score_stk4h_bias_vs_1d_hint" value="in_direction_1d"><span class="checkbox-text">In direction of 1D</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_stk4h_bias_vs_1d_hint" value="counter_trend"><span class="checkbox-text">Counter-trend</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_stk4h_bias_vs_1d_hint" value="neutral"><span class="checkbox-text">Neutral</span></label>
                     </div>
                 </div>
                 <div class="form-group">
-                    <label>Part 2 (PLAN)</label>
-                    <div class="scoring-readonly-value">Manual plan: setup, confirmation, invalidation, risk levels.</div>
+                    <label>Bias 1D <span class="help-icon" data-tooltip="Automatyczny kierunek na 1D. To kierunek nadrzędny dla planu 4H.">?</span></label>
+                    <div class="checkbox-group scoring-option-grid">
+                        <label class="checkbox-label"><input type="radio" name="score_stk4h_bias_1d_auto" value="bullish"><span class="checkbox-text">Bullish</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_stk4h_bias_1d_auto" value="bearish"><span class="checkbox-text">Bearish</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_stk4h_bias_1d_auto" value="neutral"><span class="checkbox-text">Neutral</span></label>
+                    </div>
                 </div>
                 <div class="form-group">
-                    <label>Setup Type (required)</label>
-                    <select name="score_stk4h_setup_type">
-                        <option value="">Select</option>
-                        <option value="pullback_continuation">Pullback continuation</option>
-                        <option value="breakout_continuation">Breakout continuation</option>
-                        <option value="range_play">Range play</option>
-                        <option value="breakdown_continuation">Breakdown continuation</option>
-                        <option value="reversal_attempt">Reversal attempt</option>
-                    </select>
+                    <label>Bias 4H <span class="help-icon" data-tooltip="Automatyczny kierunek wykonawczy na 4H (bullish/bearish/neutral).">?</span></label>
+                    <div class="checkbox-group scoring-option-grid">
+                        <label class="checkbox-label"><input type="radio" name="score_stk4h_bias_4h_auto" value="bullish"><span class="checkbox-text">Bullish</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_stk4h_bias_4h_auto" value="bearish"><span class="checkbox-text">Bearish</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_stk4h_bias_4h_auto" value="neutral"><span class="checkbox-text">Neutral</span></label>
+                    </div>
                 </div>
                 <div class="form-group">
-                    <label>Confirmation condition (required)</label>
-                    <select name="score_stk4h_confirmation">
-                        <option value="">Select</option>
-                        <option value="close_above_level">4H close above level</option>
-                        <option value="strong_bull_candle">Strong bull candle</option>
-                        <option value="reclaim_level">Reclaim level</option>
-                        <option value="break_hold">Break + hold</option>
-                    </select>
+                    <label>4H Structure <span class="help-icon" data-tooltip="Typ struktury 4H: HH/HL, LL/LH, Compression, Range, Transition. Kluczowe dla wyboru setupu.">?</span></label>
+                    <div class="checkbox-group scoring-option-grid">
+                        <label class="checkbox-label"><input type="radio" name="score_stk4h_structure_auto" value="hh_hl"><span class="checkbox-text">HH/HL</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_stk4h_structure_auto" value="ll_lh"><span class="checkbox-text">LL/LH</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_stk4h_structure_auto" value="compression"><span class="checkbox-text">Compression</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_stk4h_structure_auto" value="range"><span class="checkbox-text">Range</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_stk4h_structure_auto" value="transition"><span class="checkbox-text">Transition</span></label>
+                    </div>
                 </div>
                 <div class="form-group">
-                    <label>Invalidation logic (required)</label>
-                    <select name="score_stk4h_invalidation_logic">
-                        <option value="">Select</option>
-                        <option value="below_last_hl">Below last HL</option>
-                        <option value="above_last_lh">Above last LH</option>
-                        <option value="below_4h_support">Below 4H support</option>
-                        <option value="above_4h_resistance">Above 4H resistance</option>
-                        <option value="close_back_inside_range">Close back inside range</option>
-                    </select>
+                    <label>Trend Strength <span class="help-icon" data-tooltip="Pozycja ceny względem EMA20/SMA50/SMA200: Above/Below/Chop around MAs.">?</span></label>
+                    <div class="checkbox-group scoring-option-grid">
+                        <label class="checkbox-label"><input type="radio" name="score_stk4h_trend_strength_auto" value="above_key_mas"><span class="checkbox-text">Above key MAs</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_stk4h_trend_strength_auto" value="below_key_mas"><span class="checkbox-text">Below key MAs</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_stk4h_trend_strength_auto" value="chop_around_mas"><span class="checkbox-text">Chop around MAs</span></label>
+                    </div>
                 </div>
                 <div class="form-group">
-                    <label>Risk Levels</label>
+                    <label>Trend Quality <span class="help-icon" data-tooltip="Jakość ruchu: Clean trend, Overlapping/messy lub Exhausted. Messy wymaga twardszego potwierdzenia.">?</span></label>
+                    <div class="checkbox-group scoring-option-grid">
+                        <label class="checkbox-label"><input type="radio" name="score_stk4h_trend_quality_auto" value="clean_trend"><span class="checkbox-text">Clean trend</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_stk4h_trend_quality_auto" value="overlapping_messy"><span class="checkbox-text">Overlapping / messy</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_stk4h_trend_quality_auto" value="exhausted"><span class="checkbox-text">Exhausted</span></label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Regime <span class="help-icon" data-tooltip="Środowisko 4H: Trend Up/Trend Down/Range/Volatile. Pomaga dobrać typ setupu.">?</span></label>
+                    <div class="checkbox-group scoring-option-grid">
+                        <label class="checkbox-label"><input type="radio" name="score_stk4h_regime_auto" value="trend_up"><span class="checkbox-text">Trend Up</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_stk4h_regime_auto" value="trend_down"><span class="checkbox-text">Trend Down</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_stk4h_regime_auto" value="range"><span class="checkbox-text">Range</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_stk4h_regime_auto" value="volatile"><span class="checkbox-text">Volatile</span></label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>VWAP state <span class="help-icon" data-tooltip="Pozycja ceny względem VWAP (kontekst pomocniczy): Above/Below/Around/N/A.">?</span></label>
+                    <div class="checkbox-group scoring-option-grid">
+                        <label class="checkbox-label"><input type="radio" name="score_stk4h_vwap_state_auto" value="above"><span class="checkbox-text">Above</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_stk4h_vwap_state_auto" value="below"><span class="checkbox-text">Below</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_stk4h_vwap_state_auto" value="around"><span class="checkbox-text">Around</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_stk4h_vwap_state_auto" value="na"><span class="checkbox-text">N/A</span></label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Location <span class="help-icon" data-tooltip="Pozycja ceny na strukturze: przy wsparciu/oporze 4H, przy poziomie HTF (1D) lub w środku struktury.">?</span></label>
+                    <div class="checkbox-group scoring-option-grid">
+                        <label class="checkbox-label"><input type="radio" name="score_stk4h_location_hint" value="at_4h_support"><span class="checkbox-text">At 4H support</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_stk4h_location_hint" value="at_4h_resistance"><span class="checkbox-text">At 4H resistance</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_stk4h_location_hint" value="at_htf_level"><span class="checkbox-text">At HTF level (1D)</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_stk4h_location_hint" value="middle_of_structure"><span class="checkbox-text">Middle of structure</span></label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Liquidity <span class="help-icon" data-tooltip="Sygnały płynności/pułapki: sweep low/high, inside bar compression lub brak sygnału.">?</span></label>
+                    <div class="checkbox-group scoring-option-grid">
+                        <label class="checkbox-label"><input type="radio" name="score_stk4h_liquidity_hint" value="sweep_low"><span class="checkbox-text">Sweep of low</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_stk4h_liquidity_hint" value="sweep_high"><span class="checkbox-text">Sweep of high</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_stk4h_liquidity_hint" value="inside_bar_compression"><span class="checkbox-text">Inside bar compression</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_stk4h_liquidity_hint" value="none"><span class="checkbox-text">None</span></label>
+                    </div>
+                </div>
+                <div class="form-group" style="grid-column: 1 / -1;">
+                    <label>Auto Values <span class="help-icon" data-tooltip="Wartości referencyjne z Pine (Close, ATR, Support/Resistance, PWH/PWL) używane do RR, room i planu ryzyka.">?</span></label>
                     <div class="timeframe-row-3cols">
-                        <input name="score_stk4h_entry" type="text" placeholder="Entry">
-                        <input name="score_stk4h_stop" type="text" placeholder="Stop">
-                        <input name="score_stk4h_target" type="text" placeholder="Target">
+                        <div>
+                            <label>Close <span class="help-icon" data-tooltip="Aktualna cena zamknięcia 4H.">?</span></label>
+                            <input name="score_stk4h_close" type="text" placeholder="Close">
+                            <label style="margin-top:6px;">ATR(14) <span class="help-icon" data-tooltip="ATR 14 na 4H, baza do room i buforów stopa.">?</span></label>
+                            <input name="score_stk4h_atr14" type="text" placeholder="ATR(14)" style="margin-top:6px;">
+                        </div>
+                        <div>
+                            <label>Support <span class="help-icon" data-tooltip="Najbliższe wsparcie auto z kluczowych poziomów 4H/HTF.">?</span></label>
+                            <input name="score_stk4h_support_auto" type="text" placeholder="Support">
+                            <label style="margin-top:6px;">Resistance <span class="help-icon" data-tooltip="Najbliższy opór auto z kluczowych poziomów 4H/HTF.">?</span></label>
+                            <input name="score_stk4h_resistance_auto" type="text" placeholder="Resistance" style="margin-top:6px;">
+                        </div>
+                        <div>
+                            <label>PWH <span class="help-icon" data-tooltip="Previous Week High (HTF bariera).">?</span></label>
+                            <input name="score_stk4h_pwh" type="text" placeholder="PWH">
+                            <label style="margin-top:6px;">PWL <span class="help-icon" data-tooltip="Previous Week Low (HTF bariera).">?</span></label>
+                            <input name="score_stk4h_pwl" type="text" placeholder="PWL" style="margin-top:6px;">
+                        </div>
+                    </div>
+                </div>
+                <div class="analysis-subsection" style="grid-column: 1 / -1;"></div>
+                <div class="form-group">
+                    <label>Setup Type <span class="help-icon" data-tooltip="Typ scenariusza 4H (pullback/breakout/range/breakdown/reversal). Definiuje kierunek planu i logikę invalidacji.">?</span></label>
+                    <div class="checkbox-group scoring-option-grid">
+                        <label class="checkbox-label"><input type="radio" name="score_stk4h_setup_type" value="pullback_continuation"><span class="checkbox-text">Pullback continuation</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_stk4h_setup_type" value="breakout_continuation"><span class="checkbox-text">Breakout continuation</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_stk4h_setup_type" value="range_play"><span class="checkbox-text">Range play</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_stk4h_setup_type" value="breakdown_continuation"><span class="checkbox-text">Breakdown continuation</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_stk4h_setup_type" value="reversal_attempt"><span class="checkbox-text">Reversal attempt</span></label>
                     </div>
                 </div>
                 <div class="form-group">
-                    <label>Output</label>
-                    <div id="score-stk4h-rr" class="scoring-readonly-value">R:R: No data</div>
-                    <div id="score-stk4h-room" class="scoring-readonly-value">Room: No data</div>
-                    <div id="score-stk4h-breakdown" class="scoring-readonly-value">Structure: 0/8 | Setup: 0/6 | Risk: 0/6 | Penalties: 0</div>
-                    <div id="score-stk4h-status" class="scoring-readonly-value">Status: No data</div>
-                    <div id="score-stk4h-warnings" class="scoring-readonly-value">Warnings: none</div>
+                    <label>Confirmation condition <span class="help-icon" data-tooltip="Obiektywny trigger wejścia (close above level, strong candle, reclaim, break+hold).">?</span></label>
+                    <div class="checkbox-group scoring-option-grid">
+                        <label class="checkbox-label"><input type="radio" name="score_stk4h_confirmation" value="close_above_level"><span class="checkbox-text">4H close above level</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_stk4h_confirmation" value="strong_bull_candle"><span class="checkbox-text">Strong bull candle</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_stk4h_confirmation" value="reclaim_level"><span class="checkbox-text">Reclaim level</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_stk4h_confirmation" value="break_hold"><span class="checkbox-text">Break + hold</span></label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Invalidation logic <span class="help-icon" data-tooltip="Warunek unieważnienia tezy. Powinien wynikać z Setup Type i Location, nie być losowym stopem.">?</span></label>
+                    <div class="checkbox-group scoring-option-grid">
+                        <label class="checkbox-label"><input type="radio" name="score_stk4h_invalidation_logic" value="below_last_hl"><span class="checkbox-text">Below last HL</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_stk4h_invalidation_logic" value="above_last_lh"><span class="checkbox-text">Above last LH</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_stk4h_invalidation_logic" value="below_4h_support"><span class="checkbox-text">Below 4H support</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_stk4h_invalidation_logic" value="above_4h_resistance"><span class="checkbox-text">Above 4H resistance</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_stk4h_invalidation_logic" value="close_back_inside_range"><span class="checkbox-text">Close back inside range</span></label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Entry <span class="help-icon" data-tooltip="Poziom wejścia zgodny z triggerem (confirmation).">?</span></label>
+                    <input name="score_stk4h_entry" type="text" placeholder="Entry">
+                    <label style="margin-top:6px;">Stop <span class="help-icon" data-tooltip="Poziom obrony zgodny z invalidation (gdzie teza przestaje działać).">?</span></label>
+                    <input name="score_stk4h_stop" type="text" placeholder="Stop" style="margin-top:6px;">
+                    <label style="margin-top:6px;">Target <span class="help-icon" data-tooltip="Docelowy poziom na kolejnej logicznej barierze (S/R lub HTF).">?</span></label>
+                    <input name="score_stk4h_target" type="text" placeholder="Target" style="margin-top:6px;">
+                </div>
+                <div class="form-group">
+                    <label class="checkbox-label" style="margin-top:8px;">
+                        <input type="checkbox" name="score_stk4h_plan_manual_override" checked>
+                        <span class="checkbox-text">Manual override <span class="help-icon" data-tooltip="ON: tylko ręczne wartości. OFF: system auto-uzupełnia brakujące pola Part 2 heurystyką.">?</span></span>
+                    </label>
+                </div>
+                <div class="analysis-subsection" style="grid-column: 1 / -1;">
+                    <h4>Output</h4>
+                </div>
+                <div class="form-group" style="grid-column: 1 / -1;">
+                    <div style="display:grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap:6px;">
+                        <div id="score-stk4h-rr" class="scoring-readonly-value" title="R:R = reward/risk. <1.3 zwykle No-trade, 1.3-1.5 maks Reduced, >=1.5 akceptowalne.">R:R: No data</div>
+                        <div id="score-stk4h-room" class="scoring-readonly-value" title="Room = miejsce do najbliższej bariery liczone w ATR. None zwykle obniża status.">Room: No data</div>
+                        <div id="score-stk4h-plan-direction" class="scoring-readonly-value" title="Kierunek planu wyliczony z Setup Type + biasów. Używany do sanity-check RR.">Plan direction: No data</div>
+                        <div id="score-stk4h-plan-source" class="scoring-readonly-value" title="Źródło pól planu: auto/manual dla Setup, Confirmation, Invalidation i Risk levels.">Plan source: No data</div>
+                        <div id="score-stk4h-breakdown" class="scoring-readonly-value" title="Składowe jakości: Structure + Setup + Risk + Penalties (0-20).">Structure: 0/8 | Setup: 0/6 | Risk: 0/6 | Penalties: 0</div>
+                        <div id="score-stk4h-status" class="scoring-readonly-value" title="Finalny status i ostrzeżenia hard-cap (Allowed/Reduced/No-trade).">Status: No data | Warnings: none</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="analysis-section">
+        <div class="scoring-header-row">
+            <h3>Ticker (15m) - Execution &amp; Timing</h3>
+            <div class="scoring-header-summary">
+                <div><strong>15m Score:</strong> <span id="score-stk15m-score-head">No data</span></div>
+                <div><strong>Grade:</strong> <span id="score-stk15m-grade-head">No data</span></div>
+                <div><strong>Status:</strong> <span id="score-stk15m-status-head">No data</span></div>
+            </div>
+        </div>
+        <div class="analysis-subsection">
+            <div class="scoring-stage-grid">
+                <div class="form-group">
+                    <label>Bias</label>
+                    <div class="checkbox-group scoring-option-grid">
+                        <label class="checkbox-label"><input type="radio" name="score_stk15m_bias" value="bullish"><span class="checkbox-text">Bullish</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_stk15m_bias" value="bearish"><span class="checkbox-text">Bearish</span></label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Structure</label>
+                    <div class="checkbox-group scoring-option-grid">
+                        <label class="checkbox-label"><input type="radio" name="score_stk15m_structure" value="hh_hl"><span class="checkbox-text">HH/HL</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_stk15m_structure" value="ll_lh"><span class="checkbox-text">LL/LH</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_stk15m_structure" value="mixed"><span class="checkbox-text">Mixed</span></label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>VWAP</label>
+                    <div class="checkbox-group scoring-option-grid">
+                        <label class="checkbox-label"><input type="radio" name="score_stk15m_vwap" value="above"><span class="checkbox-text">Above</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_stk15m_vwap" value="middle"><span class="checkbox-text">Middle</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_stk15m_vwap" value="below"><span class="checkbox-text">Below</span></label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Location vs 4H plan</label>
+                    <div class="checkbox-group scoring-option-grid">
+                        <label class="checkbox-label"><input type="radio" name="score_stk15m_location_vs_4h" value="planned_zone"><span class="checkbox-text">At planned entry zone</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_stk15m_location_vs_4h" value="early"><span class="checkbox-text">Early</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_stk15m_location_vs_4h" value="late_extended"><span class="checkbox-text">Late / extended</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_stk15m_location_vs_4h" value="chasing_breakout"><span class="checkbox-text">Chasing breakout</span></label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Entry Type</label>
+                    <div class="checkbox-group scoring-option-grid">
+                        <label class="checkbox-label"><input type="radio" name="score_stk15m_entry_type" value="break_hold"><span class="checkbox-text">Break & hold</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_stk15m_entry_type" value="reclaim_level"><span class="checkbox-text">Reclaim level</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_stk15m_entry_type" value="pullback_vwap"><span class="checkbox-text">Pullback to VWAP</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_stk15m_entry_type" value="pullback_ema20"><span class="checkbox-text">Pullback to EMA20</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_stk15m_entry_type" value="first_hl"><span class="checkbox-text">First higher low (HL)</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_stk15m_entry_type" value="range_breakout"><span class="checkbox-text">Range breakout</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_stk15m_entry_type" value="sweep_reclaim"><span class="checkbox-text">Liquidity sweep reclaim</span></label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Trigger status</label>
+                    <div class="checkbox-group scoring-option-grid">
+                        <label class="checkbox-label"><input type="radio" name="score_stk15m_trigger_status" value="confirmed"><span class="checkbox-text">Confirmed</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_stk15m_trigger_status" value="failed"><span class="checkbox-text">Failed</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_stk15m_trigger_status" value="no_trigger"><span class="checkbox-text">No trigger</span></label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Volume</label>
+                    <div class="checkbox-group scoring-option-grid">
+                        <label class="checkbox-label"><input type="radio" name="score_stk15m_volume" value="increasing_move"><span class="checkbox-text">Increasing on move</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_stk15m_volume" value="reduced_pullbacks"><span class="checkbox-text">Reduced on pullbacks</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_stk15m_volume" value="weak"><span class="checkbox-text">Weak / no confirm</span></label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Stop logic</label>
+                    <div class="checkbox-group scoring-option-grid">
+                        <label class="checkbox-label"><input type="radio" name="score_stk15m_stop_logic" value="below_last_hl"><span class="checkbox-text">Below last HL</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_stk15m_stop_logic" value="below_sweep_low"><span class="checkbox-text">Below sweep low</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_stk15m_stop_logic" value="below_vwap"><span class="checkbox-text">Below VWAP</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_stk15m_stop_logic" value="below_ema20"><span class="checkbox-text">Below EMA20</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_stk15m_stop_logic" value="above_last_lh"><span class="checkbox-text">Above last LH</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_stk15m_stop_logic" value="above_sweep_high"><span class="checkbox-text">Above sweep high</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_stk15m_stop_logic" value="structure_invalidation"><span class="checkbox-text">Structure invalidation</span></label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Time of day</label>
+                    <div class="checkbox-group scoring-option-grid">
+                        <label class="checkbox-label"><input type="radio" name="score_stk15m_time_of_day" value="open"><span class="checkbox-text">Open</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_stk15m_time_of_day" value="midday"><span class="checkbox-text">Midday</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_stk15m_time_of_day" value="power_hour"><span class="checkbox-text">Power hour</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_stk15m_time_of_day" value="after_lunch_reclaim"><span class="checkbox-text">After lunch reclaim</span></label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Liquidity event</label>
+                    <div class="checkbox-group scoring-option-grid">
+                        <label class="checkbox-label"><input type="radio" name="score_stk15m_liquidity_event" value="stop_run_low"><span class="checkbox-text">Stop run low</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_stk15m_liquidity_event" value="stop_run_high"><span class="checkbox-text">Stop run high</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_stk15m_liquidity_event" value="failed_breakout"><span class="checkbox-text">Failed breakout</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_stk15m_liquidity_event" value="none"><span class="checkbox-text">None</span></label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Entry</label>
+                    <input name="score_stk15m_entry" type="text" placeholder="Entry">
+                    <label style="margin-top:6px;">Stop</label>
+                    <input name="score_stk15m_stop" type="text" placeholder="Stop" style="margin-top:6px;">
+                    <label style="margin-top:6px;">Target</label>
+                    <input name="score_stk15m_target" type="text" placeholder="Target" style="margin-top:6px;">
+                </div>
+                <div class="form-group" style="grid-column: 1 / -1;">
+                    <label>Note</label>
+                    <textarea name="score_stk15m_note" rows="2" placeholder="1 line"></textarea>
+                </div>
+            </div>
+        </div>
+        <div class="analysis-subsection">
+            <h4>Output</h4>
+            <div class="scoring-stage-grid">
+                <div class="form-group">
+                    <label>Status</label>
+                    <div id="score-stk15m-status" class="scoring-readonly-value">No data</div>
+                </div>
+                <div class="form-group">
+                    <label>R:R</label>
+                    <div id="score-stk15m-rr" class="scoring-readonly-value">No data</div>
+                </div>
+                <div class="form-group">
+                    <label>Breakdown</label>
+                    <div id="score-stk15m-breakdown" class="scoring-readonly-value">Context: 0/5 | Trigger: 0/5 | Entry: 0/5 | Risk: 0/5 | Penalties: 0</div>
                 </div>
             </div>
         </div>
