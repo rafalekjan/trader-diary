@@ -766,13 +766,29 @@ function initScoreGatekeeper() {
     const edgeTypeBoxEl = document.getElementById('score-edge-type-box');
     const inconsistencyEl = document.getElementById('score-inconsistency');
     const summaryEl = document.getElementById('score-summary');
-    const autoLevelsEl = document.getElementById('score-auto-levels');
     const roomAutoEl = document.getElementById('score-room-auto');
-    const snapshotStatusEl = document.getElementById('score-snapshot-status');
+    const roomEffectiveEl = document.getElementById('score-room-effective');
     const manualCloseEl = form.querySelector('input[name="score_spy_manual_close"]');
     const manualAtrEl = form.querySelector('input[name="score_spy_manual_atr"]');
     const keySupportEl = form.querySelector('input[name="score_spy_key_support"]');
     const keyResistanceEl = form.querySelector('input[name="score_spy_key_resistance"]');
+    const roomOverrideEl = form.querySelector('input[name="score_spy_room_manual_override"]');
+    const roomInputs = Array.from(form.querySelectorAll('input[name="score_spy_room_to_move"]'));
+    const stk1dPermissionEl = document.getElementById('score-stk1d-permission');
+    const stk1dScoreHeadEl = document.getElementById('score-stk1d-score-head');
+    const stk1dPermissionHeadEl = document.getElementById('score-stk1d-permission-head');
+    const stk1dInvalidationEl = document.getElementById('score-stk1d-invalidation');
+    const stk1dRoomAutoEl = document.getElementById('score-stk1d-room-auto');
+    const stk1dRoomEffectiveEl = document.getElementById('score-stk1d-room-effective');
+    const stk1dBiasAutoEl = document.getElementById('score-stk1d-bias-auto');
+    const stk1dCloseEl = form.querySelector('input[name="score_stk1d_close"]');
+    const stk1dAtrEl = form.querySelector('input[name="score_stk1d_atr"]');
+    const stk1dSupportEl = form.querySelector('input[name="score_stk1d_support"]');
+    const stk1dResistanceEl = form.querySelector('input[name="score_stk1d_resistance"]');
+    const stk1dBiasOverrideEl = form.querySelector('input[name="score_stk1d_bias_manual_override"]');
+    const stk1dBiasInputs = Array.from(form.querySelectorAll('input[name="score_stk1d_bias"]'));
+    const stk1dRoomOverrideEl = form.querySelector('input[name="score_stk1d_room_manual_override"]');
+    const stk1dRoomInputs = Array.from(form.querySelectorAll('input[name="score_stk1d_room_to_move"]'));
     let latestComputed = null;
     let latestWarnings = [];
 
@@ -792,22 +808,22 @@ function initScoreGatekeeper() {
         sessionDateEl.value = `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
     };
 
-    const computeAutoBias = (values) => {
+    const computeAutoBiasFromState = (regime, structure, trendStrength, momentumCondition) => {
         let bull = 0;
         let bear = 0;
 
-        if (values.regime === 'trend_up') bull += 2;
-        if (values.regime === 'trend_down') bear += 2;
+        if (regime === 'trend_up') bull += 2;
+        if (regime === 'trend_down') bear += 2;
 
-        if (values.structure === 'hh_hl') bull += 2;
-        if (values.structure === 'll_lh') bear += 2;
+        if (structure === 'hh_hl') bull += 2;
+        if (structure === 'll_lh') bear += 2;
 
-        if (values.trendStrength === 'above_key_mas') bull += 2;
-        if (values.trendStrength === 'below_key_mas') bear += 2;
+        if (trendStrength === 'above_key_mas') bull += 2;
+        if (trendStrength === 'below_key_mas') bear += 2;
 
-        if (values.momentumCondition === 'expanding' || values.momentumCondition === 'stable') {
-            if (values.regime === 'trend_up') bull += 1;
-            if (values.regime === 'trend_down') bear += 1;
+        if (momentumCondition === 'expanding' || momentumCondition === 'stable') {
+            if (regime === 'trend_up') bull += 1;
+            if (regime === 'trend_down') bear += 1;
         }
 
         if (bull - bear >= 2) return 'bullish';
@@ -815,9 +831,37 @@ function initScoreGatekeeper() {
         return 'neutral';
     };
 
+    const computeAutoBias = (values) => computeAutoBiasFromState(
+        values.regime,
+        values.structure,
+        values.trendStrength,
+        values.momentumCondition
+    );
+
     const updateBiasOverrideUI = () => {
         const manual = Boolean(biasOverrideEl && biasOverrideEl.checked);
         biasInputs.forEach((input) => {
+            input.disabled = !manual;
+        });
+    };
+
+    const updateStockBiasOverrideUI = () => {
+        const manual = Boolean(stk1dBiasOverrideEl && stk1dBiasOverrideEl.checked);
+        stk1dBiasInputs.forEach((input) => {
+            input.disabled = !manual;
+        });
+    };
+
+    const updateRoomOverrideUI = () => {
+        const manual = Boolean(roomOverrideEl && roomOverrideEl.checked);
+        roomInputs.forEach((input) => {
+            input.disabled = !manual;
+        });
+    };
+
+    const updateStockRoomOverrideUI = () => {
+        const manual = Boolean(stk1dRoomOverrideEl && stk1dRoomOverrideEl.checked);
+        stk1dRoomInputs.forEach((input) => {
             input.disabled = !manual;
         });
     };
@@ -872,27 +916,24 @@ function initScoreGatekeeper() {
         return '-';
     };
 
-    const updateRoomSuggestionManual = (effectiveBias) => {
-        const closeVal = parseLevel(manualCloseEl ? manualCloseEl.value : '');
-        const atrVal = parseLevel(manualAtrEl ? manualAtrEl.value : '');
-        const supportVal = parseLevel(keySupportEl ? keySupportEl.value : '');
-        const resistanceVal = parseLevel(keyResistanceEl ? keyResistanceEl.value : '');
-
-        if (autoLevelsEl) {
-            autoLevelsEl.textContent = `Manual levels: Support ${fmt(supportVal)} | Resistance ${fmt(resistanceVal)} | Close ${fmt(closeVal)} | ATR ${fmt(atrVal)}`;
-        }
-        if (snapshotStatusEl) {
-            snapshotStatusEl.textContent = 'Manual mode: copy Close + ATR + Key Levels from TV table.';
-        }
+    const computeRoomFromRaw = (bias, closeRaw, atrRaw, supportRaw, resistanceRaw) => {
+        const closeVal = parseLevel(closeRaw);
+        const atrVal = parseLevel(atrRaw);
+        const supportVal = parseLevel(supportRaw);
+        const resistanceVal = parseLevel(resistanceRaw);
 
         if (!Number.isFinite(closeVal) || !Number.isFinite(atrVal) || atrVal <= 0) {
-            if (roomAutoEl) roomAutoEl.textContent = 'Enter numeric Close and ATR(14) to get suggestion';
-            return null;
+            return { room: null, distanceAtr: null, reason: 'missing_close_or_atr' };
         }
 
         let dist = null;
-        if (effectiveBias === 'bullish' && Number.isFinite(resistanceVal)) dist = Math.abs(resistanceVal - closeVal);
-        else if (effectiveBias === 'bearish' && Number.isFinite(supportVal)) dist = Math.abs(closeVal - supportVal);
+        if (bias === 'bullish') {
+            if (!Number.isFinite(resistanceVal)) return { room: null, distanceAtr: null, reason: 'needs_resistance' };
+            dist = Math.abs(resistanceVal - closeVal);
+        } else if (bias === 'bearish') {
+            if (!Number.isFinite(supportVal)) return { room: null, distanceAtr: null, reason: 'needs_support' };
+            dist = Math.abs(closeVal - supportVal);
+        }
         else {
             const candidates = [];
             if (Number.isFinite(supportVal)) candidates.push(Math.abs(closeVal - supportVal));
@@ -901,14 +942,169 @@ function initScoreGatekeeper() {
         }
 
         if (!Number.isFinite(dist)) {
-            if (roomAutoEl) roomAutoEl.textContent = 'Enter Support/Resistance levels to compute room';
-            return null;
+            return { room: null, distanceAtr: null, reason: 'missing_levels' };
         }
 
         const distanceAtr = dist / atrVal;
-        const room = classifyRoomFromAtr(distanceAtr);
-        if (roomAutoEl) roomAutoEl.textContent = `Auto suggestion: ${roomLabel(room)} (${distanceAtr.toFixed(2)} ATR)`;
-        return room;
+        return { room: classifyRoomFromAtr(distanceAtr), distanceAtr, reason: '' };
+    };
+
+    const updateRoomSuggestionManual = (effectiveBias) => {
+        const out = computeRoomFromRaw(
+            effectiveBias,
+            manualCloseEl ? manualCloseEl.value : '',
+            manualAtrEl ? manualAtrEl.value : '',
+            keySupportEl ? keySupportEl.value : '',
+            keyResistanceEl ? keyResistanceEl.value : ''
+        );
+
+        if (!out.room && out.reason === 'missing_close_or_atr') {
+            if (roomAutoEl) roomAutoEl.textContent = 'Enter numeric Close and ATR(14) to get suggestion';
+            return null;
+        }
+        if (!out.room && out.reason === 'needs_resistance') {
+            if (roomAutoEl) roomAutoEl.textContent = 'Needs resistance for bullish bias';
+            return null;
+        }
+        if (!out.room && out.reason === 'needs_support') {
+            if (roomAutoEl) roomAutoEl.textContent = 'Needs support for bearish bias';
+            return null;
+        }
+        if (!out.room) {
+            if (roomAutoEl) roomAutoEl.textContent = 'Enter Support/Resistance levels to compute room';
+            return null;
+        }
+        if (roomAutoEl) roomAutoEl.textContent = `Auto suggestion: ${roomLabel(out.room)} (${out.distanceAtr.toFixed(2)} ATR)`;
+        return out.room;
+    };
+
+    const updateStockRoomSuggestionManual = (bias) => {
+        const out = computeRoomFromRaw(
+            bias,
+            stk1dCloseEl ? stk1dCloseEl.value : '',
+            stk1dAtrEl ? stk1dAtrEl.value : '',
+            stk1dSupportEl ? stk1dSupportEl.value : '',
+            stk1dResistanceEl ? stk1dResistanceEl.value : ''
+        );
+
+        if (!out.room && out.reason === 'missing_close_or_atr') {
+            if (stk1dRoomAutoEl) stk1dRoomAutoEl.textContent = 'Enter numeric Close and ATR(14) to get suggestion';
+            return null;
+        }
+        if (!out.room && out.reason === 'needs_resistance') {
+            if (stk1dRoomAutoEl) stk1dRoomAutoEl.textContent = 'Needs resistance for bullish bias';
+            return null;
+        }
+        if (!out.room && out.reason === 'needs_support') {
+            if (stk1dRoomAutoEl) stk1dRoomAutoEl.textContent = 'Needs support for bearish bias';
+            return null;
+        }
+        if (!out.room) {
+            if (stk1dRoomAutoEl) stk1dRoomAutoEl.textContent = 'Enter Support/Resistance levels to compute room';
+            return null;
+        }
+        if (stk1dRoomAutoEl) stk1dRoomAutoEl.textContent = `Auto suggestion: ${roomLabel(out.room)} (${out.distanceAtr.toFixed(2)} ATR)`;
+        return out.room;
+    };
+
+    const calculateStock1D = (values) => {
+        const hasMinimum = Boolean(values.bias && values.regime && values.structure && values.trendStrength);
+        if (!hasMinimum) {
+            return { score20: 0, score100: 0, permission: 'No data', invalidation: 'No data' };
+        }
+        let score = 0;
+        score += values.bias === 'neutral' ? 1 : 2;
+        score += (values.structure === 'hh_hl' || values.structure === 'll_lh') ? 2 : values.structure === 'range' ? 1 : 0;
+        score += (
+            (values.bias === 'bullish' && values.regime === 'trend_up') ||
+            (values.bias === 'bearish' && values.regime === 'trend_down')
+        ) ? 2 : values.regime === 'range' ? 1 : 0;
+        score += (
+            (values.bias === 'bullish' && values.trendStrength === 'above_key_mas') ||
+            (values.bias === 'bearish' && values.trendStrength === 'below_key_mas')
+        ) ? 2 : values.trendStrength === 'chop_around_mas' ? 1 : 0;
+        score += values.momentum === 'expanding' ? 2 : values.momentum === 'stable' ? 1 : 0;
+        score += values.alignment === 'aligned' ? 2 : values.alignment === 'mixed' ? 1 : 0;
+        score += values.rsState === 'strong' ? 2 : values.rsState === 'neutral' ? 1 : 0;
+        score += values.rsTrend === 'rising' ? 2 : values.rsTrend === 'flat' ? 1 : 0;
+        score += values.room === 'large' ? 3 : values.room === 'medium' ? 2 : values.room === 'limited' ? 1 : 0;
+
+        if (values.alignment === 'contra') score -= 3;
+        if (values.room === 'none') score -= 3;
+        if (values.momentum === 'exhausted' || values.momentum === 'diverging') score -= 1;
+
+        score = clamp(score, 0, 20);
+        const score100 = Math.round(score * 5);
+        let permission = score100 >= 70 ? 'Allowed' : score100 >= 50 ? 'Reduced' : 'No-trade';
+        if (values.alignment === 'contra' && permission === 'Allowed') permission = 'Reduced';
+        if (values.room === 'none') permission = 'No-trade';
+        let invalidation = 'monitor key levels';
+        if (values.bias === 'bullish') invalidation = 'daily close below support zone';
+        else if (values.bias === 'bearish') invalidation = 'daily close above resistance zone';
+        return { score20: score, score100, permission, invalidation };
+    };
+
+    const calculateStock1DFromInputs = (inputs) => {
+        const safeInputs = inputs && typeof inputs === 'object' ? inputs : {};
+        const regime = String(safeInputs.score_stk1d_regime || '');
+        const structure = String(safeInputs.score_stk1d_structure || '');
+        const trendStrength = String(safeInputs.score_stk1d_trend_strength || '');
+        const momentumCondition = String(safeInputs.score_stk1d_momentum || '');
+        const manualBias = String(safeInputs.score_stk1d_bias || '');
+        const biasManualOverride = Boolean(safeInputs.score_stk1d_bias_manual_override);
+        const autoBias = computeAutoBiasFromState(regime, structure, trendStrength, momentumCondition);
+        const bias = (biasManualOverride && manualBias) ? manualBias : autoBias;
+        const roomOut = computeRoomFromRaw(
+            bias,
+            safeInputs.score_stk1d_close,
+            safeInputs.score_stk1d_atr,
+            safeInputs.score_stk1d_support,
+            safeInputs.score_stk1d_resistance
+        );
+        const manualRoom = String(safeInputs.score_stk1d_room_to_move || '');
+        const roomManualOverride = Boolean(safeInputs.score_stk1d_room_manual_override);
+        const effectiveRoom = roomManualOverride && manualRoom ? manualRoom : roomOut.room;
+
+        return calculateStock1D({
+            bias,
+            alignment: String(safeInputs.score_stk1d_alignment || ''),
+            regime,
+            structure,
+            trendStrength,
+            momentum: momentumCondition,
+            rsState: String(safeInputs.score_stk1d_rs_state || ''),
+            rsTrend: String(safeInputs.score_stk1d_rs_trend || ''),
+            room: effectiveRoom
+        });
+    };
+
+    const buildSnapshotModules = (item) => {
+        const modules = [];
+        const marketScore = Number(item && item.score);
+        if (Number.isFinite(marketScore)) {
+            modules.push({
+                key: 'spy_1d',
+                label: 'SPY 1D',
+                score: marketScore,
+                max: 100,
+                permission: item.permission || 'No data'
+            });
+        }
+
+        const stockResult = calculateStock1DFromInputs(item && item.inputs);
+        if (stockResult.permission !== 'No data') {
+            const rawTicker = String((item && item.inputs && item.inputs.score_stk1d_ticker) || '').trim();
+            const tickerLabel = rawTicker ? `${rawTicker.toUpperCase()} 1D` : 'Ticker 1D';
+            modules.push({
+                key: 'ticker_1d',
+                label: tickerLabel,
+                score: stockResult.score100,
+                max: 100,
+                permission: stockResult.permission
+            });
+        }
+
+        return modules;
     };
 
     const collectFormInputs = () => {
@@ -1102,11 +1298,59 @@ function initScoreGatekeeper() {
             biasManualOverride: isChecked('score_spy_bias_manual_override')
         };
 
+        const stockValues = {
+            manualBias: getRadio('score_stk1d_bias'),
+            biasManualOverride: isChecked('score_stk1d_bias_manual_override'),
+            alignment: getRadio('score_stk1d_alignment'),
+            regime: getRadio('score_stk1d_regime'),
+            structure: getRadio('score_stk1d_structure'),
+            trendStrength: getRadio('score_stk1d_trend_strength'),
+            momentumCondition: getRadio('score_stk1d_momentum'),
+            rsState: getRadio('score_stk1d_rs_state'),
+            rsTrend: getRadio('score_stk1d_rs_trend'),
+        };
+        const autoStockBias = computeAutoBiasFromState(
+            stockValues.regime,
+            stockValues.structure,
+            stockValues.trendStrength,
+            stockValues.momentumCondition
+        );
+        const effectiveStockBias = stockValues.biasManualOverride && stockValues.manualBias ? stockValues.manualBias : autoStockBias;
+        stockValues.bias = effectiveStockBias;
+        stockValues.biasMode = stockValues.biasManualOverride ? 'manual_override' : 'auto';
+        stockValues.momentum = stockValues.momentumCondition;
+        const autoStockRoom = updateStockRoomSuggestionManual(effectiveStockBias);
+        const manualStockRoom = getRadio('score_stk1d_room_to_move');
+        const stockManualRoomOverride = isChecked('score_stk1d_room_manual_override');
+        stockValues.room = stockManualRoomOverride && manualStockRoom ? manualStockRoom : autoStockRoom;
+        if (stk1dRoomEffectiveEl) {
+            const modeLabel = stockManualRoomOverride ? 'Manual override' : 'Auto';
+            stk1dRoomEffectiveEl.textContent = `Auto room: ${roomLabel(autoStockRoom)} | Effective: ${roomLabel(stockValues.room)} (${modeLabel})`;
+        }
+
+        if (stk1dBiasAutoEl) {
+            const modeLabel = stockValues.biasManualOverride ? 'Manual override' : 'Auto';
+            stk1dBiasAutoEl.textContent = `Auto bias: ${autoStockBias} | Effective: ${effectiveStockBias} (${modeLabel})`;
+        }
+
+        const stockResult = calculateStock1D(stockValues);
+        if (stk1dScoreHeadEl) stk1dScoreHeadEl.textContent = stockResult.permission === 'No data' ? 'No data' : `${stockResult.score100} / 100`;
+        if (stk1dPermissionHeadEl) stk1dPermissionHeadEl.textContent = stockResult.permission;
+        if (stk1dPermissionEl) stk1dPermissionEl.textContent = stockResult.permission === 'No data' ? 'No data' : `${stockResult.permission} (${stockResult.score100}/100)`;
+        if (stk1dInvalidationEl) stk1dInvalidationEl.textContent = stockResult.invalidation;
+
         const autoBias = computeAutoBias(values);
         const effectiveBias = values.biasManualOverride && values.manualBias ? values.manualBias : autoBias;
         values.bias = effectiveBias;
         values.biasMode = values.biasManualOverride ? 'manual_override' : 'auto';
         values.roomSuggestion = updateRoomSuggestionManual(effectiveBias);
+        const manualRoom = getRadio('score_spy_room_to_move');
+        const manualRoomOverride = isChecked('score_spy_room_manual_override');
+        values.roomToMove = manualRoomOverride && manualRoom ? manualRoom : values.roomSuggestion;
+        if (roomEffectiveEl) {
+            const modeLabel = manualRoomOverride ? 'Manual override' : 'Auto';
+            roomEffectiveEl.textContent = `Auto room: ${roomLabel(values.roomSuggestion)} | Effective: ${roomLabel(values.roomToMove)} (${modeLabel})`;
+        }
 
         if (biasAutoEl) {
             const modeLabel = values.biasManualOverride ? 'Manual override' : 'Auto';
@@ -1164,20 +1408,24 @@ function initScoreGatekeeper() {
     const renderHistoryTable = (items) => {
         if (!historyBodyEl) return;
         if (!Array.isArray(items) || !items.length) {
-            historyBodyEl.innerHTML = '<tr><td colspan="8">No data</td></tr>';
+            historyBodyEl.innerHTML = '<tr><td colspan="6">No data</td></tr>';
             return;
         }
         historyBodyEl.innerHTML = items.map((item) => {
-            const abc = `${item.section_a}/${item.section_b}/${item.section_c}`;
+            const modules = buildSnapshotModules(item);
+            const totalScore = modules.reduce((sum, m) => sum + m.score, 0);
+            const totalMax = modules.reduce((sum, m) => sum + m.max, 0);
+            const totalText = modules.length ? `${totalScore} / ${totalMax}` : '-';
+            const modulesText = modules.length
+                ? modules.map((m) => `${m.label}: ${m.score}/${m.max} (${m.permission})`).join('<br>')
+                : '-';
             return `
                 <tr data-id="${item.id}">
                     <td>${item.session_date || '-'}</td>
-                    <td>${item.score ?? '-'}</td>
-                    <td>${item.permission || '-'}</td>
+                    <td>${totalText}</td>
+                    <td>${modulesText}</td>
                     <td>${item.size_modifier || '-'}</td>
                     <td>${item.risk_state || '-'}</td>
-                    <td>${abc}</td>
-                    <td><button type="button" class="btn btn-secondary btn-sm score-history-view" data-id="${item.id}">View</button></td>
                     <td><button type="button" class="btn btn-secondary btn-sm score-history-load" data-id="${item.id}">Load</button></td>
                 </tr>
             `;
@@ -1256,9 +1504,14 @@ function initScoreGatekeeper() {
             const data = await res.json();
             if (!res.ok) throw new Error(data?.detail || `HTTP ${res.status}`);
             const warnings = Array.isArray(data.warnings) ? data.warnings.join(' | ') : '';
-            const abc = `${data.section_a}/${data.section_b}/${data.section_c}`;
+            const modules = buildSnapshotModules(data);
+            const totalScore = modules.reduce((sum, m) => sum + m.score, 0);
+            const totalMax = modules.reduce((sum, m) => sum + m.max, 0);
+            const modulesText = modules.length
+                ? modules.map((m) => `${m.label} ${m.score}/${m.max} (${m.permission})`).join(' | ')
+                : 'No sector data';
             if (historyStatusEl) {
-                historyStatusEl.textContent = `View ${data.session_date}: Score ${data.score}, Permission ${data.permission}, Size ${data.size_modifier}, Risk ${data.risk_state}, A/B/C ${abc}${warnings ? `, Warnings: ${warnings}` : ''}`;
+                historyStatusEl.textContent = `View ${data.session_date}: Total ${totalScore}/${totalMax}, Modules: ${modulesText}. SPY Permission ${data.permission}, Size ${data.size_modifier}, Risk ${data.risk_state}${warnings ? `, Warnings: ${warnings}` : ''}`;
             }
         } catch (err) {
             if (historyStatusEl) historyStatusEl.textContent = `View failed: ${String(err)}`;
@@ -1272,6 +1525,10 @@ function initScoreGatekeeper() {
             if (!res.ok) throw new Error(data?.detail || `HTTP ${res.status}`);
             applyFormInputs(data.inputs || {});
             if (sessionDateEl) sessionDateEl.value = data.session_date || sessionDateEl.value;
+            updateBiasOverrideUI();
+            updateStockBiasOverrideUI();
+            updateRoomOverrideUI();
+            updateStockRoomOverrideUI();
             render();
             if (historyStatusEl) historyStatusEl.textContent = `Loaded snapshot ${data.session_date} into form.`;
         } catch (err) {
@@ -1283,6 +1540,18 @@ function initScoreGatekeeper() {
         updateBiasOverrideUI();
         render();
     });
+    if (stk1dBiasOverrideEl) stk1dBiasOverrideEl.addEventListener('change', () => {
+        updateStockBiasOverrideUI();
+        render();
+    });
+    if (roomOverrideEl) roomOverrideEl.addEventListener('change', () => {
+        updateRoomOverrideUI();
+        render();
+    });
+    if (stk1dRoomOverrideEl) stk1dRoomOverrideEl.addEventListener('change', () => {
+        updateStockRoomOverrideUI();
+        render();
+    });
     if (saveSnapshotBtn) saveSnapshotBtn.addEventListener('click', () => saveSnapshot(false));
     if (refreshHistoryBtn) refreshHistoryBtn.addEventListener('click', fetchHistory);
     if (historyBodyEl) {
@@ -1291,9 +1560,7 @@ function initScoreGatekeeper() {
             if (!(target instanceof HTMLElement)) return;
             const id = target.getAttribute('data-id');
             if (!id) return;
-            if (target.classList.contains('score-history-view')) {
-                viewSnapshot(id);
-            } else if (target.classList.contains('score-history-load')) {
+            if (target.classList.contains('score-history-load')) {
                 loadSnapshot(id);
             }
         });
@@ -1301,6 +1568,9 @@ function initScoreGatekeeper() {
 
     setTodayDate();
     updateBiasOverrideUI();
+    updateStockBiasOverrideUI();
+    updateRoomOverrideUI();
+    updateStockRoomOverrideUI();
     form.addEventListener('change', render);
     form.addEventListener('input', render);
     render();
@@ -1338,23 +1608,26 @@ const SPY_SCORING_FIELD_HELP = {
 
 const STOCK_SCORING_FIELD_HELP = {
     stk1d_ticker: { tooltipText: 'Symbol akcji analizowanej na interwale dziennym (1D).' },
-    stk1d_rate: { tooltipText: 'Twoja ocena jakoĹ›ci kandydata (0-99) na podstawie zewnÄ™trznej aplikacji lub wĹ‚asnej oceny.' },
+    stk1d_rate: { tooltipText: 'Ticker Score 0-100 dla etapu 1D (ocena kandydata po Direction/Context).' },
     stk4h_rate: { tooltipText: 'Twoja ocena jakoĹ›ci ukĹ‚adu na 4H (0-99).' },
     stk1h_rate: { tooltipText: 'Twoja ocena jakoĹ›ci ukĹ‚adu na 1H (0-99).' },
-    stk1d_bias: { tooltipText: 'Ostateczny kierunek po uwzglÄ™dnieniu struktury, 200 SMA, trend anchor i kontekstu SPY.' },
-    stk1d_relative_vs_spy: { tooltipText: 'Relative = dziĹ› vs SPY (stan bieĹĽÄ…cy): Strength, Weakness albo Neutral.' },
-    stk1d_rs_trend: { tooltipText: 'RS trend = czy relacja Relative vs SPY poprawia siÄ™, jest stabilna, czy pogarsza.' },
-    stk1d_structure: { tooltipText: 'HH/HL = wyĹĽsze szczyty i doĹ‚ki, LL/LH = niĹĽsze szczyty i doĹ‚ki, Mixed = brak czytelnej struktury.' },
-    stk1d_sma200: { tooltipText: 'Above = cena powyĹĽej SMA200 (czÄ™sto bullish kontekst), Below = poniĹĽej (czÄ™sto bearish kontekst).' },
-    stk1d_trend_anchor: { tooltipText: 'PorĂłwnaj cenÄ™ do EMA20 na D1: Above = powyĹĽej, Middle = dotyka/krÄ…ĹĽy, Below = poniĹĽej.' },
-    stk1d_spy_alignment: { tooltipText: 'Aligned = akcja idzie w tym samym kierunku co SPY, Diverging = wyraĹşnie inaczej, Opposite = przeciwnie do SPY.' },
-    stk1d_beta_sensitivity: { tooltipText: 'High beta = mocno reaguje na ruch SPY, Defensive = mniej zaleĹĽna od rynku, Neutral = poĹ›rodku.' },
-    stk1d_trend_state: { tooltipText: 'Intact = trend dziaĹ‚a, Weakening = traci impet/Ĺ‚amie zasady, Broken = struktura trendu jest naruszona.' },
-    stk1d_trend_quality: { tooltipText: 'Clean: czytelne swingi i malo falszywych wybic. Acceptable: trend jest, ale z 1-2 whipsaw. Choppy: czeste zmiany kierunku, duzo knotow i brak follow-through.' },
-    stk1d_phase: { tooltipText: 'Impulse = silny ruch kierunkowy, Pullback = cofniÄ™cie, Base = konsolidacja/budowanie bazy.' },
-    stk1d_pullback: { tooltipText: 'Within trend = cofniÄ™cie zgodne z kierunkiem biasu, Against = cofniÄ™cie przeciwne do biasu, None = brak cofniÄ™cia.' },
-    stk1d_volatility_state: { tooltipText: 'Expanding gdy dzienne Ĺ›wiece/zakres rosnÄ…, Contracting gdy zmiennoĹ›Ä‡ siÄ™ zwija i rynek usypia.' },
-    stk1d_extension_state: { tooltipText: 'Extended = daleko od EMA20/50 (Ĺ‚atwo o cofkÄ™), Reset = po mocnym cofniÄ™ciu, Balanced = poĹ›rodku.' },
+    stk1d_bias: { tooltipText: 'Bias = preferowany kierunek swingĂłw dla tickera na D1.' },
+    stk1d_spy_alignment: { tooltipText: 'Aligned/Mixed/Contra: zgodnoĹ›Ä‡ tickera z biasem SPY.' },
+    stk1d_regime: { tooltipText: 'Regime = Trend Up, Trend Down, Range lub Volatile.' },
+    stk1d_structure: { tooltipText: 'HH/HL, LL/LH, Mixed lub Range dla struktury D1.' },
+    stk1d_trend_strength: { tooltipText: 'Pozycja ceny wzglÄ™dem kluczowych MA: Above/Below/Chop.' },
+    stk1d_momentum_condition: { tooltipText: 'Momentum D1: Expanding, Stable, Diverging, Exhausted.' },
+    stk1d_vwap: { tooltipText: 'VWAP na D1 traktuj jako filtr pomocniczy (opcjonalny).' },
+    stk1d_relative_vs_spy: { tooltipText: 'RS state vs SPY: Strong/Neutral/Weak.' },
+    stk1d_rs_trend: { tooltipText: 'RS trend vs SPY: Rising/Flat/Falling.' },
+    stk1d_level_position: { tooltipText: 'Lokalizacja ceny vs poziomy: support/resistance/middle/break attempts/retest.' },
+    stk1d_support_status: { tooltipText: 'Status supportu: holding/broken/reclaimed/rejecting/not tested.' },
+    stk1d_resistance_status: { tooltipText: 'Status oporu: holding/broken/reclaimed/rejecting/not tested.' },
+    stk1d_room_to_move: { tooltipText: 'Room to move = dystans do najbliĹĽszego poziomu wyraĹĽony w ATR.' },
+    stk1d_manual_close: { tooltipText: 'Przepisz Close z TV/Pine do obliczenia room suggestion.' },
+    stk1d_manual_atr: { tooltipText: 'Przepisz ATR(14) z TV/Pine do obliczenia room suggestion.' },
+    stk1d_atr_env: { tooltipText: 'ATR% environment: Low/Normal/High.' },
+    stk1d_earnings_days: { tooltipText: 'Liczba dni do earnings; uĹĽyj -1, gdy brak danych.' },
     stk1d_gap_risk: { tooltipText: 'Najpierw ocen AUTO proxy (srednie luki z historii), potem zrob MANUAL override gdy sa catalysty (earnings/makro/news).', source: 'SEMI' },
     stk1d_options_liquidity: { tooltipText: 'Sprawdz chain: 1) bid/ask spread % (ATM i +/- 1-2 strike), 2) OI i volume, 3) czy fill na mid jest realistyczny. Good: zwykle <=5% spread i sensowna plynnosc; Poor: szerokie spready i slabe OI/vol.' },
     stk1d_event_earnings: { tooltipText: 'Wyniki mogÄ… wywoĹ‚aÄ‡ gwaĹ‚towny ruch i zmieniÄ‡ kontekst (ryzyko dla swing options).' },
@@ -1362,7 +1635,6 @@ const STOCK_SCORING_FIELD_HELP = {
     stk1d_event_other: { tooltipText: 'Inny zaplanowany katalizator (np. decyzja sÄ…dowa, FDA, makro, split).' },
     stk1d_support: { tooltipText: 'NajbliĹĽszy istotny poziom wsparcia na 1D.' },
     stk1d_resistance: { tooltipText: 'NajbliĹĽszy istotny poziom oporu na 1D.' },
-    stk1d_level_position: { tooltipText: 'Gdzie jest cena wzglÄ™dem kluczowych poziomĂłw: przy wsparciu, w Ĺ›rodku zakresu, przy oporze lub wybija zakres.' },
     stk1d_summary: { tooltipText: 'W 1-2 zdaniach podaj, czy akcja jest kandydatem i dlaczego (bez planu wejscia/stop/target).' },
     stk4h_bias: { tooltipText: 'Bias 4H to finalny kierunek po ocenie struktury i polozenia wzgledem anchor/poziomow. To filtr, nie sygnal wejscia.' },
     stk4h_structure: { tooltipText: 'Struktura swingowa 4H: HH/HL trend wzrostowy, LL/LH trend spadkowy, Mixed brak czytelnej struktury.' },
@@ -1492,24 +1764,26 @@ function initScoringFieldHelp(form, stockSection = form) {
         'stk1d_ticker',
         'stk1d_rate',
         'stk1d_bias',
-        'stk1d_structure',
-        'stk1d_sma200',
-        'stk1d_trend_anchor',
         'stk1d_spy_alignment',
+        'stk1d_regime',
+        'stk1d_structure',
+        'stk1d_trend_strength',
+        'stk1d_momentum_condition',
+        'stk1d_vwap',
         'stk1d_relative_vs_spy',
         'stk1d_rs_trend',
-        'stk1d_beta_sensitivity',
-        'stk1d_trend_state',
-        'stk1d_trend_quality',
-        'stk1d_phase',
-        'stk1d_pullback',
-        'stk1d_volatility_state',
-        'stk1d_extension_state',
+        'stk1d_support_status',
+        'stk1d_resistance_status',
         'stk1d_gap_risk',
         'stk1d_options_liquidity',
         'stk1d_support',
         'stk1d_resistance',
         'stk1d_level_position',
+        'stk1d_room_to_move',
+        'stk1d_manual_close',
+        'stk1d_manual_atr',
+        'stk1d_atr_env',
+        'stk1d_earnings_days',
         'stk1d_summary',
         'stk4h_bias',
         'stk4h_rate',
@@ -1773,38 +2047,43 @@ function calculateStock1DScore(values) {
     const hasDirectionalBias = values.bias === 'bullish' || values.bias === 'bearish';
 
     let directionScore = 0;
-    directionScore += hasDirectionalBias ? 2 : 0;
-    directionScore += (values.structure === 'hh_hl' || values.structure === 'll_lh') ? 2 : 0;
+    directionScore += hasDirectionalBias ? 2 : 1;
+    directionScore += (values.structure === 'hh_hl' || values.structure === 'll_lh') ? 2 : values.structure === 'range' ? 1 : 0;
     if (hasDirectionalBias) {
-        if ((values.bias === 'bullish' && values.sma200 === 'above') || (values.bias === 'bearish' && values.sma200 === 'below')) {
-            directionScore += 2;
-        } else if (values.sma200 === 'above' || values.sma200 === 'below') {
-            directionScore += 1;
-        }
-        if ((values.bias === 'bullish' && values.trendAnchor === 'above') || (values.bias === 'bearish' && values.trendAnchor === 'below')) {
-            directionScore += 2;
-        } else if (values.trendAnchor === 'middle') {
-            directionScore += 1;
-        }
+        if (
+            (values.bias === 'bullish' && values.trendStrength === 'above_key_mas') ||
+            (values.bias === 'bearish' && values.trendStrength === 'below_key_mas')
+        ) directionScore += 2;
+        else if (values.trendStrength === 'chop_around_mas') directionScore += 1;
+
+        if (
+            (values.bias === 'bullish' && values.regime === 'trend_up') ||
+            (values.bias === 'bearish' && values.regime === 'trend_down')
+        ) directionScore += 1;
+
+        if (values.momentumCondition === 'expanding' || values.momentumCondition === 'stable') directionScore += 1;
+    } else {
+        if (values.regime === 'range') directionScore += 1;
     }
     directionScore = clamp(directionScore, 0, 8);
 
     let contextScore = 0;
     contextScore += values.rate >= 80 ? 2 : values.rate >= 60 ? 1 : 0;
-    contextScore += values.spyAlignment === 'aligned' ? 2 : values.spyAlignment === 'diverging' ? 1 : 0;
-    contextScore += values.relativeVsSpy === 'strength' ? 2 : values.relativeVsSpy === 'neutral' ? 1 : 0;
-    contextScore += values.rsTrend === 'improving' ? 2 : values.rsTrend === 'stable' ? 1 : 0;
-    contextScore += values.trendState === 'intact' ? 1 : 0;
+    contextScore += values.spyAlignment === 'aligned' ? 2 : values.spyAlignment === 'mixed' ? 1 : 0;
+    contextScore += values.relativeVsSpy === 'strong' ? 2 : values.relativeVsSpy === 'neutral' ? 1 : 0;
+    contextScore += values.rsTrend === 'rising' ? 2 : values.rsTrend === 'flat' ? 1 : 0;
+    contextScore += values.atrEnv === 'normal' ? 1 : 0;
+    contextScore += (values.vwap === 'above' || values.vwap === 'below') ? 1 : 0;
     contextScore = clamp(contextScore, 0, 8);
 
     let riskLevelsScore = 0;
+    riskLevelsScore += values.roomToMove === 'large' ? 2 : values.roomToMove === 'medium' ? 1 : 0;
     riskLevelsScore += values.gapRisk === 'low' ? 2 : values.gapRisk === 'medium' ? 1 : 0;
     riskLevelsScore += values.optionsLiquidity === 'good' ? 2 : values.optionsLiquidity === 'medium' ? 1 : 0;
-    riskLevelsScore += (values.betaSensitivity === 'neutral_beta' || values.betaSensitivity === 'defensive') ? 1 : 0;
     if (hasDirectionalBias) {
         if (
-            (values.bias === 'bullish' && values.levelPosition === 'near_support') ||
-            (values.bias === 'bearish' && values.levelPosition === 'near_resistance')
+            (values.bias === 'bullish' && values.levelPosition === 'at_support') ||
+            (values.bias === 'bearish' && values.levelPosition === 'at_resistance')
         ) {
             riskLevelsScore += 1;
         }
@@ -1812,13 +2091,13 @@ function calculateStock1DScore(values) {
     riskLevelsScore = clamp(riskLevelsScore, 0, 4);
 
     let penalties = 0;
-    if (values.bias === 'bullish' && values.relativeVsSpy === 'weakness') penalties -= 2;
-    if (values.bias === 'bearish' && values.relativeVsSpy === 'strength') penalties -= 2;
+    if (values.bias === 'bullish' && values.relativeVsSpy === 'weak') penalties -= 2;
+    if (values.bias === 'bearish' && values.relativeVsSpy === 'strong') penalties -= 2;
     if (values.bias === 'neutral') penalties -= 1;
-    if (values.trendState === 'broken') penalties -= 2;
-    if (values.trendState === 'broken' && values.structure === 'mixed') penalties -= 1;
-    if (values.pullback === 'against') penalties -= 1;
-    if (values.betaSensitivity === 'high_beta' && values.spyAlignment === 'opposite') penalties -= 1;
+    if (values.roomToMove === 'none') penalties -= 2;
+    if (values.spyAlignment === 'contra') penalties -= 2;
+    if (values.momentumCondition === 'exhausted') penalties -= 1;
+    if (values.momentumCondition === 'diverging') penalties -= 1;
     if (values.earningsSoon) penalties -= 2;
     if (values.dividendSoon) penalties -= 1;
     if (values.otherCatalyst) penalties -= 1;
@@ -1828,6 +2107,10 @@ function calculateStock1DScore(values) {
 
     let cap = 20;
     const capReasons = [];
+    if (values.roomToMove === 'none') {
+        cap = Math.min(cap, 10);
+        capReasons.push('Room to move: None (cap 10)');
+    }
     if (values.gapRisk === 'high') {
         cap = Math.min(cap, 12);
         capReasons.push('Gap risk: High (cap 12)');
@@ -1840,16 +2123,23 @@ function calculateStock1DScore(values) {
         cap = Math.min(cap, 12);
         capReasons.push('Options liquidity: Poor (cap 12)');
     }
-    if (values.spyAlignment === 'opposite' && values.relativeVsSpy === 'weakness') {
+    if (values.spyAlignment === 'contra') {
         cap = Math.min(cap, 10);
-        capReasons.push('Opposite + Weakness vs SPY (cap 10)');
+        capReasons.push('Contra vs SPY (cap 10)');
+    }
+    if (
+        (values.bias === 'bullish' && values.regime === 'trend_down') ||
+        (values.bias === 'bearish' && values.regime === 'trend_up')
+    ) {
+        cap = Math.min(cap, 12);
+        capReasons.push('Bias and regime mismatch (cap 12)');
     }
 
     const total = Math.min(boundedRawTotal, cap);
     const capApplied = total < boundedRawTotal;
 
     // Keep "No data" until core directional context is provided.
-    const hasMinimumDirectionContext = Boolean(values.bias && values.structure);
+    const hasMinimumDirectionContext = Boolean(values.bias && values.structure && values.regime && values.trendStrength && values.relativeVsSpy && values.roomToMove);
 
     let grade = 'No data';
     if (hasMinimumDirectionContext) {
@@ -2383,6 +2673,10 @@ function initScoringBuilder() {
     const trendQualityGuardrailEl = document.getElementById('stk1d_trend_quality_guardrail');
     const liquidityEventGuardrailEl = document.getElementById('stk1d_liquidity_event_guardrail');
     const volGapGuardrailEl = document.getElementById('stk1d_vol_gap_guardrail');
+    const stock1dPermissionEl = document.getElementById('stk1d_permission');
+    const stock1dAlignmentAutoEl = document.getElementById('stk1d_alignment_auto');
+    const stock1dInvalidationEl = document.getElementById('stk1d_invalidation_tomorrow');
+    const stock1dRoomAutoEl = document.getElementById('stk1d_room_auto');
     const pullbackGroupEl = document.getElementById('stk1d_pullback_group');
     const pullbackNaEl = document.getElementById('stk1d_pullback_na');
     const stk4hChoppyGuardrailEl = document.getElementById('stk4h_choppy_guardrail');
@@ -2454,6 +2748,30 @@ function initScoringBuilder() {
         const num = Number.parseFloat(normalized);
         if (!Number.isFinite(num)) return 0;
         return Math.max(min, Math.min(max, num));
+    };
+
+    const parseLevel = (raw) => {
+        const text = String(raw || '').trim();
+        if (!text) return null;
+        const rangeMatch = text.match(/(-?\d+(?:\.\d+)?)\s*[-:]\s*(-?\d+(?:\.\d+)?)/);
+        if (rangeMatch) {
+            const a = Number(rangeMatch[1]);
+            const b = Number(rangeMatch[2]);
+            if (Number.isFinite(a) && Number.isFinite(b)) return (a + b) / 2;
+        }
+        const numMatch = text.match(/-?\d+(?:\.\d+)?/);
+        if (!numMatch) return null;
+        const n = Number(numMatch[0]);
+        return Number.isFinite(n) ? n : null;
+    };
+
+    const classifyRoomFromAtr = (distanceAtr) => {
+        const n = Number(distanceAtr);
+        if (!Number.isFinite(n)) return null;
+        if (n > 1.5) return 'large';
+        if (n >= 0.8) return 'medium';
+        if (n >= 0.3) return 'limited';
+        return 'none';
     };
 
     const collectSpyInputs = () => {
@@ -2700,7 +3018,7 @@ function initScoringBuilder() {
     const bindRateValidation = () => {
         const rateFields = [
             { name: 'sc_spy_rate', min: 0, max: 100 },
-            { name: 'stk1d_rate', min: 0, max: 99 },
+            { name: 'stk1d_rate', min: 0, max: 100 },
             { name: 'stk4h_rate', min: 0, max: 99 },
             { name: 'stk1h_rate', min: 0, max: 99 },
             { name: 'm15_rate', min: 0, max: 99 }
@@ -2840,19 +3158,20 @@ function initScoringBuilder() {
             bias: getStockRadioValue('stk1d_bias'),
             relativeVsSpy: getStockRadioValue('stk1d_relative_vs_spy'),
             rsTrend: getStockRadioValue('stk1d_rs_trend'),
+            regime: getStockRadioValue('stk1d_regime'),
             structure: getStockRadioValue('stk1d_structure'),
-            trendState: getStockRadioValue('stk1d_trend_state'),
-            trendAnchor: getStockRadioValue('stk1d_trend_anchor'),
-            sma200: getStockRadioValue('stk1d_sma200'),
-            pullback: getStockRadioValue('stk1d_pullback'),
-            betaSensitivity: getStockRadioValue('stk1d_beta_sensitivity'),
+            trendStrength: getStockRadioValue('stk1d_trend_strength'),
+            momentumCondition: getStockRadioValue('stk1d_momentum_condition'),
+            vwap: getStockRadioValue('stk1d_vwap'),
+            roomToMove: getStockRadioValue('stk1d_room_to_move'),
             gapRisk: getStockRadioValue('stk1d_gap_risk'),
             optionsLiquidity: getStockRadioValue('stk1d_options_liquidity'),
             levelPosition: getStockRadioValue('stk1d_level_position'),
+            atrEnv: getStockRadioValue('stk1d_atr_env'),
             earningsSoon: isStockChecked('stk1d_event_earnings'),
             dividendSoon: isStockChecked('stk1d_event_dividends'),
             otherCatalyst: isStockChecked('stk1d_event_other'),
-            rate: parseRate('stk1d_rate', 0, 99)
+            rate: parseRate('stk1d_rate', 0, 100)
         });
         const stock4hScore = calculateStock4HScore({
             bias: getRadioValue('stk4h_bias'),
@@ -2877,6 +3196,30 @@ function initScoringBuilder() {
             invalidationLogic: getRadioValue('stk4h_invalidation_logic'),
             liquidityCheck: getRadioValue('stk4h_liquidity_check')
         });
+
+        const closeVal1D = parseLevel(getFieldValue('stk1d_manual_close'));
+        const atrVal1D = parseLevel(getFieldValue('stk1d_manual_atr'));
+        const supportVal1D = parseLevel(getFieldValue('stk1d_support'));
+        const resistanceVal1D = parseLevel(getFieldValue('stk1d_resistance'));
+        const bias1D = getStockRadioValue('stk1d_bias');
+
+        let roomAutoText = 'Enter Close + ATR + key levels to compute auto room suggestion';
+        if (Number.isFinite(closeVal1D) && Number.isFinite(atrVal1D) && atrVal1D > 0) {
+            let dist = null;
+            if (bias1D === 'bullish' && Number.isFinite(resistanceVal1D)) dist = Math.abs(resistanceVal1D - closeVal1D);
+            else if (bias1D === 'bearish' && Number.isFinite(supportVal1D)) dist = Math.abs(closeVal1D - supportVal1D);
+            else {
+                const candidates = [];
+                if (Number.isFinite(supportVal1D)) candidates.push(Math.abs(closeVal1D - supportVal1D));
+                if (Number.isFinite(resistanceVal1D)) candidates.push(Math.abs(resistanceVal1D - closeVal1D));
+                if (candidates.length) dist = Math.min(...candidates);
+            }
+            if (Number.isFinite(dist)) {
+                const room = classifyRoomFromAtr(dist / atrVal1D);
+                roomAutoText = room ? `Auto suggestion: ${room} (${(dist / atrVal1D).toFixed(2)} ATR)` : roomAutoText;
+            }
+        }
+        if (stock1dRoomAutoEl) stock1dRoomAutoEl.textContent = roomAutoText;
         const intradayReactionCount = [
             isChecked('stk1h_intraday_premarket'),
             isChecked('stk1h_intraday_opening_range'),
@@ -2961,6 +3304,30 @@ function initScoringBuilder() {
             breakdownText: `Direction: ${stockScore.directionScore}/8 | Context: ${stockScore.contextScore}/8 | Risk/Levels: ${stockScore.riskLevelsScore}/4 | Penalties: ${stockScore.penalties}`,
             capNoteEl: stockCapNoteEl
         });
+
+        if (stock1dPermissionEl) {
+            let permission = 'No trade';
+            if (stockScore.hasMinimumData) {
+                if (stockScore.total >= 16) permission = 'Allowed';
+                else if (stockScore.total >= 12) permission = 'Reduced';
+                else permission = 'No trade';
+            }
+            stock1dPermissionEl.textContent = permission;
+        }
+        if (stock1dAlignmentAutoEl) {
+            const alignment = getStockRadioValue('stk1d_spy_alignment');
+            stock1dAlignmentAutoEl.textContent = alignment ? alignment : 'No data';
+        }
+        if (stock1dInvalidationEl) {
+            const bias1d = getStockRadioValue('stk1d_bias');
+            const sLvl = getFieldValue('stk1d_support').trim();
+            const rLvl = getFieldValue('stk1d_resistance').trim();
+            let inv = 'No data';
+            if (bias1d === 'bullish') inv = sLvl ? `Invalidation: daily close below support (${sLvl})` : 'Invalidation: daily close below support zone';
+            else if (bias1d === 'bearish') inv = rLvl ? `Invalidation: daily close above resistance (${rLvl})` : 'Invalidation: daily close above resistance zone';
+            else if (bias1d === 'neutral') inv = 'Invalidation: break from range with follow-through opposite to planned direction';
+            stock1dInvalidationEl.textContent = inv;
+        }
 
         renderTfScore({
             score: stock4hScore,
@@ -3093,10 +3460,10 @@ function initScoringBuilder() {
                 : '';
         }
         if (volGapGuardrailEl) {
-            const vol = getStockRadioValue('stk1d_volatility_state');
+            const vol = getStockRadioValue('stk1d_atr_env');
             const gap = getStockRadioValue('stk1d_gap_risk');
-            volGapGuardrailEl.textContent = (vol === 'expanding' && gap === 'high')
-                ? 'Warning: Expanding volatility and high gap risk increase jump risk.'
+            volGapGuardrailEl.textContent = (vol === 'high' && gap === 'high')
+                ? 'Warning: High ATR% and high gap risk increase jump risk.'
                 : '';
         }
         if (stk4hChoppyGuardrailEl) {
@@ -3275,11 +3642,13 @@ function initScoringBuilder() {
             mustHappen: normalizeValue(getFieldValue('must_happen')),
             d1: {
                 bias: getRadioLabel('stk1d_bias'),
+                regime: getRadioLabel('stk1d_regime'),
                 structure: getRadioLabel('stk1d_structure'),
-                sma200: getRadioLabel('stk1d_sma200'),
-                anchor: getRadioLabel('stk1d_trend_anchor'),
+                trendStrength: getRadioLabel('stk1d_trend_strength'),
+                momentum: getRadioLabel('stk1d_momentum_condition'),
                 spyAlignment: getRadioLabel('stk1d_spy_alignment'),
-                relative: getRadioLabel('stk1d_relative_vs_spy')
+                relative: getRadioLabel('stk1d_relative_vs_spy'),
+                room: getRadioLabel('stk1d_room_to_move')
             },
             h4: {
                 setupType: getRadioLabel('stk4h_setup_type'),
@@ -3478,7 +3847,7 @@ function initScoringBuilder() {
             `STATUS: ${stockDecision}`,
             '',
             'DIRECTION & CONTEXT (1D)',
-            `Bias ${facts.d1.bias} | Structure ${facts.d1.structure} | 200SMA ${facts.d1.sma200} | Anchor ${facts.d1.anchor}`,
+            `Bias ${facts.d1.bias} | Regime ${facts.d1.regime} | Structure ${facts.d1.structure} | Trend ${facts.d1.trendStrength} | Momentum ${facts.d1.momentum} | Room ${facts.d1.room}`,
             `SPY alignment ${facts.d1.spyAlignment} | Relative vs SPY ${facts.d1.relative}`,
             `MARKET ALIGNED?: ${marketAlignedLine}`,
             `THESIS: ${thesisLine}`,

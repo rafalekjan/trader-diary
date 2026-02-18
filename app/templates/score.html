@@ -83,7 +83,7 @@
             <div id="score-inconsistency" class="scoring-guardrail"></div>
         </div>
 
-        <div class="analysis-subsection">
+        <div class="analysis-subsection score-section-b">
             <h4>B. Location & Blocks</h4>
             <div class="scoring-stage-grid">
                 <div class="form-group">
@@ -117,7 +117,7 @@
                         <label class="checkbox-label"><input type="radio" name="score_spy_resistance_status" value="not_tested"><span class="checkbox-text">Not tested</span></label>
                     </div>
                 </div>
-                <div class="form-group">
+                <div class="form-group score-b-room-to-move">
                     <label>Room to Move <span class="help-icon" data-tooltip="Ile miejsca jest do kolejnego poziomu. Małe room = słaby R/R dla swing.">?</span></label>
                     <div class="checkbox-group scoring-option-grid">
                         <label class="checkbox-label"><input type="radio" name="score_spy_room_to_move" value="large"><span class="checkbox-text">Large</span></label>
@@ -125,29 +125,29 @@
                         <label class="checkbox-label"><input type="radio" name="score_spy_room_to_move" value="limited"><span class="checkbox-text">Limited</span></label>
                         <label class="checkbox-label"><input type="radio" name="score_spy_room_to_move" value="none"><span class="checkbox-text">None</span></label>
                     </div>
+                    <label class="checkbox-label" style="margin-top:8px;">
+                        <input type="checkbox" name="score_spy_room_manual_override">
+                        <span class="checkbox-text">Manual override</span>
+                    </label>
+                    <div id="score-room-effective" class="scoring-readonly-value">Auto room: No data | Effective: No data</div>
                 </div>
-                <div class="form-group">
-                    <label>Key Levels <span class="help-icon" data-tooltip="Poziomy, gdzie cena wcześniej reagowała (PDH/PDL, PWH/PWL, swing high/low, 20/50/200). Dają invalidację i cele.">?</span></label>
+                <div class="form-group score-b-key-levels">
+                    <label>Key Levels <span class="help-icon" data-tooltip="Major swing levels (1D/weekly): PDH/PDL, PWH/PWL, swing high/low, 20/50/200. Nie uzywaj intraday mikro-poziomow. Te poziomy definiuja room i invalidation.">?</span></label>
                     <div class="timeframe-row-2cols">
                         <input id="score_spy_key_support" name="score_spy_key_support" type="text" placeholder="Support">
                         <input id="score_spy_key_resistance" name="score_spy_key_resistance" type="text" placeholder="Resistance">
                     </div>
                 </div>
-                <div class="form-group">
-                    <label>Pine values (manual copy)</label>
-                    <div class="scoring-readonly-value" id="score-auto-levels">PDH: - | PDL: - | PWH: - | PWL: - | EMA20: - | SMA50: - | SMA200: - | DCH20: - | DCL20: -</div>
-                </div>
-                <div class="form-group">
-                    <label>Manual values for Room Suggestion: `Close`, `ATR (14)` <span class="help-icon" data-tooltip="Wpisz dokładnie wartości: Close oraz ATR(14) z tabeli TV. Następnie uzupełnij Key Levels (Support/Resistance), aby dostać Auto Room Suggestion (ATR-based).">?</span></label>
+                <div class="form-group score-b-manual-values">
+                    <label>Manual values <span class="help-icon" data-tooltip="Wpisz dokladnie wartosci: Close i ATR(14) z tabeli TV.">?</span></label>
                     <div class="timeframe-row-2cols">
-                        <input name="score_spy_manual_close" type="text" placeholder="Close (TV)">
-                        <input name="score_spy_manual_atr" type="text" placeholder="ATR (14) (TV)">
+                        <input name="score_spy_manual_close" type="text" placeholder="Close">
+                        <input name="score_spy_manual_atr" type="text" placeholder="ATR (14)">
                     </div>
-                    <div id="score-snapshot-status" class="scoring-guardrail">Manual mode active: enter Key Levels + Close + ATR.</div>
                 </div>
-                <div class="form-group">
+                <div class="form-group score-b-room-suggestion">
                     <label>Auto Room Suggestion (ATR-based)</label>
-                    <div id="score-room-auto" class="scoring-readonly-value">Enter manual Close, ATR and Key Levels</div>
+                    <div id="score-room-auto" class="scoring-readonly-value">Enter values to get suggestion</div>
                 </div>
             </div>
         </div>
@@ -241,6 +241,145 @@
 
     <div class="analysis-section">
         <div class="scoring-header-row">
+            <h3>Ticker (1D) - Direction &amp; Context</h3>
+            <div class="scoring-header-summary">
+                <div><strong>Ticker Score:</strong> <span id="score-stk1d-score-head">No data</span></div>
+                <div><strong>Permission:</strong> <span id="score-stk1d-permission-head">No data</span></div>
+            </div>
+        </div>
+        <div class="analysis-subsection">
+            <h4>Ticker (1D) - Direction &amp; Context</h4>
+            <div class="scoring-stage-grid stock1d-layout">
+                <div class="form-group">
+                    <label for="score_stk1d_ticker">Ticker <span class="help-icon" data-tooltip="Symbol akcji analizowanej na interwale 1D.">?</span></label>
+                    <input id="score_stk1d_ticker" name="score_stk1d_ticker" type="text" placeholder="NVDA">
+                </div>
+                <div class="form-group">
+                    <label>Market Regime <span class="help-icon" data-tooltip="Trend = HH/HL lub LL/LH + nachylone MA. Range = overlap świec + płaskie MA. Volatile = duże świece/ATR% wysokie, częste zwroty.">?</span></label>
+                    <div class="checkbox-group scoring-option-grid">
+                        <label class="checkbox-label"><input type="radio" name="score_stk1d_regime" value="trend_up"><span class="checkbox-text">Trend Up</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_stk1d_regime" value="trend_down"><span class="checkbox-text">Trend Down</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_stk1d_regime" value="range"><span class="checkbox-text">Range</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_stk1d_regime" value="volatile"><span class="checkbox-text">Volatile</span></label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Bias <span class="help-icon" data-tooltip="Preferowany kierunek zagrań na tickerze. Domyślnie liczony automatycznie z Regime + Structure + Trend Strength + Momentum.">?</span></label>
+                    <div class="checkbox-group scoring-option-grid">
+                        <label class="checkbox-label"><input type="radio" name="score_stk1d_bias" value="bullish"><span class="checkbox-text">Bullish</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_stk1d_bias" value="bearish"><span class="checkbox-text">Bearish</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_stk1d_bias" value="neutral"><span class="checkbox-text">Neutral</span></label>
+                    </div>
+                    <label class="checkbox-label" style="margin-top:8px;">
+                        <input type="checkbox" name="score_stk1d_bias_manual_override">
+                        <span class="checkbox-text">Manual override</span>
+                    </label>
+                    <div id="score-stk1d-bias-auto" class="scoring-readonly-value">Auto bias: No data</div>
+                </div>
+                <div class="form-group">
+                    <label>Structure <span class="help-icon" data-tooltip="Układ swingów na D1: HH/HL (bull), LL/LH (bear), Mixed/Range (ostrożnie).">?</span></label>
+                    <div class="checkbox-group scoring-option-grid">
+                        <label class="checkbox-label"><input type="radio" name="score_stk1d_structure" value="hh_hl"><span class="checkbox-text">HH/HL</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_stk1d_structure" value="ll_lh"><span class="checkbox-text">LL/LH</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_stk1d_structure" value="mixed"><span class="checkbox-text">Mixed</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_stk1d_structure" value="range"><span class="checkbox-text">Range</span></label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Trend Strength <span class="help-icon" data-tooltip="Położenie vs 20EMA/50MA/200SMA: powyżej = long-friendly, poniżej = short-friendly, wokół = chop/ostrożność.">?</span></label>
+                    <div class="checkbox-group scoring-option-grid">
+                        <label class="checkbox-label"><input type="radio" name="score_stk1d_trend_strength" value="above_key_mas"><span class="checkbox-text">Above key MAs</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_stk1d_trend_strength" value="below_key_mas"><span class="checkbox-text">Below key MAs</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_stk1d_trend_strength" value="chop_around_mas"><span class="checkbox-text">Chop around MAs</span></label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>VWAP (optional) <span class="help-icon" data-tooltip="Na 1D to dodatkowy kontekst, nie filar decyzji kierunkowej.">?</span></label>
+                    <div class="checkbox-group scoring-option-grid">
+                        <label class="checkbox-label"><input type="radio" name="score_stk1d_vwap" value="above"><span class="checkbox-text">Above</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_stk1d_vwap" value="below"><span class="checkbox-text">Below</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_stk1d_vwap" value="na"><span class="checkbox-text">N/A</span></label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Momentum Condition (1D) <span class="help-icon" data-tooltip="Expanding = impet rośnie; Stable = trend trwa; Diverging = impet nie potwierdza ceny; Exhausted = rośnie ryzyko cofnięcia.">?</span></label>
+                    <div class="checkbox-group scoring-option-grid">
+                        <label class="checkbox-label"><input type="radio" name="score_stk1d_momentum" value="expanding"><span class="checkbox-text">Expanding</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_stk1d_momentum" value="stable"><span class="checkbox-text">Stable</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_stk1d_momentum" value="diverging"><span class="checkbox-text">Diverging</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_stk1d_momentum" value="exhausted"><span class="checkbox-text">Exhausted</span></label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Market Alignment (vs SPY) <span class="help-icon" data-tooltip="Aligned/Mixed/Contra: zgodność tickera z kierunkiem SPY.">?</span></label>
+                    <div class="checkbox-group scoring-option-grid">
+                        <label class="checkbox-label"><input type="radio" name="score_stk1d_alignment" value="aligned"><span class="checkbox-text">Aligned</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_stk1d_alignment" value="mixed"><span class="checkbox-text">Mixed</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_stk1d_alignment" value="contra"><span class="checkbox-text">Contra</span></label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>RS state vs SPY <span class="help-icon" data-tooltip="Relative strength względem SPY: Strong/Neutral/Weak.">?</span></label>
+                    <div class="checkbox-group scoring-option-grid">
+                        <label class="checkbox-label"><input type="radio" name="score_stk1d_rs_state" value="strong"><span class="checkbox-text">Strong</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_stk1d_rs_state" value="neutral"><span class="checkbox-text">Neutral</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_stk1d_rs_state" value="weak"><span class="checkbox-text">Weak</span></label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>RS trend <span class="help-icon" data-tooltip="Kierunek RS vs SPY: rising/flat/falling.">?</span></label>
+                    <div class="checkbox-group scoring-option-grid">
+                        <label class="checkbox-label"><input type="radio" name="score_stk1d_rs_trend" value="rising"><span class="checkbox-text">Rising</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_stk1d_rs_trend" value="flat"><span class="checkbox-text">Flat</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_stk1d_rs_trend" value="falling"><span class="checkbox-text">Falling</span></label>
+                    </div>
+                </div>
+                <div class="form-group stk1d-manual-values">
+                    <label>Manual values <span class="help-icon" data-tooltip="Wpisz dokladnie wartosci: Close i ATR(14) z tabeli TV.">?</span></label>
+                    <div class="timeframe-row-2cols">
+                        <input name="score_stk1d_close" type="text" placeholder="Close">
+                        <input name="score_stk1d_atr" type="text" placeholder="ATR (14)">
+                    </div>
+                </div>
+                <div class="form-group stk1d-key-levels">
+                    <label>Key Levels <span class="help-icon" data-tooltip="Major swing levels (1D/weekly): PDH/PDL, PWH/PWL, swing high/low, 20/50/200. Nie uzywaj intraday mikro-poziomow. Te poziomy definiuja room i invalidation.">?</span></label>
+                    <div class="timeframe-row-2cols">
+                        <input name="score_stk1d_support" type="text" placeholder="Support">
+                        <input name="score_stk1d_resistance" type="text" placeholder="Resistance">
+                    </div>
+                </div>
+                <div class="form-group stk1d-room-suggestion">
+                    <label>Auto Room Suggestion (ATR-based)</label>
+                    <div id="score-stk1d-room-auto" class="scoring-readonly-value">Enter Close + ATR + key levels to compute room</div>
+                </div>
+                <div class="form-group stk1d-room-to-move">
+                    <label>Room to Move <span class="help-icon" data-tooltip="Ile miejsca jest do kolejnego poziomu. Male room = slaby R/R dla swing.">?</span></label>
+                    <div class="checkbox-group scoring-option-grid">
+                        <label class="checkbox-label"><input type="radio" name="score_stk1d_room_to_move" value="large"><span class="checkbox-text">Large</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_stk1d_room_to_move" value="medium"><span class="checkbox-text">Medium</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_stk1d_room_to_move" value="limited"><span class="checkbox-text">Limited</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_stk1d_room_to_move" value="none"><span class="checkbox-text">None</span></label>
+                    </div>
+                    <label class="checkbox-label" style="margin-top:8px;">
+                        <input type="checkbox" name="score_stk1d_room_manual_override">
+                        <span class="checkbox-text">Manual override</span>
+                    </label>
+                    <div id="score-stk1d-room-effective" class="scoring-readonly-value">Auto room: No data | Effective: No data</div>
+                </div>
+                <div class="form-group stk1d-permission-box">
+                    <label>Ticker Permission (auto) <span class="help-icon" data-tooltip="Automatyczna decyzja dla tickera: Allowed / Reduced / No-trade.">?</span></label>
+                    <div id="score-stk1d-permission" class="scoring-readonly-value">No data</div>
+                </div>
+                <div class="form-group stk1d-invalidation-box">
+                    <label>Invalidation tomorrow (auto) <span class="help-icon" data-tooltip="Warunek unieważnienia setupu na kolejnej sesji (kontekst 1D).">?</span></label>
+                    <div id="score-stk1d-invalidation" class="scoring-readonly-value">No data</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="analysis-section">
+        <div class="scoring-header-row">
             <h3>History</h3>
             <div class="scoring-header-summary">
                 <div><a class="btn btn-secondary" href="/score/snapshots/export.csv">Export CSV</a></div>
@@ -268,20 +407,20 @@
                 <thead>
                     <tr>
                         <th>Date</th>
-                        <th>Score</th>
-                        <th>Permission</th>
+                        <th>Total (All Sectors)</th>
+                        <th>Sector Breakdown</th>
                         <th>Size</th>
                         <th>Risk State</th>
-                        <th>A/B/C</th>
-                        <th>View</th>
                         <th>Load</th>
                     </tr>
                 </thead>
                 <tbody id="score-history-body">
-                    <tr><td colspan="8">No data</td></tr>
+                    <tr><td colspan="6">No data</td></tr>
                 </tbody>
             </table>
         </div>
     </div>
 </form>
 {% endblock %}
+
+

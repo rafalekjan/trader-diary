@@ -205,319 +205,200 @@
         </div>
 
         <div class="analysis-subsection">
-            <h4>1. Identification & quick summary + Direction</h4>
+            <h4>A. Direction &amp; Regime</h4>
             <div class="scoring-stage-grid">
                 <div class="form-group">
                     <label for="stk1d_ticker">Ticker</label>
                     <input id="stk1d_ticker" name="stk1d_ticker" type="text" placeholder="NVDA">
                 </div>
                 <div class="form-group">
-                    <label for="stk1d_rate">Rate</label>
-                    <input id="stk1d_rate" name="stk1d_rate" type="number" min="0" max="99" step="1" placeholder="0-99">
+                    <label for="stk1d_rate">Ticker Score (1D) 0-100</label>
+                    <input id="stk1d_rate" name="stk1d_rate" type="number" min="0" max="100" step="1" placeholder="0-100">
                 </div>
                 <div class="form-group">
                     <label>Bias</label>
                     <div class="checkbox-group scoring-option-grid">
-                        <label class="checkbox-label">
-                            <input type="radio" name="stk1d_bias" value="bullish">
-                            <span class="checkbox-text">Bullish</span>
-                        </label>
-                        <label class="checkbox-label">
-                            <input type="radio" name="stk1d_bias" value="bearish">
-                            <span class="checkbox-text">Bearish</span>
-                        </label>
-                        <label class="checkbox-label">
-                            <input type="radio" name="stk1d_bias" value="neutral">
-                            <span class="checkbox-text">Neutral</span>
-                        </label>
+                        <label class="checkbox-label"><input type="radio" name="stk1d_bias" value="bullish"><span class="checkbox-text">Bullish</span></label>
+                        <label class="checkbox-label"><input type="radio" name="stk1d_bias" value="bearish"><span class="checkbox-text">Bearish</span></label>
+                        <label class="checkbox-label"><input type="radio" name="stk1d_bias" value="neutral"><span class="checkbox-text">Neutral</span></label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Market alignment (vs SPY)</label>
+                    <div class="checkbox-group scoring-option-grid">
+                        <label class="checkbox-label"><input type="radio" name="stk1d_spy_alignment" value="aligned"><span class="checkbox-text">Aligned</span></label>
+                        <label class="checkbox-label"><input type="radio" name="stk1d_spy_alignment" value="mixed"><span class="checkbox-text">Mixed</span></label>
+                        <label class="checkbox-label"><input type="radio" name="stk1d_spy_alignment" value="contra"><span class="checkbox-text">Contra</span></label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Regime</label>
+                    <div class="checkbox-group scoring-option-grid">
+                        <label class="checkbox-label"><input type="radio" name="stk1d_regime" value="trend_up"><span class="checkbox-text">Trend Up</span></label>
+                        <label class="checkbox-label"><input type="radio" name="stk1d_regime" value="trend_down"><span class="checkbox-text">Trend Down</span></label>
+                        <label class="checkbox-label"><input type="radio" name="stk1d_regime" value="range"><span class="checkbox-text">Range</span></label>
+                        <label class="checkbox-label"><input type="radio" name="stk1d_regime" value="volatile"><span class="checkbox-text">Volatile</span></label>
                     </div>
                 </div>
                 <div class="form-group">
                     <label>Structure</label>
                     <div class="checkbox-group scoring-option-grid">
-                        <label class="checkbox-label">
-                            <input type="radio" name="stk1d_structure" value="hh_hl">
-                            <span class="checkbox-text">HH/HL</span>
-                        </label>
-                        <label class="checkbox-label">
-                            <input type="radio" name="stk1d_structure" value="ll_lh">
-                            <span class="checkbox-text">LL/LH</span>
-                        </label>
-                        <label class="checkbox-label">
-                            <input type="radio" name="stk1d_structure" value="mixed">
-                            <span class="checkbox-text">Mixed</span>
-                        </label>
+                        <label class="checkbox-label"><input type="radio" name="stk1d_structure" value="hh_hl"><span class="checkbox-text">HH/HL</span></label>
+                        <label class="checkbox-label"><input type="radio" name="stk1d_structure" value="ll_lh"><span class="checkbox-text">LL/LH</span></label>
+                        <label class="checkbox-label"><input type="radio" name="stk1d_structure" value="mixed"><span class="checkbox-text">Mixed</span></label>
+                        <label class="checkbox-label"><input type="radio" name="stk1d_structure" value="range"><span class="checkbox-text">Range</span></label>
                     </div>
                 </div>
                 <div class="form-group">
-                    <label>200 SMA</label>
+                    <label>Trend strength</label>
                     <div class="checkbox-group scoring-option-grid">
-                        <label class="checkbox-label">
-                            <input type="radio" name="stk1d_sma200" value="above">
-                            <span class="checkbox-text">Above</span>
-                        </label>
-                        <label class="checkbox-label">
-                            <input type="radio" name="stk1d_sma200" value="below">
-                            <span class="checkbox-text">Below</span>
-                        </label>
+                        <label class="checkbox-label"><input type="radio" name="stk1d_trend_strength" value="above_key_mas"><span class="checkbox-text">Above key MAs</span></label>
+                        <label class="checkbox-label"><input type="radio" name="stk1d_trend_strength" value="below_key_mas"><span class="checkbox-text">Below key MAs</span></label>
+                        <label class="checkbox-label"><input type="radio" name="stk1d_trend_strength" value="chop_around_mas"><span class="checkbox-text">Chop around MAs</span></label>
                     </div>
                 </div>
                 <div class="form-group">
-                    <label>Trend anchor (EMA20 / VWAP proxy)</label>
+                    <label>Momentum condition (1D)</label>
                     <div class="checkbox-group scoring-option-grid">
-                        <label class="checkbox-label">
-                            <input type="radio" name="stk1d_trend_anchor" value="above">
-                            <span class="checkbox-text">Above</span>
-                        </label>
-                        <label class="checkbox-label">
-                            <input type="radio" name="stk1d_trend_anchor" value="middle">
-                            <span class="checkbox-text">Middle</span>
-                        </label>
-                        <label class="checkbox-label">
-                            <input type="radio" name="stk1d_trend_anchor" value="below">
-                            <span class="checkbox-text">Below</span>
-                        </label>
+                        <label class="checkbox-label"><input type="radio" name="stk1d_momentum_condition" value="expanding"><span class="checkbox-text">Expanding</span></label>
+                        <label class="checkbox-label"><input type="radio" name="stk1d_momentum_condition" value="stable"><span class="checkbox-text">Stable</span></label>
+                        <label class="checkbox-label"><input type="radio" name="stk1d_momentum_condition" value="diverging"><span class="checkbox-text">Diverging</span></label>
+                        <label class="checkbox-label"><input type="radio" name="stk1d_momentum_condition" value="exhausted"><span class="checkbox-text">Exhausted</span></label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>VWAP (optional)</label>
+                    <div class="checkbox-group scoring-option-grid">
+                        <label class="checkbox-label"><input type="radio" name="stk1d_vwap" value="above"><span class="checkbox-text">Above</span></label>
+                        <label class="checkbox-label"><input type="radio" name="stk1d_vwap" value="below"><span class="checkbox-text">Below</span></label>
+                        <label class="checkbox-label"><input type="radio" name="stk1d_vwap" value="na"><span class="checkbox-text">N/A</span></label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>TV/Pine values (copy)</label>
+                    <div id="stk1d_auto_ma_box" class="scoring-readonly-value">EMA20: - | SMA50: - | SMA200: - | ATR(14): - | ATR%: -</div>
+                </div>
+                <div class="form-group">
+                    <label>TV/Pine key levels</label>
+                    <div id="stk1d_auto_levels_box" class="scoring-readonly-value">PDH: - | PDL: - | PWH: - | PWL: - | DCH20: - | DCL20: -</div>
+                </div>
+                <div class="form-group">
+                    <label for="stk1d_earnings_days">Earnings in N days (optional)</label>
+                    <input id="stk1d_earnings_days" name="stk1d_earnings_days" type="number" min="-1" step="1" placeholder="-1 if unknown">
+                </div>
+                <div class="form-group">
+                    <label>ATR% environment</label>
+                    <div class="checkbox-group scoring-option-grid">
+                        <label class="checkbox-label"><input type="radio" name="stk1d_atr_env" value="low"><span class="checkbox-text">Low</span></label>
+                        <label class="checkbox-label"><input type="radio" name="stk1d_atr_env" value="normal"><span class="checkbox-text">Normal</span></label>
+                        <label class="checkbox-label"><input type="radio" name="stk1d_atr_env" value="high"><span class="checkbox-text">High</span></label>
                     </div>
                 </div>
             </div>
         </div>
 
         <div class="analysis-subsection">
-            <h4>2. Context (SPY and market)</h4>
+            <h4>B. Location &amp; Blocks</h4>
             <div class="scoring-stage-grid">
                 <div class="form-group">
-                    <label>SPY alignment</label>
+                    <label>Location</label>
                     <div class="checkbox-group scoring-option-grid">
-                        <label class="checkbox-label">
-                            <input type="radio" name="stk1d_spy_alignment" value="aligned">
-                            <span class="checkbox-text">Aligned</span>
-                        </label>
-                        <label class="checkbox-label">
-                            <input type="radio" name="stk1d_spy_alignment" value="diverging">
-                            <span class="checkbox-text">Diverging</span>
-                        </label>
-                        <label class="checkbox-label">
-                            <input type="radio" name="stk1d_spy_alignment" value="opposite">
-                            <span class="checkbox-text">Opposite</span>
-                        </label>
+                        <label class="checkbox-label"><input type="radio" name="stk1d_level_position" value="at_support"><span class="checkbox-text">At Support</span></label>
+                        <label class="checkbox-label"><input type="radio" name="stk1d_level_position" value="at_resistance"><span class="checkbox-text">At Resistance</span></label>
+                        <label class="checkbox-label"><input type="radio" name="stk1d_level_position" value="middle_of_range"><span class="checkbox-text">Middle of Range</span></label>
+                        <label class="checkbox-label"><input type="radio" name="stk1d_level_position" value="breakout_attempt"><span class="checkbox-text">Breakout Attempt</span></label>
+                        <label class="checkbox-label"><input type="radio" name="stk1d_level_position" value="breakdown_attempt"><span class="checkbox-text">Breakdown Attempt</span></label>
+                        <label class="checkbox-label"><input type="radio" name="stk1d_level_position" value="post_break_retest"><span class="checkbox-text">Post-break Retest</span></label>
                     </div>
                 </div>
                 <div class="form-group">
-                    <label>Relative vs SPY</label>
+                    <label>Support status</label>
                     <div class="checkbox-group scoring-option-grid">
-                        <label class="checkbox-label">
-                            <input type="radio" name="stk1d_relative_vs_spy" value="strength">
-                            <span class="checkbox-text">Strength</span>
-                        </label>
-                        <label class="checkbox-label">
-                            <input type="radio" name="stk1d_relative_vs_spy" value="weakness">
-                            <span class="checkbox-text">Weakness</span>
-                        </label>
-                        <label class="checkbox-label">
-                            <input type="radio" name="stk1d_relative_vs_spy" value="neutral">
-                            <span class="checkbox-text">Neutral</span>
-                        </label>
+                        <label class="checkbox-label"><input type="radio" name="stk1d_support_status" value="holding"><span class="checkbox-text">Holding</span></label>
+                        <label class="checkbox-label"><input type="radio" name="stk1d_support_status" value="broken"><span class="checkbox-text">Broken</span></label>
+                        <label class="checkbox-label"><input type="radio" name="stk1d_support_status" value="reclaimed"><span class="checkbox-text">Reclaimed</span></label>
+                        <label class="checkbox-label"><input type="radio" name="stk1d_support_status" value="rejecting"><span class="checkbox-text">Rejecting</span></label>
+                        <label class="checkbox-label"><input type="radio" name="stk1d_support_status" value="not_tested"><span class="checkbox-text">Not tested</span></label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Resistance status</label>
+                    <div class="checkbox-group scoring-option-grid">
+                        <label class="checkbox-label"><input type="radio" name="stk1d_resistance_status" value="holding"><span class="checkbox-text">Holding</span></label>
+                        <label class="checkbox-label"><input type="radio" name="stk1d_resistance_status" value="broken"><span class="checkbox-text">Broken</span></label>
+                        <label class="checkbox-label"><input type="radio" name="stk1d_resistance_status" value="reclaimed"><span class="checkbox-text">Reclaimed</span></label>
+                        <label class="checkbox-label"><input type="radio" name="stk1d_resistance_status" value="rejecting"><span class="checkbox-text">Rejecting</span></label>
+                        <label class="checkbox-label"><input type="radio" name="stk1d_resistance_status" value="not_tested"><span class="checkbox-text">Not tested</span></label>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>My key levels</label>
+                    <div class="timeframe-row-2cols">
+                        <input id="stk1d_support" name="stk1d_support" type="text" placeholder="Support level">
+                        <input id="stk1d_resistance" name="stk1d_resistance" type="text" placeholder="Resistance level">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Manual values for Room (Close, ATR)</label>
+                    <div class="timeframe-row-2cols">
+                        <input name="stk1d_manual_close" type="text" placeholder="Close">
+                        <input name="stk1d_manual_atr" type="text" placeholder="ATR (14)">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Room to move (ATR-based)</label>
+                    <div class="checkbox-group scoring-option-grid">
+                        <label class="checkbox-label"><input type="radio" name="stk1d_room_to_move" value="large"><span class="checkbox-text">Large</span></label>
+                        <label class="checkbox-label"><input type="radio" name="stk1d_room_to_move" value="medium"><span class="checkbox-text">Medium</span></label>
+                        <label class="checkbox-label"><input type="radio" name="stk1d_room_to_move" value="limited"><span class="checkbox-text">Limited</span></label>
+                        <label class="checkbox-label"><input type="radio" name="stk1d_room_to_move" value="none"><span class="checkbox-text">None</span></label>
+                    </div>
+                    <div id="stk1d_room_auto" class="scoring-readonly-value">Enter Close + ATR + key levels to compute auto room suggestion</div>
+                </div>
+            </div>
+        </div>
+
+        <div class="analysis-subsection">
+            <h4>C. Relative &amp; Risk (vs market)</h4>
+            <div class="scoring-stage-grid">
+                <div class="form-group">
+                    <label>RS state vs SPY</label>
+                    <div class="checkbox-group scoring-option-grid">
+                        <label class="checkbox-label"><input type="radio" name="stk1d_relative_vs_spy" value="strong"><span class="checkbox-text">Strong</span></label>
+                        <label class="checkbox-label"><input type="radio" name="stk1d_relative_vs_spy" value="neutral"><span class="checkbox-text">Neutral</span></label>
+                        <label class="checkbox-label"><input type="radio" name="stk1d_relative_vs_spy" value="weak"><span class="checkbox-text">Weak</span></label>
                     </div>
                 </div>
                 <div class="form-group">
                     <label>RS trend</label>
                     <div class="checkbox-group scoring-option-grid">
-                        <label class="checkbox-label">
-                            <input type="radio" name="stk1d_rs_trend" value="improving">
-                            <span class="checkbox-text">Improving</span>
-                        </label>
-                        <label class="checkbox-label">
-                            <input type="radio" name="stk1d_rs_trend" value="stable">
-                            <span class="checkbox-text">Stable</span>
-                        </label>
-                        <label class="checkbox-label">
-                            <input type="radio" name="stk1d_rs_trend" value="deteriorating">
-                            <span class="checkbox-text">Deteriorating</span>
-                        </label>
+                        <label class="checkbox-label"><input type="radio" name="stk1d_rs_trend" value="rising"><span class="checkbox-text">Rising</span></label>
+                        <label class="checkbox-label"><input type="radio" name="stk1d_rs_trend" value="flat"><span class="checkbox-text">Flat</span></label>
+                        <label class="checkbox-label"><input type="radio" name="stk1d_rs_trend" value="falling"><span class="checkbox-text">Falling</span></label>
                     </div>
                 </div>
                 <div class="form-group">
-                    <label>Beta / sensitivity</label>
-                    <div class="checkbox-group scoring-option-grid">
-                        <label class="checkbox-label">
-                            <input type="radio" name="stk1d_beta_sensitivity" value="high_beta">
-                            <span class="checkbox-text">High beta</span>
-                        </label>
-                        <label class="checkbox-label">
-                            <input type="radio" name="stk1d_beta_sensitivity" value="neutral_beta">
-                            <span class="checkbox-text">Neutral</span>
-                        </label>
-                        <label class="checkbox-label">
-                            <input type="radio" name="stk1d_beta_sensitivity" value="defensive">
-                            <span class="checkbox-text">Defensive</span>
-                        </label>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="analysis-subsection">
-            <h4>3. Trend state and phase</h4>
-            <div class="scoring-stage-grid">
-                <div class="form-group">
-                    <label>Trend state</label>
-                    <div class="checkbox-group scoring-option-grid">
-                        <label class="checkbox-label">
-                            <input type="radio" name="stk1d_trend_state" value="intact">
-                            <span class="checkbox-text">Intact</span>
-                        </label>
-                        <label class="checkbox-label">
-                            <input type="radio" name="stk1d_trend_state" value="weakening">
-                            <span class="checkbox-text">Weakening</span>
-                        </label>
-                        <label class="checkbox-label">
-                            <input type="radio" name="stk1d_trend_state" value="broken">
-                            <span class="checkbox-text">Broken</span>
-                        </label>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label>Phase</label>
-                    <div class="checkbox-group scoring-option-grid">
-                        <label class="checkbox-label">
-                            <input type="radio" name="stk1d_phase" value="impulse">
-                            <span class="checkbox-text">Impulse</span>
-                        </label>
-                        <label class="checkbox-label">
-                            <input type="radio" name="stk1d_phase" value="pullback">
-                            <span class="checkbox-text">Pullback</span>
-                        </label>
-                        <label class="checkbox-label">
-                            <input type="radio" name="stk1d_phase" value="base">
-                            <span class="checkbox-text">Base</span>
-                        </label>
-                    </div>
-                </div>
-                <div id="stk1d_pullback_group" class="form-group">
-                    <label>Pullback</label>
-                    <div class="checkbox-group scoring-option-grid">
-                        <label class="checkbox-label">
-                            <input type="radio" name="stk1d_pullback" value="within_trend">
-                            <span class="checkbox-text">Within trend</span>
-                        </label>
-                        <label class="checkbox-label">
-                            <input type="radio" name="stk1d_pullback" value="against">
-                            <span class="checkbox-text">Against</span>
-                        </label>
-                        <label class="checkbox-label">
-                            <input type="radio" name="stk1d_pullback" value="none">
-                            <span class="checkbox-text">None</span>
-                        </label>
-                    </div>
-                    <div id="stk1d_pullback_na" class="scoring-guardrail"></div>
-                </div>
-                <div class="form-group">
-                    <label>Trend quality</label>
-                    <div class="checkbox-group scoring-option-grid">
-                        <label class="checkbox-label">
-                            <input type="radio" name="stk1d_trend_quality" value="clean">
-                            <span class="checkbox-text">Clean</span>
-                        </label>
-                        <label class="checkbox-label">
-                            <input type="radio" name="stk1d_trend_quality" value="acceptable">
-                            <span class="checkbox-text">Acceptable</span>
-                        </label>
-                        <label class="checkbox-label">
-                            <input type="radio" name="stk1d_trend_quality" value="choppy">
-                            <span class="checkbox-text">Choppy</span>
-                        </label>
-                    </div>
-                    <div id="stk1d_trend_quality_guardrail" class="scoring-guardrail"></div>
-                </div>
-                <div class="form-group">
-                    <label>Volatility state</label>
-                    <div class="checkbox-group scoring-option-grid">
-                        <label class="checkbox-label">
-                            <input type="radio" name="stk1d_volatility_state" value="expanding">
-                            <span class="checkbox-text">Expanding</span>
-                        </label>
-                        <label class="checkbox-label">
-                            <input type="radio" name="stk1d_volatility_state" value="stable">
-                            <span class="checkbox-text">Stable</span>
-                        </label>
-                        <label class="checkbox-label">
-                            <input type="radio" name="stk1d_volatility_state" value="contracting">
-                            <span class="checkbox-text">Contracting</span>
-                        </label>
-                    </div>
-                </div>
-                <div class="form-group">
-                    <label>Extension state</label>
-                    <div class="checkbox-group scoring-option-grid">
-                        <label class="checkbox-label">
-                            <input type="radio" name="stk1d_extension_state" value="extended">
-                            <span class="checkbox-text">Extended</span>
-                        </label>
-                        <label class="checkbox-label">
-                            <input type="radio" name="stk1d_extension_state" value="balanced">
-                            <span class="checkbox-text">Balanced</span>
-                        </label>
-                        <label class="checkbox-label">
-                            <input type="radio" name="stk1d_extension_state" value="reset">
-                            <span class="checkbox-text">Reset</span>
-                        </label>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="analysis-subsection">
-            <h4>4. Context risk</h4>
-            <div class="scoring-stage-grid">
-                <div class="form-group">
-                    <label>Events</label>
+                    <label>Earnings / dividends / catalysts</label>
                     <div class="checkbox-group scoring-option-grid scoring-option-grid-2">
-                        <label class="checkbox-label">
-                            <input type="checkbox" name="stk1d_event_earnings">
-                            <span class="checkbox-text">Earnings</span>
-                        </label>
-                        <label class="checkbox-label">
-                            <input type="checkbox" name="stk1d_event_dividends">
-                            <span class="checkbox-text">Dividends</span>
-                        </label>
-                        <label class="checkbox-label">
-                            <input type="checkbox" name="stk1d_event_other">
-                            <span class="checkbox-text">Other catalyst</span>
-                        </label>
+                        <label class="checkbox-label"><input type="checkbox" name="stk1d_event_earnings"><span class="checkbox-text">Earnings</span></label>
+                        <label class="checkbox-label"><input type="checkbox" name="stk1d_event_dividends"><span class="checkbox-text">Dividends</span></label>
+                        <label class="checkbox-label"><input type="checkbox" name="stk1d_event_other"><span class="checkbox-text">Other catalyst</span></label>
                     </div>
                 </div>
                 <div class="form-group">
                     <label>Gap risk</label>
                     <div class="checkbox-group scoring-option-grid">
-                        <label class="checkbox-label">
-                            <input type="radio" name="stk1d_gap_risk" value="low">
-                            <span class="checkbox-text">Low</span>
-                        </label>
-                        <label class="checkbox-label">
-                            <input type="radio" name="stk1d_gap_risk" value="medium">
-                            <span class="checkbox-text">Medium</span>
-                        </label>
-                        <label class="checkbox-label">
-                            <input type="radio" name="stk1d_gap_risk" value="high">
-                            <span class="checkbox-text">High</span>
-                        </label>
+                        <label class="checkbox-label"><input type="radio" name="stk1d_gap_risk" value="low"><span class="checkbox-text">Low</span></label>
+                        <label class="checkbox-label"><input type="radio" name="stk1d_gap_risk" value="medium"><span class="checkbox-text">Medium</span></label>
+                        <label class="checkbox-label"><input type="radio" name="stk1d_gap_risk" value="high"><span class="checkbox-text">High</span></label>
                     </div>
                 </div>
                 <div class="form-group">
                     <label>Liquidity / options liquidity</label>
                     <div class="checkbox-group scoring-option-grid">
-                        <label class="checkbox-label">
-                            <input type="radio" name="stk1d_options_liquidity" value="good">
-                            <span class="checkbox-text">Good</span>
-                        </label>
-                        <label class="checkbox-label">
-                            <input type="radio" name="stk1d_options_liquidity" value="medium">
-                            <span class="checkbox-text">Medium</span>
-                        </label>
-                        <label class="checkbox-label">
-                            <input type="radio" name="stk1d_options_liquidity" value="poor">
-                            <span class="checkbox-text">Poor</span>
-                        </label>
+                        <label class="checkbox-label"><input type="radio" name="stk1d_options_liquidity" value="good"><span class="checkbox-text">Good</span></label>
+                        <label class="checkbox-label"><input type="radio" name="stk1d_options_liquidity" value="medium"><span class="checkbox-text">Medium</span></label>
+                        <label class="checkbox-label"><input type="radio" name="stk1d_options_liquidity" value="poor"><span class="checkbox-text">Poor</span></label>
                     </div>
                     <div id="stk1d_liquidity_event_guardrail" class="scoring-guardrail"></div>
                 </div>
@@ -528,49 +409,23 @@
         </div>
 
         <div class="analysis-subsection">
-            <h4>5. Key levels</h4>
+            <h4>Output</h4>
             <div class="scoring-stage-grid">
                 <div class="form-group">
-                    <label>Level position</label>
-                    <div class="checkbox-group scoring-option-grid">
-                        <label class="checkbox-label">
-                            <input type="radio" name="stk1d_level_position" value="near_support">
-                            <span class="checkbox-text">Near support</span>
-                        </label>
-                        <label class="checkbox-label">
-                            <input type="radio" name="stk1d_level_position" value="mid_range">
-                            <span class="checkbox-text">Mid-range</span>
-                        </label>
-                        <label class="checkbox-label">
-                            <input type="radio" name="stk1d_level_position" value="near_resistance">
-                            <span class="checkbox-text">Near resistance</span>
-                        </label>
-                        <label class="checkbox-label">
-                            <input type="radio" name="stk1d_level_position" value="range_break">
-                            <span class="checkbox-text">Range break</span>
-                        </label>
-                    </div>
+                    <label>Ticker Permission (auto)</label>
+                    <div id="stk1d_permission" class="scoring-readonly-value">No data</div>
                 </div>
                 <div class="form-group">
-                    <label for="stk1d_support">Support</label>
-                    <input id="stk1d_support" name="stk1d_support" type="text" placeholder="Support">
+                    <label>Aligned with SPY? (auto)</label>
+                    <div id="stk1d_alignment_auto" class="scoring-readonly-value">No data</div>
                 </div>
                 <div class="form-group">
-                    <label for="stk1d_resistance">Resistance</label>
-                    <input id="stk1d_resistance" name="stk1d_resistance" type="text" placeholder="Resistance">
+                    <label>Invalidation tomorrow (auto)</label>
+                    <div id="stk1d_invalidation_tomorrow" class="scoring-readonly-value">No data</div>
                 </div>
                 <div class="form-group">
-                    <div class="advanced-hint">Support/Resistance: enter concrete numbers or zones (e.g., 480-490), not descriptions.</div>
-                </div>
-            </div>
-        </div>
-
-        <div class="analysis-subsection">
-            <h4>6. Summary</h4>
-            <div class="scoring-stage-grid">
-                <div class="form-group">
-                    <label for="stk1d_summary">Stock summary</label>
-                    <textarea id="stk1d_summary" name="stk1d_summary" rows="3" placeholder="1-2 sentences: candidate / no candidate and why."></textarea>
+                    <label for="stk1d_summary">Summary</label>
+                    <textarea id="stk1d_summary" name="stk1d_summary" rows="3" placeholder="Auto + manual summary for this ticker"></textarea>
                 </div>
             </div>
         </div>

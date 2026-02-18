@@ -1211,6 +1211,84 @@ main {
     gap: 0.75rem;
 }
 
+.score-section-b .score-b-key-levels,
+.score-section-b .score-b-manual-values,
+.score-section-b .score-b-room-suggestion {
+    grid-column: 1;
+}
+
+.score-section-b .score-b-key-levels {
+    grid-row: 3;
+}
+
+.score-section-b .score-b-room-to-move {
+    grid-column: 2;
+    grid-row: 3;
+}
+
+@media (max-width: 900px) {
+    .score-section-b .score-b-key-levels,
+    .score-section-b .score-b-manual-values,
+    .score-section-b .score-b-room-suggestion,
+    .score-section-b .score-b-room-to-move {
+        grid-column: 1;
+        grid-row: auto;
+    }
+}
+
+.stock1d-layout .stk1d-manual-values,
+.stock1d-layout .stk1d-key-levels,
+.stock1d-layout .stk1d-room-suggestion {
+    grid-column: 1;
+}
+
+.stock1d-layout {
+    align-items: start;
+}
+
+.stock1d-layout .form-group {
+    align-self: start;
+}
+
+.stock1d-layout .stk1d-manual-values {
+    grid-row: 6;
+}
+
+.stock1d-layout .stk1d-key-levels {
+    grid-row: 7;
+}
+
+.stock1d-layout .stk1d-room-suggestion {
+    grid-row: 8;
+}
+
+.stock1d-layout .stk1d-room-to-move {
+    grid-column: 2;
+    grid-row: 6;
+}
+
+.stock1d-layout .stk1d-permission-box {
+    grid-column: 1;
+    grid-row: 9;
+}
+
+.stock1d-layout .stk1d-invalidation-box {
+    grid-column: 1;
+    grid-row: 10;
+}
+
+@media (max-width: 900px) {
+    .stock1d-layout .stk1d-manual-values,
+    .stock1d-layout .stk1d-key-levels,
+    .stock1d-layout .stk1d-room-suggestion,
+    .stock1d-layout .stk1d-room-to-move,
+    .stock1d-layout .stk1d-permission-box,
+    .stock1d-layout .stk1d-invalidation-box {
+        grid-column: 1;
+        grid-row: auto;
+    }
+}
+
 .scoring-option-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
@@ -1341,39 +1419,74 @@ main {
     margin-bottom: 0.4rem;
 }
 
+.table-wrap {
+    width: 100%;
+    overflow-x: auto;
+    border: 1px solid #d6ccbc;
+    border-radius: 10px;
+    background: #fffdf9;
+}
+
 .score-table-wrap {
     margin-top: 0.65rem;
 }
 
 .score-result-table {
     margin-top: 0;
-    table-layout: fixed;
+    width: 100%;
+    min-width: 980px;
+    table-layout: auto;
+    border-collapse: collapse;
+    background: #fffdf9;
 }
 
 .score-result-table th:nth-child(1),
 .score-result-table td:nth-child(1) {
-    width: 110px;
+    width: 120px;
 }
 
 .score-result-table th:nth-child(2),
-.score-result-table td:nth-child(2),
+.score-result-table td:nth-child(2) {
+    width: 150px;
+    white-space: nowrap;
+    font-weight: 600;
+}
+
 .score-result-table th:nth-child(3),
-.score-result-table td:nth-child(3),
+.score-result-table td:nth-child(3) {
+    min-width: 420px;
+}
+
 .score-result-table th:nth-child(4),
 .score-result-table td:nth-child(4) {
-    width: 115px;
+    width: 110px;
     white-space: nowrap;
     font-weight: 600;
 }
 
 .score-result-table th:nth-child(5),
 .score-result-table td:nth-child(5) {
-    min-width: 300px;
+    width: 140px;
+    white-space: nowrap;
 }
 
 .score-result-table th:nth-child(6),
 .score-result-table td:nth-child(6) {
-    min-width: 220px;
+    width: 130px;
+    white-space: nowrap;
+}
+
+.score-result-table th,
+.score-result-table td {
+    white-space: normal;
+    border: 1px solid #d9cfbf;
+    padding: 0.65rem 0.75rem;
+}
+
+.score-result-table th {
+    background: #e9dcc6;
+    color: #3b2b16;
+    font-weight: 700;
 }
 
 .score-result-table td {
@@ -1381,11 +1494,11 @@ main {
 }
 
 .score-result-table tbody tr:nth-child(odd) {
-    background: #fcfaf6;
+    background: #f8f1e6;
 }
 
 .score-result-table tbody tr:hover {
-    background: #f6f1e9;
+    background: #f0e6d6;
 }
 
 .score-result-table #pen-vol-subtotal {
