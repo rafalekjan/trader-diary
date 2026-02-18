@@ -809,25 +809,12 @@ function initScoreGatekeeper() {
     };
 
     const computeAutoBiasFromState = (regime, structure, trendStrength, momentumCondition) => {
-        let bull = 0;
-        let bear = 0;
-
-        if (regime === 'trend_up') bull += 2;
-        if (regime === 'trend_down') bear += 2;
-
-        if (structure === 'hh_hl') bull += 2;
-        if (structure === 'll_lh') bear += 2;
-
-        if (trendStrength === 'above_key_mas') bull += 2;
-        if (trendStrength === 'below_key_mas') bear += 2;
-
-        if (momentumCondition === 'expanding' || momentumCondition === 'stable') {
-            if (regime === 'trend_up') bull += 1;
-            if (regime === 'trend_down') bear += 1;
-        }
-
-        if (bull - bear >= 2) return 'bullish';
-        if (bear - bull >= 2) return 'bearish';
+        // Keep parity with TradingView logic (SPY/stock1D Pine):
+        // Bullish only for HH/HL + Above key MAs,
+        // Bearish only for LL/LH + Below key MAs,
+        // otherwise Neutral.
+        if (structure === 'hh_hl' && trendStrength === 'above_key_mas') return 'bullish';
+        if (structure === 'll_lh' && trendStrength === 'below_key_mas') return 'bearish';
         return 'neutral';
     };
 

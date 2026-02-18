@@ -1212,8 +1212,7 @@ main {
 }
 
 .score-section-b .score-b-key-levels,
-.score-section-b .score-b-manual-values,
-.score-section-b .score-b-room-suggestion {
+.score-section-b .score-b-manual-values {
     grid-column: 1;
 }
 
@@ -1229,7 +1228,6 @@ main {
 @media (max-width: 900px) {
     .score-section-b .score-b-key-levels,
     .score-section-b .score-b-manual-values,
-    .score-section-b .score-b-room-suggestion,
     .score-section-b .score-b-room-to-move {
         grid-column: 1;
         grid-row: auto;
@@ -1237,8 +1235,7 @@ main {
 }
 
 .stock1d-layout .stk1d-manual-values,
-.stock1d-layout .stk1d-key-levels,
-.stock1d-layout .stk1d-room-suggestion {
+.stock1d-layout .stk1d-key-levels {
     grid-column: 1;
 }
 
@@ -1256,10 +1253,6 @@ main {
 
 .stock1d-layout .stk1d-key-levels {
     grid-row: 7;
-}
-
-.stock1d-layout .stk1d-room-suggestion {
-    grid-row: 8;
 }
 
 .stock1d-layout .stk1d-room-to-move {
@@ -1280,7 +1273,6 @@ main {
 @media (max-width: 900px) {
     .stock1d-layout .stk1d-manual-values,
     .stock1d-layout .stk1d-key-levels,
-    .stock1d-layout .stk1d-room-suggestion,
     .stock1d-layout .stk1d-room-to-move,
     .stock1d-layout .stk1d-permission-box,
     .stock1d-layout .stk1d-invalidation-box {
