@@ -370,6 +370,189 @@
         </div>
     </div>
 
+        <div class="analysis-section">
+        <div class="scoring-header-row">
+            <h3>Ticker (4H) - Structure &amp; Planning</h3>
+            <div class="scoring-header-summary">
+                <div><strong>4H Score:</strong> <span id="score-stk4h-score-head">No data</span></div>
+                <div><strong>Grade:</strong> <span id="score-stk4h-grade-head">No data</span></div>
+                <div><strong>Status:</strong> <span id="score-stk4h-status-head">No data</span></div>
+            </div>
+        </div>
+        <div class="analysis-subsection">
+            <h4>Ticker (4H) - Structure &amp; Planning</h4>
+            <div class="scoring-stage-grid">
+                <div class="form-group">
+                    <label>Part 1 (AUTO from PINE)</label>
+                    <div class="scoring-readonly-value">Wpisz fakty z tabeli Pine 4H (AUTO/HINT).</div>
+                </div>
+                <div class="form-group">
+                    <label>Bias vs 1D (hint)</label>
+                    <select name="score_stk4h_bias_vs_1d_hint">
+                        <option value="">Select</option>
+                        <option value="in_direction_1d">In direction of 1D</option>
+                        <option value="counter_trend">Counter-trend</option>
+                        <option value="neutral">Neutral</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Bias 1D (auto)</label>
+                    <select name="score_stk4h_bias_1d_auto">
+                        <option value="">Select</option>
+                        <option value="bullish">Bullish</option>
+                        <option value="bearish">Bearish</option>
+                        <option value="neutral">Neutral</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Bias 4H (auto)</label>
+                    <select name="score_stk4h_bias_4h_auto">
+                        <option value="">Select</option>
+                        <option value="bullish">Bullish</option>
+                        <option value="bearish">Bearish</option>
+                        <option value="neutral">Neutral</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>4H Structure (auto)</label>
+                    <select name="score_stk4h_structure_auto">
+                        <option value="">Select</option>
+                        <option value="hh_hl">HH/HL</option>
+                        <option value="ll_lh">LL/LH</option>
+                        <option value="compression">Compression</option>
+                        <option value="range">Range</option>
+                        <option value="transition">Transition</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Trend Strength (auto)</label>
+                    <select name="score_stk4h_trend_strength_auto">
+                        <option value="">Select</option>
+                        <option value="above_key_mas">Above key MAs</option>
+                        <option value="below_key_mas">Below key MAs</option>
+                        <option value="chop_around_mas">Chop around MAs</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Trend Quality (auto)</label>
+                    <select name="score_stk4h_trend_quality_auto">
+                        <option value="">Select</option>
+                        <option value="clean_trend">Clean trend</option>
+                        <option value="overlapping_messy">Overlapping / messy</option>
+                        <option value="exhausted">Exhausted</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Regime (auto)</label>
+                    <select name="score_stk4h_regime_auto">
+                        <option value="">Select</option>
+                        <option value="trend_up">Trend Up</option>
+                        <option value="trend_down">Trend Down</option>
+                        <option value="range">Range</option>
+                        <option value="volatile">Volatile</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>VWAP state (auto)</label>
+                    <select name="score_stk4h_vwap_state_auto">
+                        <option value="">Select</option>
+                        <option value="above">Above</option>
+                        <option value="below">Below</option>
+                        <option value="around">Around</option>
+                        <option value="na">N/A</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Location (hint)</label>
+                    <select name="score_stk4h_location_hint">
+                        <option value="">Select</option>
+                        <option value="at_4h_support">At 4H support</option>
+                        <option value="at_4h_resistance">At 4H resistance</option>
+                        <option value="at_htf_level">At HTF level (1D)</option>
+                        <option value="middle_of_structure">Middle of structure</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Liquidity hint</label>
+                    <select name="score_stk4h_liquidity_hint">
+                        <option value="">Select</option>
+                        <option value="sweep_low">Sweep of low</option>
+                        <option value="sweep_high">Sweep of high</option>
+                        <option value="inside_bar_compression">Inside bar compression</option>
+                        <option value="none">None</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>AUTO values (from Pine)</label>
+                    <div class="timeframe-row-2cols">
+                        <input name="score_stk4h_close" type="text" placeholder="Close">
+                        <input name="score_stk4h_atr14" type="text" placeholder="ATR(14)">
+                    </div>
+                    <div class="timeframe-row-2cols" style="margin-top:6px;">
+                        <input name="score_stk4h_support_auto" type="text" placeholder="Support (auto)">
+                        <input name="score_stk4h_resistance_auto" type="text" placeholder="Resistance (auto)">
+                    </div>
+                    <div class="timeframe-row-2cols" style="margin-top:6px;">
+                        <input name="score_stk4h_pwh" type="text" placeholder="PWH (optional)">
+                        <input name="score_stk4h_pwl" type="text" placeholder="PWL (optional)">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Part 2 (PLAN)</label>
+                    <div class="scoring-readonly-value">Manual plan: setup, confirmation, invalidation, risk levels.</div>
+                </div>
+                <div class="form-group">
+                    <label>Setup Type (required)</label>
+                    <select name="score_stk4h_setup_type">
+                        <option value="">Select</option>
+                        <option value="pullback_continuation">Pullback continuation</option>
+                        <option value="breakout_continuation">Breakout continuation</option>
+                        <option value="range_play">Range play</option>
+                        <option value="breakdown_continuation">Breakdown continuation</option>
+                        <option value="reversal_attempt">Reversal attempt</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Confirmation condition (required)</label>
+                    <select name="score_stk4h_confirmation">
+                        <option value="">Select</option>
+                        <option value="close_above_level">4H close above level</option>
+                        <option value="strong_bull_candle">Strong bull candle</option>
+                        <option value="reclaim_level">Reclaim level</option>
+                        <option value="break_hold">Break + hold</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Invalidation logic (required)</label>
+                    <select name="score_stk4h_invalidation_logic">
+                        <option value="">Select</option>
+                        <option value="below_last_hl">Below last HL</option>
+                        <option value="above_last_lh">Above last LH</option>
+                        <option value="below_4h_support">Below 4H support</option>
+                        <option value="above_4h_resistance">Above 4H resistance</option>
+                        <option value="close_back_inside_range">Close back inside range</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Risk Levels</label>
+                    <div class="timeframe-row-3cols">
+                        <input name="score_stk4h_entry" type="text" placeholder="Entry">
+                        <input name="score_stk4h_stop" type="text" placeholder="Stop">
+                        <input name="score_stk4h_target" type="text" placeholder="Target">
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Output</label>
+                    <div id="score-stk4h-rr" class="scoring-readonly-value">R:R: No data</div>
+                    <div id="score-stk4h-room" class="scoring-readonly-value">Room: No data</div>
+                    <div id="score-stk4h-breakdown" class="scoring-readonly-value">Structure: 0/8 | Setup: 0/6 | Risk: 0/6 | Penalties: 0</div>
+                    <div id="score-stk4h-status" class="scoring-readonly-value">Status: No data</div>
+                    <div id="score-stk4h-warnings" class="scoring-readonly-value">Warnings: none</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <div class="analysis-section">
         <div class="scoring-header-row">
             <h3>History</h3>
@@ -414,5 +597,6 @@
     </div>
 </form>
 {% endblock %}
+
 
 

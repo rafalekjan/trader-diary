@@ -789,6 +789,14 @@ function initScoreGatekeeper() {
     const stk1dBiasInputs = Array.from(form.querySelectorAll('input[name="score_stk1d_bias"]'));
     const stk1dRoomOverrideEl = form.querySelector('input[name="score_stk1d_room_manual_override"]');
     const stk1dRoomInputs = Array.from(form.querySelectorAll('input[name="score_stk1d_room_to_move"]'));
+    const stk4hScoreHeadEl = document.getElementById('score-stk4h-score-head');
+    const stk4hGradeHeadEl = document.getElementById('score-stk4h-grade-head');
+    const stk4hStatusHeadEl = document.getElementById('score-stk4h-status-head');
+    const stk4hRrEl = document.getElementById('score-stk4h-rr');
+    const stk4hRoomEl = document.getElementById('score-stk4h-room');
+    const stk4hBreakdownEl = document.getElementById('score-stk4h-breakdown');
+    const stk4hStatusEl = document.getElementById('score-stk4h-status');
+    const stk4hWarningsEl = document.getElementById('score-stk4h-warnings');
     let latestComputed = null;
     let latestWarnings = [];
 
@@ -1065,6 +1073,242 @@ function initScoreGatekeeper() {
         });
     };
 
+    const getPlanDirection = (setupType, oneDBias) => {
+        if (setupType === 'breakdown_continuation') return 'bearish';
+        if (setupType === 'breakout_continuation' || setupType === 'pullback_continuation') return 'bullish';
+        if ((setupType === 'reversal_attempt' || setupType === 'range_play') && (oneDBias === 'bullish' || oneDBias === 'bearish')) {
+            return oneDBias;
+        }
+        return '';
+    };
+
+    const calculateRR = (entryRaw, stopRaw, targetRaw, direction) => {
+        const entry = parseLevel(entryRaw);
+        const stop = parseLevel(stopRaw);
+        const target = parseLevel(targetRaw);
+        if (!Number.isFinite(entry) || !Number.isFinite(stop) || !Number.isFinite(target)) {
+            return { rr: null, label: 'Enter Entry/Stop/Target', validOrder: false };
+        }
+        let validOrder = true;
+        if (direction === 'bullish') validOrder = stop < entry && entry < target;
+        else if (direction === 'bearish') validOrder = target < entry && entry < stop;
+        if (!validOrder) {
+            return { rr: null, label: 'Invalid level order', validOrder: false };
+        }
+        const risk = Math.abs(entry - stop);
+        const reward = Math.abs(target - entry);
+        if (!Number.isFinite(risk) || risk <= 0 || !Number.isFinite(reward)) {
+            return { rr: null, label: 'Invalid risk values', validOrder: false };
+        }
+        const rr = reward / risk;
+        let label = '<1.5R (warning)';
+        if (rr > 2) label = '>2R (good)';
+        else if (rr >= 1.5) label = '1.5-2R (acceptable)';
+        return { rr, label, validOrder: true };
+    };
+
+    const calculateStock4H = (values, stock1dResult) => {
+        const hasRequiredPlan = Boolean(values.setupType && values.confirmation && values.invalidationLogic);
+        const hasRequiredAuto = Boolean(values.bias4hAuto && values.structureAuto && values.trendQualityAuto);
+        if (!hasRequiredPlan || !hasRequiredAuto) {
+            return {
+                score20: 0,
+                grade: 'No data',
+                status: 'No data',
+                rrText: 'No data',
+                roomText: 'No data',
+                warningsText: 'none',
+                structureScore: 0,
+                setupScore: 0,
+                riskScore: 0,
+                penalties: 0
+            };
+        }
+
+        const planDirection = getPlanDirection(values.setupType, values.bias4hAuto || values.bias1dAuto);
+        const rrInfo = calculateRR(values.entry, values.stop, values.target, planDirection);
+        const entryNum = parseLevel(values.entry);
+        const atrNum = parseLevel(values.atr14);
+        const supportNum = parseLevel(values.supportAuto);
+        const resistanceNum = parseLevel(values.resistanceAuto);
+        let roomClass = '';
+        let roomText = 'Room: No data';
+        if (Number.isFinite(entryNum) && Number.isFinite(atrNum) && atrNum > 0) {
+            let dist = null;
+            if (planDirection === 'bullish' && Number.isFinite(resistanceNum)) dist = resistanceNum - entryNum;
+            else if (planDirection === 'bearish' && Number.isFinite(supportNum)) dist = entryNum - supportNum;
+            else {
+                const candidates = [];
+                if (Number.isFinite(supportNum)) candidates.push(Math.abs(entryNum - supportNum));
+                if (Number.isFinite(resistanceNum)) candidates.push(Math.abs(resistanceNum - entryNum));
+                if (candidates.length) dist = Math.min(...candidates);
+            }
+            if (Number.isFinite(dist) && dist >= 0) {
+                roomClass = classifyRoomFromAtr(dist / atrNum) || '';
+                if (roomClass) roomText = `${roomClass} (${(dist / atrNum).toFixed(2)} ATR)`;
+            }
+        }
+
+        let structureScore = 0;
+        structureScore += values.biasVs1DHint === 'in_direction_1d' ? 2 : values.biasVs1DHint === 'neutral' ? 1 : 0;
+        structureScore += (values.structureAuto === 'hh_hl' || values.structureAuto === 'll_lh') ? 3
+            : values.structureAuto === 'compression' ? 2
+                : (values.structureAuto === 'transition' || values.structureAuto === 'range') ? 1 : 0;
+        structureScore += values.trendQualityAuto === 'clean_trend' ? 3 : values.trendQualityAuto === 'overlapping_messy' ? 1 : 0;
+        structureScore = clamp(structureScore, 0, 8);
+
+        let setupScore = 0;
+        setupScore += values.setupType ? 1 : 0;
+        setupScore += values.confirmation ? 1 : 0;
+        setupScore += values.invalidationLogic ? 1 : 0;
+        setupScore += values.locationHint === 'at_htf_level' ? 2
+            : (values.locationHint === 'at_4h_support' || values.locationHint === 'at_4h_resistance') ? 1 : 0;
+        setupScore += (values.liquidityHint && values.liquidityHint !== 'none') ? 1 : 0;
+        setupScore = clamp(setupScore, 0, 6);
+
+        let riskScore = 0;
+        riskScore += values.hasRiskLevels && rrInfo.validOrder ? 2 : 0;
+        riskScore += rrInfo.rr > 2 ? 3 : rrInfo.rr >= 1.5 ? 2 : rrInfo.rr >= 1.3 ? 1 : 0;
+        riskScore += roomClass === 'large' || roomClass === 'medium' || roomClass === 'limited' ? 1 : 0;
+        riskScore = clamp(riskScore, 0, 6);
+
+        let penalties = 0;
+        const warnings = [];
+        if (values.structureAuto === 'range' && values.setupType === 'pullback_continuation') {
+            penalties -= 2;
+            warnings.push('Range structure with pullback continuation');
+        }
+        if (values.trendQualityAuto === 'exhausted' && values.setupType === 'breakout_continuation') {
+            penalties -= 3;
+            warnings.push('Exhausted trend with breakout continuation');
+        }
+        if (values.trendQualityAuto === 'overlapping_messy' && values.locationHint === 'middle_of_structure') {
+            penalties -= 2;
+            warnings.push('Messy trend in middle of structure');
+        }
+        if (
+            values.invalidationLogic === 'below_4h_support' &&
+            values.locationHint === 'at_4h_resistance'
+        ) warnings.push('Invalidation below support mismatched with location at resistance');
+        if (
+            values.invalidationLogic === 'above_4h_resistance' &&
+            values.locationHint === 'at_4h_support'
+        ) warnings.push('Invalidation above resistance mismatched with location at support');
+
+        if (
+            values.regimeAuto === 'range' &&
+            values.confirmation === 'break_hold' &&
+            values.locationHint !== 'at_4h_support' &&
+            values.locationHint !== 'at_4h_resistance'
+        ) warnings.push('Range + Break+hold should be at support/resistance');
+
+        const qualityScore = clamp(structureScore + setupScore + riskScore + penalties, 0, 20);
+        let score = qualityScore;
+        let status = score >= 16 ? 'Allowed' : score >= 12 ? 'Reduced' : 'No-trade';
+        const capReasons = [];
+
+        if (!values.hasRiskLevels || !rrInfo.validOrder || rrInfo.rr === null) {
+            status = 'No-trade';
+            capReasons.push('No-trade: incomplete or invalid Entry/Stop/Target');
+        }
+        if (rrInfo.rr !== null && rrInfo.rr < 1.3) {
+            status = 'No-trade';
+            capReasons.push('No-trade: R:R below 1.3R');
+        }
+        if (rrInfo.rr !== null && rrInfo.rr < 1.5 && status === 'Allowed') {
+            status = 'Reduced';
+            capReasons.push('Cap Reduced: R:R between 1.3R and 1.5R');
+        }
+        if (values.trendQualityAuto === 'exhausted' && values.setupType === 'reversal_attempt') {
+            status = 'No-trade';
+            capReasons.push('No-trade: exhausted trend + reversal attempt');
+        }
+        if (values.biasVs1DHint === 'counter_trend' && status === 'Allowed') {
+            status = 'Reduced';
+            capReasons.push('Counter-trend vs 1D cannot be Allowed');
+        }
+        if (roomClass === 'none') {
+            if (values.setupType === 'range_play' || values.setupType === 'reversal_attempt') {
+                if (status === 'Allowed') status = 'Reduced';
+                capReasons.push('Cap Reduced: room to move = none');
+            } else {
+                status = 'No-trade';
+                capReasons.push('No-trade: room to move = none');
+            }
+        }
+        if (
+            values.regimeAuto === 'range' &&
+            values.confirmation === 'break_hold' &&
+            values.locationHint !== 'at_4h_support' &&
+            values.locationHint !== 'at_4h_resistance' &&
+            status === 'Allowed'
+        ) {
+            status = 'Reduced';
+            capReasons.push('Cap Reduced: range + break/hold outside edge location');
+        }
+        if (stock1dResult && stock1dResult.permission === 'No-trade') {
+            score = Math.min(score, 8);
+            status = 'No-trade';
+            capReasons.push('Blocked by 1D: Permission = No-trade');
+        }
+
+        let grade = 'Invalid';
+        if (qualityScore >= 16) grade = 'A-Grade';
+        else if (qualityScore >= 12) grade = 'B-Grade';
+        else if (qualityScore > 0) grade = 'C-Grade';
+
+        const rrText = rrInfo.rr === null ? rrInfo.label : `${rrInfo.rr.toFixed(2)}R (${rrInfo.label})`;
+        const statusText = capReasons.length ? `${status} | ${capReasons.join('; ')}` : status;
+
+        return {
+            score20: score,
+            grade,
+            status,
+            statusText,
+            rrText,
+            roomText,
+            warningsText: warnings.length ? warnings.join(' | ') : 'none',
+            structureScore,
+            setupScore,
+            riskScore,
+            penalties
+        };
+    };
+
+    const calculateStock4HFromInputs = (inputs) => {
+        const safeInputs = inputs && typeof inputs === 'object' ? inputs : {};
+        const stock1dResult = calculateStock1DFromInputs(safeInputs);
+        return calculateStock4H({
+            biasVs1DHint: String(safeInputs.score_stk4h_bias_vs_1d_hint || ''),
+            bias1dAuto: String(safeInputs.score_stk4h_bias_1d_auto || ''),
+            bias4hAuto: String(safeInputs.score_stk4h_bias_4h_auto || ''),
+            structureAuto: String(safeInputs.score_stk4h_structure_auto || ''),
+            trendStrengthAuto: String(safeInputs.score_stk4h_trend_strength_auto || ''),
+            trendQualityAuto: String(safeInputs.score_stk4h_trend_quality_auto || ''),
+            regimeAuto: String(safeInputs.score_stk4h_regime_auto || ''),
+            vwapStateAuto: String(safeInputs.score_stk4h_vwap_state_auto || ''),
+            locationHint: String(safeInputs.score_stk4h_location_hint || ''),
+            liquidityHint: String(safeInputs.score_stk4h_liquidity_hint || ''),
+            setupType: String(safeInputs.score_stk4h_setup_type || ''),
+            confirmation: String(safeInputs.score_stk4h_confirmation || ''),
+            invalidationLogic: String(safeInputs.score_stk4h_invalidation_logic || ''),
+            close: safeInputs.score_stk4h_close,
+            atr14: safeInputs.score_stk4h_atr14,
+            supportAuto: safeInputs.score_stk4h_support_auto,
+            resistanceAuto: safeInputs.score_stk4h_resistance_auto,
+            pwh: safeInputs.score_stk4h_pwh,
+            pwl: safeInputs.score_stk4h_pwl,
+            entry: safeInputs.score_stk4h_entry,
+            stop: safeInputs.score_stk4h_stop,
+            target: safeInputs.score_stk4h_target,
+            hasRiskLevels: Boolean(
+                parseLevel(safeInputs.score_stk4h_entry) !== null &&
+                parseLevel(safeInputs.score_stk4h_stop) !== null &&
+                parseLevel(safeInputs.score_stk4h_target) !== null
+            )
+        }, stock1dResult);
+    };
+
     const buildSnapshotModules = (item) => {
         const modules = [];
         const marketScore = Number(item && item.score);
@@ -1088,6 +1332,19 @@ function initScoreGatekeeper() {
                 score: stockResult.score100,
                 max: 100,
                 permission: stockResult.permission
+            });
+        }
+
+        const stock4hResult = calculateStock4HFromInputs(item && item.inputs);
+        if (stock4hResult.grade !== 'No data') {
+            const rawTicker = String((item && item.inputs && item.inputs.score_stk1d_ticker) || '').trim();
+            const tickerLabel = rawTicker ? `${rawTicker.toUpperCase()} 4H` : 'Ticker 4H';
+            modules.push({
+                key: 'ticker_4h',
+                label: tickerLabel,
+                score: stock4hResult.score20,
+                max: 20,
+                permission: stock4hResult.grade
             });
         }
 
@@ -1296,6 +1553,32 @@ function initScoreGatekeeper() {
             rsState: getRadio('score_stk1d_rs_state'),
             rsTrend: getRadio('score_stk1d_rs_trend'),
         };
+        const getSelect = (name) => form.querySelector(`select[name="${name}"]`)?.value || '';
+        const getInput = (name) => form.querySelector(`[name="${name}"]`)?.value || '';
+        const stock4hValues = {
+            biasVs1DHint: getSelect('score_stk4h_bias_vs_1d_hint'),
+            bias1dAuto: getSelect('score_stk4h_bias_1d_auto'),
+            bias4hAuto: getSelect('score_stk4h_bias_4h_auto'),
+            structureAuto: getSelect('score_stk4h_structure_auto'),
+            trendStrengthAuto: getSelect('score_stk4h_trend_strength_auto'),
+            trendQualityAuto: getSelect('score_stk4h_trend_quality_auto'),
+            regimeAuto: getSelect('score_stk4h_regime_auto'),
+            vwapStateAuto: getSelect('score_stk4h_vwap_state_auto'),
+            locationHint: getSelect('score_stk4h_location_hint'),
+            liquidityHint: getSelect('score_stk4h_liquidity_hint'),
+            setupType: getSelect('score_stk4h_setup_type'),
+            confirmation: getSelect('score_stk4h_confirmation'),
+            invalidationLogic: getSelect('score_stk4h_invalidation_logic'),
+            close: getInput('score_stk4h_close'),
+            atr14: getInput('score_stk4h_atr14'),
+            supportAuto: getInput('score_stk4h_support_auto'),
+            resistanceAuto: getInput('score_stk4h_resistance_auto'),
+            pwh: getInput('score_stk4h_pwh'),
+            pwl: getInput('score_stk4h_pwl'),
+            entry: getInput('score_stk4h_entry'),
+            stop: getInput('score_stk4h_stop'),
+            target: getInput('score_stk4h_target')
+        };
         const autoStockBias = computeAutoBiasFromState(
             stockValues.regime,
             stockValues.structure,
@@ -1325,6 +1608,46 @@ function initScoreGatekeeper() {
         if (stk1dPermissionHeadEl) stk1dPermissionHeadEl.textContent = stockResult.permission;
         if (stk1dPermissionEl) stk1dPermissionEl.textContent = stockResult.permission === 'No data' ? 'No data' : `${stockResult.permission} (${stockResult.score100}/100)`;
         if (stk1dInvalidationEl) stk1dInvalidationEl.textContent = stockResult.invalidation;
+
+        const stock4hResult = calculateStock4H({
+            biasVs1DHint: stock4hValues.biasVs1DHint,
+            bias1dAuto: stock4hValues.bias1dAuto,
+            bias4hAuto: stock4hValues.bias4hAuto,
+            structureAuto: stock4hValues.structureAuto,
+            trendStrengthAuto: stock4hValues.trendStrengthAuto,
+            trendQualityAuto: stock4hValues.trendQualityAuto,
+            regimeAuto: stock4hValues.regimeAuto,
+            vwapStateAuto: stock4hValues.vwapStateAuto,
+            locationHint: stock4hValues.locationHint,
+            liquidityHint: stock4hValues.liquidityHint,
+            setupType: stock4hValues.setupType,
+            confirmation: stock4hValues.confirmation,
+            invalidationLogic: stock4hValues.invalidationLogic,
+            close: stock4hValues.close,
+            atr14: stock4hValues.atr14,
+            supportAuto: stock4hValues.supportAuto,
+            resistanceAuto: stock4hValues.resistanceAuto,
+            pwh: stock4hValues.pwh,
+            pwl: stock4hValues.pwl,
+            entry: stock4hValues.entry,
+            stop: stock4hValues.stop,
+            target: stock4hValues.target,
+            hasRiskLevels: Boolean(
+                parseLevel(stock4hValues.entry) !== null &&
+                parseLevel(stock4hValues.stop) !== null &&
+                parseLevel(stock4hValues.target) !== null
+            )
+        }, stockResult);
+        if (stk4hScoreHeadEl) stk4hScoreHeadEl.textContent = stock4hResult.grade === 'No data' ? 'No data' : `${stock4hResult.score20} / 20`;
+        if (stk4hGradeHeadEl) stk4hGradeHeadEl.textContent = stock4hResult.grade;
+        if (stk4hStatusHeadEl) stk4hStatusHeadEl.textContent = stock4hResult.status;
+        if (stk4hRrEl) stk4hRrEl.textContent = `R:R: ${stock4hResult.rrText}`;
+        if (stk4hRoomEl) stk4hRoomEl.textContent = `Room: ${stock4hResult.roomText || 'No data'}`;
+        if (stk4hBreakdownEl) stk4hBreakdownEl.textContent = stock4hResult.grade === 'No data'
+            ? 'Structure: 0/8 | Setup: 0/6 | Risk: 0/6 | Penalties: 0'
+            : `Structure: ${stock4hResult.structureScore}/8 | Setup: ${stock4hResult.setupScore}/6 | Risk: ${stock4hResult.riskScore}/6 | Penalties: ${stock4hResult.penalties}`;
+        if (stk4hStatusEl) stk4hStatusEl.textContent = `Status: ${stock4hResult.grade === 'No data' ? 'No data' : stock4hResult.statusText}`;
+        if (stk4hWarningsEl) stk4hWarningsEl.textContent = `Warnings: ${stock4hResult.warningsText || 'none'}`;
 
         const autoBias = computeAutoBias(values);
         const effectiveBias = values.biasManualOverride && values.manualBias ? values.manualBias : autoBias;
