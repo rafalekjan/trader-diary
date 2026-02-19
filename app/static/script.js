@@ -772,7 +772,18 @@ function initScoreGatekeeper() {
     const manualAtrEl = form.querySelector('input[name="score_spy_manual_atr"]');
     const keySupportEl = form.querySelector('input[name="score_spy_key_support"]');
     const keyResistanceEl = form.querySelector('input[name="score_spy_key_resistance"]');
-    const roomOverrideEl = form.querySelector('input[name="score_spy_room_manual_override"]');
+    const spySwingHighEl = form.querySelector('input[name="score_spy_swing_high"]');
+    const spySwingLowEl = form.querySelector('input[name="score_spy_swing_low"]');
+    const spySma200El = form.querySelector('input[name="score_spy_sma200"]');
+    const spyPwhEl = form.querySelector('input[name="score_spy_pwh"]');
+    const spyPwlEl = form.querySelector('input[name="score_spy_pwl"]');
+    const spyDch20El = form.querySelector('input[name="score_spy_dch20"]');
+    const spyDcl20El = form.querySelector('input[name="score_spy_dcl20"]');
+    const spyDch55El = form.querySelector('input[name="score_spy_dch55"]');
+    const spyDcl55El = form.querySelector('input[name="score_spy_dcl55"]');
+    const spyRoomBarrierChoiceEl = form.querySelector('select[name="score_spy_room_barrier_choice"]');
+    const spyRoomNoiseAtrEl = form.querySelector('input[name="score_spy_room_noise_atr"]');
+    const spyRoomMinAtrEl = form.querySelector('input[name="score_spy_room_min_atr"]');
     const roomInputs = Array.from(form.querySelectorAll('input[name="score_spy_room_to_move"]'));
     const stk1dPermissionEl = document.getElementById('score-stk1d-permission');
     const stk1dScoreHeadEl = document.getElementById('score-stk1d-score-head');
@@ -785,9 +796,18 @@ function initScoreGatekeeper() {
     const stk1dAtrEl = form.querySelector('input[name="score_stk1d_atr"]');
     const stk1dSupportEl = form.querySelector('input[name="score_stk1d_support"]');
     const stk1dResistanceEl = form.querySelector('input[name="score_stk1d_resistance"]');
+    const stk1dSwingHighEl = form.querySelector('input[name="score_stk1d_swing_high"]');
+    const stk1dSwingLowEl = form.querySelector('input[name="score_stk1d_swing_low"]');
+    const stk1dSma200El = form.querySelector('input[name="score_stk1d_sma200"]');
+    const stk1dPwhEl = form.querySelector('input[name="score_stk1d_pwh"]');
+    const stk1dPwlEl = form.querySelector('input[name="score_stk1d_pwl"]');
+    const stk1dDch20El = form.querySelector('input[name="score_stk1d_dch20"]');
+    const stk1dDcl20El = form.querySelector('input[name="score_stk1d_dcl20"]');
+    const stk1dRoomBarrierChoiceEl = form.querySelector('select[name="score_stk1d_room_barrier_choice"]');
+    const stk1dRoomNoiseAtrEl = form.querySelector('input[name="score_stk1d_room_noise_atr"]');
+    const stk1dRoomMinAtrEl = form.querySelector('input[name="score_stk1d_room_min_atr"]');
     const stk1dBiasOverrideEl = form.querySelector('input[name="score_stk1d_bias_manual_override"]');
     const stk1dBiasInputs = Array.from(form.querySelectorAll('input[name="score_stk1d_bias"]'));
-    const stk1dRoomOverrideEl = form.querySelector('input[name="score_stk1d_room_manual_override"]');
     const stk1dRoomInputs = Array.from(form.querySelectorAll('input[name="score_stk1d_room_to_move"]'));
     const stk4hScoreHeadEl = document.getElementById('score-stk4h-score-head');
     const stk4hGradeHeadEl = document.getElementById('score-stk4h-grade-head');
@@ -865,15 +885,25 @@ function initScoreGatekeeper() {
         });
     };
 
+    const updateRoomAtrLocks = () => {
+        const spyManual = Boolean(biasOverrideEl && biasOverrideEl.checked);
+        if (spyRoomNoiseAtrEl) spyRoomNoiseAtrEl.disabled = !spyManual;
+        if (spyRoomMinAtrEl) spyRoomMinAtrEl.disabled = !spyManual;
+
+        const stk1dManual = Boolean(stk1dBiasOverrideEl && stk1dBiasOverrideEl.checked);
+        if (stk1dRoomNoiseAtrEl) stk1dRoomNoiseAtrEl.disabled = !stk1dManual;
+        if (stk1dRoomMinAtrEl) stk1dRoomMinAtrEl.disabled = !stk1dManual;
+    };
+
     const updateRoomOverrideUI = () => {
-        const manual = Boolean(roomOverrideEl && roomOverrideEl.checked);
+        const manual = Boolean(biasOverrideEl && biasOverrideEl.checked);
         roomInputs.forEach((input) => {
             input.disabled = !manual;
         });
     };
 
     const updateStockRoomOverrideUI = () => {
-        const manual = Boolean(stk1dRoomOverrideEl && stk1dRoomOverrideEl.checked);
+        const manual = Boolean(stk1dBiasOverrideEl && stk1dBiasOverrideEl.checked);
         stk1dRoomInputs.forEach((input) => {
             input.disabled = !manual;
         });
@@ -982,95 +1012,336 @@ function initScoreGatekeeper() {
         return '-';
     };
 
-    const computeRoomFromRaw = (bias, closeRaw, atrRaw, supportRaw, resistanceRaw) => {
+    const buildSpyBarrierMapFromRaw = (raw) => ({
+        swingHigh: parseLevel(raw.swingHigh),
+        swingLow: parseLevel(raw.swingLow),
+        rangeHigh: parseLevel(raw.rangeHigh),
+        rangeLow: parseLevel(raw.rangeLow),
+        pwh: parseLevel(raw.pwh),
+        pwl: parseLevel(raw.pwl),
+        dch20: parseLevel(raw.dch20),
+        dcl20: parseLevel(raw.dcl20),
+        dch55: parseLevel(raw.dch55),
+        dcl55: parseLevel(raw.dcl55),
+        sma200: parseLevel(raw.sma200),
+        supportLegacy: parseLevel(raw.supportLegacy),
+        resistanceLegacy: parseLevel(raw.resistanceLegacy)
+    });
+
+    const buildStock1DBarrierMapFromRaw = (raw) => ({
+        swingHigh: parseLevel(raw.swingHigh),
+        swingLow: parseLevel(raw.swingLow),
+        rangeHigh: parseLevel(raw.rangeHigh),
+        rangeLow: parseLevel(raw.rangeLow),
+        pwh: parseLevel(raw.pwh),
+        pwl: parseLevel(raw.pwl),
+        dch20: parseLevel(raw.dch20),
+        dcl20: parseLevel(raw.dcl20),
+        sma200: parseLevel(raw.sma200),
+        supportLegacy: parseLevel(raw.supportLegacy),
+        resistanceLegacy: parseLevel(raw.resistanceLegacy)
+    });
+
+    const computeDirectionalRoomFromBarrierMap = ({
+        bias,
+        closeRaw,
+        atrRaw,
+        barrierMap,
+        barrierChoiceRaw,
+        noiseAtrRaw,
+        roomMinAtrRaw,
+        regimeRaw,
+        setupTypeRaw,
+        mode,
+        sidesModeRaw
+    }) => {
         const closeVal = parseLevel(closeRaw);
         const atrVal = parseLevel(atrRaw);
-        const supportVal = parseLevel(supportRaw);
-        const resistanceVal = parseLevel(resistanceRaw);
-
         if (!Number.isFinite(closeVal) || !Number.isFinite(atrVal) || atrVal <= 0) {
-            return { room: null, distanceAtr: null, reason: 'missing_close_or_atr' };
+            return {
+                room: null,
+                distanceAtr: null,
+                reason: 'missing_close_or_atr',
+                label: '',
+                skippedNoise: 0,
+                skippedTooClose: 0,
+                forcedLimited: false,
+                levelsSource: 'unknown'
+            };
         }
 
-        let dist = null;
-        if (bias === 'bullish') {
-            if (!Number.isFinite(resistanceVal)) return { room: null, distanceAtr: null, reason: 'needs_resistance' };
-            dist = Math.abs(resistanceVal - closeVal);
-        } else if (bias === 'bearish') {
-            if (!Number.isFinite(supportVal)) return { room: null, distanceAtr: null, reason: 'needs_support' };
-            dist = Math.abs(closeVal - supportVal);
-        }
-        else {
-            const candidates = [];
-            if (Number.isFinite(supportVal)) candidates.push(Math.abs(closeVal - supportVal));
-            if (Number.isFinite(resistanceVal)) candidates.push(Math.abs(resistanceVal - closeVal));
-            if (candidates.length > 0) dist = Math.min(...candidates);
+        const isBull = bias === 'bullish';
+        const isBear = bias === 'bearish';
+        const regime = String(regimeRaw || '');
+        const setupType = String(setupTypeRaw || '');
+        const sidesMode = String(sidesModeRaw || 'auto');
+        const useBothSides = sidesMode !== 'single' && (regime === 'range' || (!isBull && !isBear));
+        const noiseAtr = Number.isFinite(parseLevel(noiseAtrRaw)) ? Math.max(0, parseLevel(noiseAtrRaw)) : 0.3;
+        const roomMinAtr = Number.isFinite(parseLevel(roomMinAtrRaw)) ? Math.max(0, parseLevel(roomMinAtrRaw)) : (mode === 'spy' ? 0.8 : 0.6);
+        const barrierChoice = String(barrierChoiceRaw || 'auto');
+        const candidates = [];
+        const push = (key, label, value, quality) => {
+            if (!Number.isFinite(value)) return;
+            if (isBull && value <= closeVal) return;
+            if (isBear && value >= closeVal) return;
+            if (candidates.some((x) => x.key === key || Math.abs(x.value - value) < 1e-8)) return;
+            candidates.push({ key, label, value, quality });
+        };
+
+        const hasModern = [
+            barrierMap.swingHigh, barrierMap.swingLow, barrierMap.pwh, barrierMap.pwl,
+            barrierMap.dch20, barrierMap.dcl20, barrierMap.dch55, barrierMap.dcl55, barrierMap.sma200
+        ].some(Number.isFinite);
+
+        if (useBothSides) {
+            const hasRangeEdges = Number.isFinite(barrierMap.rangeHigh) && Number.isFinite(barrierMap.rangeLow);
+            if (setupType === 'range_play' && hasRangeEdges) {
+                const toHigh = Math.abs(barrierMap.rangeHigh - closeVal) / atrVal;
+                const toLow = Math.abs(closeVal - barrierMap.rangeLow) / atrVal;
+                const useHighAsOpposite = toLow <= toHigh;
+                const chosenValue = useHighAsOpposite ? barrierMap.rangeHigh : barrierMap.rangeLow;
+                const chosenLabel = useHighAsOpposite ? 'Range High (opposite edge)' : 'Range Low (opposite edge)';
+                const chosenDist = Math.abs(chosenValue - closeVal) / atrVal;
+                const source = 'candidates';
+                if (chosenDist < noiseAtr) {
+                    return {
+                        room: 'limited',
+                        distanceAtr: chosenDist,
+                        reason: 'forced_noise_room',
+                        label: `${chosenLabel} [Range]`,
+                        skippedNoise: 1,
+                        skippedTooClose: 0,
+                        forcedLimited: true,
+                        levelsSource: source
+                    };
+                }
+                if (chosenDist < roomMinAtr) {
+                    return {
+                        room: 'limited',
+                        distanceAtr: chosenDist,
+                        reason: 'forced_min_room',
+                        label: `${chosenLabel} [Range]`,
+                        skippedNoise: 0,
+                        skippedTooClose: 1,
+                        forcedLimited: true,
+                        levelsSource: source
+                    };
+                }
+                return {
+                    room: classifyRoomFromAtr(chosenDist),
+                    distanceAtr: chosenDist,
+                    reason: '',
+                    label: `${chosenLabel} [Range]`,
+                    skippedNoise: 0,
+                    skippedTooClose: 0,
+                    forcedLimited: false,
+                    levelsSource: source
+                };
+            }
+            const bull = computeDirectionalRoomFromBarrierMap({
+                bias: 'bullish',
+                closeRaw: closeVal,
+                atrRaw: atrVal,
+                barrierMap,
+                barrierChoiceRaw,
+                noiseAtrRaw,
+                roomMinAtrRaw,
+                regimeRaw: '',
+                setupTypeRaw,
+                mode,
+                sidesModeRaw: 'single'
+            });
+            const bear = computeDirectionalRoomFromBarrierMap({
+                bias: 'bearish',
+                closeRaw: closeVal,
+                atrRaw: atrVal,
+                barrierMap,
+                barrierChoiceRaw,
+                noiseAtrRaw,
+                roomMinAtrRaw,
+                regimeRaw: '',
+                setupTypeRaw,
+                mode,
+                sidesModeRaw: 'single'
+            });
+            if (Number.isFinite(bull.distanceAtr) && Number.isFinite(bear.distanceAtr)) return bull.distanceAtr <= bear.distanceAtr ? bull : bear;
+            return Number.isFinite(bull.distanceAtr) ? bull : bear;
         }
 
-        if (!Number.isFinite(dist)) {
-            return { room: null, distanceAtr: null, reason: 'missing_levels' };
+        if (isBull) {
+            if (mode === 'spy') {
+                push('dch55', 'DCH55', barrierMap.dch55, 'Regime');
+                push('dch20', 'DCH20', barrierMap.dch20, 'Regime');
+                push('pwh', 'PWH', barrierMap.pwh, 'Major HTF');
+                push('swing_high', 'MajorSwingHigh', barrierMap.swingHigh, 'Structure');
+                push('sma200', 'SMA200', barrierMap.sma200, 'Indicator');
+            } else {
+                push('swing_high', 'MajorSwingHigh', barrierMap.swingHigh, 'Structure');
+                push('pwh', 'PWH', barrierMap.pwh, 'Major HTF');
+                push('dch20', 'DCH20', barrierMap.dch20, 'Indicator');
+                push('sma200', 'SMA200', barrierMap.sma200, 'Indicator');
+            }
+            if (!hasModern) push('res_legacy', 'Resistance (legacy)', barrierMap.resistanceLegacy, 'Legacy');
+        } else if (isBear) {
+            if (mode === 'spy') {
+                push('dcl55', 'DCL55', barrierMap.dcl55, 'Regime');
+                push('dcl20', 'DCL20', barrierMap.dcl20, 'Regime');
+                push('pwl', 'PWL', barrierMap.pwl, 'Major HTF');
+                push('swing_low', 'MajorSwingLow', barrierMap.swingLow, 'Structure');
+                push('sma200', 'SMA200', barrierMap.sma200, 'Indicator');
+            } else {
+                push('swing_low', 'MajorSwingLow', barrierMap.swingLow, 'Structure');
+                push('pwl', 'PWL', barrierMap.pwl, 'Major HTF');
+                push('dcl20', 'DCL20', barrierMap.dcl20, 'Indicator');
+                push('sma200', 'SMA200', barrierMap.sma200, 'Indicator');
+            }
+            if (!hasModern) push('sup_legacy', 'Support (legacy)', barrierMap.supportLegacy, 'Legacy');
         }
 
-        const distanceAtr = dist / atrVal;
-        return { room: classifyRoomFromAtr(distanceAtr), distanceAtr, reason: '' };
+        if (!candidates.length) {
+            return {
+                room: null,
+                distanceAtr: null,
+                reason: 'missing_levels',
+                label: '',
+                skippedNoise: 0,
+                skippedTooClose: 0,
+                forcedLimited: false,
+                levelsSource: 'unknown'
+            };
+        }
+
+        let ordered = candidates;
+        if (barrierChoice !== 'auto') {
+            const chosen = candidates.find((c) => c.key === barrierChoice);
+            if (chosen) ordered = [chosen, ...candidates.filter((c) => c.key !== barrierChoice)];
+        }
+        let skippedNoise = 0;
+        let skippedTooClose = 0;
+        for (const c of ordered) {
+            const distAtr = Math.abs(c.value - closeVal) / atrVal;
+            if (distAtr < noiseAtr) {
+                skippedNoise += 1;
+                continue;
+            }
+            if (distAtr < roomMinAtr) {
+                skippedTooClose += 1;
+                continue;
+            }
+            return {
+                room: classifyRoomFromAtr(distAtr),
+                distanceAtr: distAtr,
+                reason: '',
+                label: `${c.label} [${c.quality}]`,
+                skippedNoise,
+                skippedTooClose,
+                forcedLimited: false,
+                levelsSource: c.quality === 'Legacy' ? 'legacy' : 'candidates'
+            };
+        }
+        const firstBeyondNoise = ordered.find((c) => (Math.abs(c.value - closeVal) / atrVal) >= noiseAtr) || null;
+        const first = firstBeyondNoise || ordered[0];
+        const distAtr = first ? Math.abs(first.value - closeVal) / atrVal : null;
+        return {
+            room: Number.isFinite(distAtr) ? 'limited' : null,
+            distanceAtr: distAtr,
+            reason: firstBeyondNoise ? 'forced_min_room' : 'forced_noise_room',
+            label: first ? `${first.label} [${first.quality}]` : '',
+            skippedNoise,
+            skippedTooClose,
+            forcedLimited: true,
+            levelsSource: first && first.quality === 'Legacy' ? 'legacy' : 'candidates'
+        };
     };
 
     const updateRoomSuggestionManual = (effectiveBias) => {
-        const out = computeRoomFromRaw(
-            effectiveBias,
-            manualCloseEl ? manualCloseEl.value : '',
-            manualAtrEl ? manualAtrEl.value : '',
-            keySupportEl ? keySupportEl.value : '',
-            keyResistanceEl ? keyResistanceEl.value : ''
-        );
+        const out = computeDirectionalRoomFromBarrierMap({
+            bias: effectiveBias,
+            closeRaw: manualCloseEl ? manualCloseEl.value : '',
+            atrRaw: manualAtrEl ? manualAtrEl.value : '',
+            barrierMap: buildSpyBarrierMapFromRaw({
+                swingHigh: spySwingHighEl ? spySwingHighEl.value : '',
+                swingLow: spySwingLowEl ? spySwingLowEl.value : '',
+                pwh: spyPwhEl ? spyPwhEl.value : '',
+                pwl: spyPwlEl ? spyPwlEl.value : '',
+                dch20: spyDch20El ? spyDch20El.value : '',
+                dcl20: spyDcl20El ? spyDcl20El.value : '',
+                dch55: spyDch55El ? spyDch55El.value : '',
+                dcl55: spyDcl55El ? spyDcl55El.value : '',
+                sma200: spySma200El ? spySma200El.value : '',
+                supportLegacy: keySupportEl ? keySupportEl.value : '',
+                resistanceLegacy: keyResistanceEl ? keyResistanceEl.value : ''
+            }),
+            barrierChoiceRaw: spyRoomBarrierChoiceEl ? spyRoomBarrierChoiceEl.value : 'auto',
+            noiseAtrRaw: spyRoomNoiseAtrEl ? spyRoomNoiseAtrEl.value : '0.30',
+            roomMinAtrRaw: spyRoomMinAtrEl ? spyRoomMinAtrEl.value : '0.80',
+            regimeRaw: getRadio('score_spy_regime'),
+            setupTypeRaw: '',
+            mode: 'spy'
+        });
 
         if (!out.room && out.reason === 'missing_close_or_atr') {
             if (roomAutoEl) roomAutoEl.textContent = 'Enter numeric Close and ATR(14) to get suggestion';
             return null;
         }
-        if (!out.room && out.reason === 'needs_resistance') {
-            if (roomAutoEl) roomAutoEl.textContent = 'Needs resistance for bullish bias';
-            return null;
-        }
-        if (!out.room && out.reason === 'needs_support') {
-            if (roomAutoEl) roomAutoEl.textContent = 'Needs support for bearish bias';
-            return null;
-        }
         if (!out.room) {
-            if (roomAutoEl) roomAutoEl.textContent = 'Enter Support/Resistance levels to compute room';
+            if (roomAutoEl) roomAutoEl.textContent = 'Enter Level Pack to compute room';
             return null;
         }
-        if (roomAutoEl) roomAutoEl.textContent = `Auto suggestion: ${roomLabel(out.room)} (${out.distanceAtr.toFixed(2)} ATR)`;
-        return out.room;
+        if (roomAutoEl) {
+            const extra = [];
+            if (out.label) extra.push(`barrier ${out.label}`);
+            if (out.levelsSource) extra.push(`source ${out.levelsSource}`);
+            if (out.forcedLimited) extra.push('forced limited');
+            if (out.skippedNoise > 0) extra.push(`skip noise ${out.skippedNoise}`);
+            if (out.skippedTooClose > 0) extra.push(`skip close ${out.skippedTooClose}`);
+            roomAutoEl.textContent = `Auto suggestion: ${roomLabel(out.room)} (${out.distanceAtr.toFixed(2)} ATR${extra.length ? `, ${extra.join(', ')}` : ''})`;
+        }
+        return out;
     };
 
     const updateStockRoomSuggestionManual = (bias) => {
-        const out = computeRoomFromRaw(
+        const out = computeDirectionalRoomFromBarrierMap({
             bias,
-            stk1dCloseEl ? stk1dCloseEl.value : '',
-            stk1dAtrEl ? stk1dAtrEl.value : '',
-            stk1dSupportEl ? stk1dSupportEl.value : '',
-            stk1dResistanceEl ? stk1dResistanceEl.value : ''
-        );
+            closeRaw: stk1dCloseEl ? stk1dCloseEl.value : '',
+            atrRaw: stk1dAtrEl ? stk1dAtrEl.value : '',
+            barrierMap: buildStock1DBarrierMapFromRaw({
+                swingHigh: stk1dSwingHighEl ? stk1dSwingHighEl.value : '',
+                swingLow: stk1dSwingLowEl ? stk1dSwingLowEl.value : '',
+                pwh: stk1dPwhEl ? stk1dPwhEl.value : '',
+                pwl: stk1dPwlEl ? stk1dPwlEl.value : '',
+                dch20: stk1dDch20El ? stk1dDch20El.value : '',
+                dcl20: stk1dDcl20El ? stk1dDcl20El.value : '',
+                sma200: stk1dSma200El ? stk1dSma200El.value : '',
+                supportLegacy: stk1dSupportEl ? stk1dSupportEl.value : '',
+                resistanceLegacy: stk1dResistanceEl ? stk1dResistanceEl.value : ''
+            }),
+            barrierChoiceRaw: stk1dRoomBarrierChoiceEl ? stk1dRoomBarrierChoiceEl.value : 'auto',
+            noiseAtrRaw: stk1dRoomNoiseAtrEl ? stk1dRoomNoiseAtrEl.value : '0.30',
+            roomMinAtrRaw: stk1dRoomMinAtrEl ? stk1dRoomMinAtrEl.value : '0.60',
+            regimeRaw: getRadio('score_stk1d_regime'),
+            setupTypeRaw: '',
+            mode: 'stock1d'
+        });
 
         if (!out.room && out.reason === 'missing_close_or_atr') {
             if (stk1dRoomAutoEl) stk1dRoomAutoEl.textContent = 'Enter numeric Close and ATR(14) to get suggestion';
             return null;
         }
-        if (!out.room && out.reason === 'needs_resistance') {
-            if (stk1dRoomAutoEl) stk1dRoomAutoEl.textContent = 'Needs resistance for bullish bias';
-            return null;
-        }
-        if (!out.room && out.reason === 'needs_support') {
-            if (stk1dRoomAutoEl) stk1dRoomAutoEl.textContent = 'Needs support for bearish bias';
-            return null;
-        }
         if (!out.room) {
-            if (stk1dRoomAutoEl) stk1dRoomAutoEl.textContent = 'Enter Support/Resistance levels to compute room';
+            if (stk1dRoomAutoEl) stk1dRoomAutoEl.textContent = 'Enter Level Pack to compute room';
             return null;
         }
-        if (stk1dRoomAutoEl) stk1dRoomAutoEl.textContent = `Auto suggestion: ${roomLabel(out.room)} (${out.distanceAtr.toFixed(2)} ATR)`;
-        return out.room;
+        if (stk1dRoomAutoEl) {
+            const extra = [];
+            if (out.label) extra.push(`barrier ${out.label}`);
+            if (out.levelsSource) extra.push(`source ${out.levelsSource}`);
+            if (out.forcedLimited) extra.push('forced limited');
+            if (out.skippedNoise > 0) extra.push(`skip noise ${out.skippedNoise}`);
+            if (out.skippedTooClose > 0) extra.push(`skip close ${out.skippedTooClose}`);
+            stk1dRoomAutoEl.textContent = `Auto suggestion: ${roomLabel(out.room)} (${out.distanceAtr.toFixed(2)} ATR${extra.length ? `, ${extra.join(', ')}` : ''})`;
+        }
+        return out;
     };
 
     const calculateStock1D = (values) => {
@@ -1104,10 +1375,12 @@ function initScoreGatekeeper() {
         let permission = score100 >= 70 ? 'Allowed' : score100 >= 50 ? 'Reduced' : 'No-trade';
         if (values.alignment === 'contra' && permission === 'Allowed') permission = 'Reduced';
         if (values.room === 'none') permission = 'No-trade';
+        if (values.roomLevelsSource === 'legacy' && permission === 'Allowed') permission = 'Reduced';
+        if (values.roomForced && permission === 'Allowed') permission = 'Reduced';
         let invalidation = 'monitor key levels';
         if (values.bias === 'bullish') invalidation = 'daily close below support zone';
         else if (values.bias === 'bearish') invalidation = 'daily close above resistance zone';
-        return { score20: score, score100, permission, invalidation };
+        return { score20: score, score100, permission, invalidation, roomLevelsSource: values.roomLevelsSource || 'unknown' };
     };
 
     const calculateStock1DFromInputs = (inputs) => {
@@ -1120,16 +1393,33 @@ function initScoreGatekeeper() {
         const biasManualOverride = Boolean(safeInputs.score_stk1d_bias_manual_override);
         const autoBias = computeAutoBiasFromState(regime, structure, trendStrength, momentumCondition);
         const bias = (biasManualOverride && manualBias) ? manualBias : autoBias;
-        const roomOut = computeRoomFromRaw(
+        const roomOut = computeDirectionalRoomFromBarrierMap({
             bias,
-            safeInputs.score_stk1d_close,
-            safeInputs.score_stk1d_atr,
-            safeInputs.score_stk1d_support,
-            safeInputs.score_stk1d_resistance
-        );
+            closeRaw: safeInputs.score_stk1d_close,
+            atrRaw: safeInputs.score_stk1d_atr,
+            barrierMap: buildStock1DBarrierMapFromRaw({
+                swingHigh: safeInputs.score_stk1d_swing_high,
+                swingLow: safeInputs.score_stk1d_swing_low,
+                pwh: safeInputs.score_stk1d_pwh,
+                pwl: safeInputs.score_stk1d_pwl,
+                dch20: safeInputs.score_stk1d_dch20,
+                dcl20: safeInputs.score_stk1d_dcl20,
+                sma200: safeInputs.score_stk1d_sma200,
+                supportLegacy: safeInputs.score_stk1d_support,
+                resistanceLegacy: safeInputs.score_stk1d_resistance
+            }),
+            barrierChoiceRaw: safeInputs.score_stk1d_room_barrier_choice,
+            noiseAtrRaw: safeInputs.score_stk1d_room_noise_atr,
+            roomMinAtrRaw: safeInputs.score_stk1d_room_min_atr,
+            regimeRaw: regime,
+            setupTypeRaw: '',
+            mode: 'stock1d'
+        });
         const manualRoom = String(safeInputs.score_stk1d_room_to_move || '');
-        const roomManualOverride = Boolean(safeInputs.score_stk1d_room_manual_override);
+        const roomManualOverride = Boolean(safeInputs.score_stk1d_bias_manual_override);
         const effectiveRoom = roomManualOverride && manualRoom ? manualRoom : roomOut.room;
+        const roomLevelsSource = roomManualOverride ? 'manual' : roomOut.levelsSource;
+        const roomForced = !roomManualOverride && Boolean(roomOut.forcedLimited);
 
         return calculateStock1D({
             bias,
@@ -1140,7 +1430,9 @@ function initScoreGatekeeper() {
             momentum: momentumCondition,
             rsState: String(safeInputs.score_stk1d_rs_state || ''),
             rsTrend: String(safeInputs.score_stk1d_rs_trend || ''),
-            room: effectiveRoom
+            room: effectiveRoom,
+            roomLevelsSource,
+            roomForced
         });
     };
 
@@ -1178,40 +1470,168 @@ function initScoreGatekeeper() {
         return { rr, label, validOrder: true };
     };
 
+    const build4HBarrierMap = (values) => ({
+        swingHigh: parseLevel(values.swingHigh),
+        swingLow: parseLevel(values.swingLow),
+        pwh: parseLevel(values.pwh),
+        pwl: parseLevel(values.pwl),
+        dch20: parseLevel(values.dch20),
+        dcl20: parseLevel(values.dcl20),
+        rangeHigh: parseLevel(values.rangeHigh),
+        rangeLow: parseLevel(values.rangeLow),
+        resistanceLegacy: parseLevel(values.resistanceAuto),
+        supportLegacy: parseLevel(values.supportAuto)
+    });
+
+    const deriveMajorSupportResistance = (barrierMap, close) => {
+        const modern = [
+            barrierMap.swingHigh, barrierMap.swingLow, barrierMap.pwh, barrierMap.pwl,
+            barrierMap.dch20, barrierMap.dcl20, barrierMap.rangeHigh, barrierMap.rangeLow
+        ].filter(Number.isFinite);
+        const legacy = [barrierMap.resistanceLegacy, barrierMap.supportLegacy].filter(Number.isFinite);
+        const all = modern.length ? modern : legacy;
+        let support = null;
+        let resistance = null;
+        all.forEach((lv) => {
+            if (lv <= close && (!Number.isFinite(support) || close - lv < close - support)) support = lv;
+            if (lv >= close && (!Number.isFinite(resistance) || lv - close < resistance - close)) resistance = lv;
+        });
+        return { support, resistance };
+    };
+
+    const get4HBarrierCandidates = (setupType, planDirection, entry, barrierMap) => {
+        const isBull = planDirection === 'bullish';
+        const isBear = planDirection === 'bearish';
+        if (!isBull && !isBear) return [];
+        const out = [];
+        const push = (key, label, value, quality) => {
+            if (!Number.isFinite(value)) return;
+            if (isBull && value <= entry) return;
+            if (isBear && value >= entry) return;
+            if (out.some((x) => x.key === key || Math.abs(x.value - value) < 1e-8)) return;
+            out.push({ key, label, value, quality: quality || 'Major' });
+        };
+        const hasModern = [
+            barrierMap.swingHigh, barrierMap.swingLow, barrierMap.pwh, barrierMap.pwl,
+            barrierMap.dch20, barrierMap.dcl20, barrierMap.rangeHigh, barrierMap.rangeLow
+        ].some(Number.isFinite);
+
+        if (isBull) {
+            if (setupType === 'range_play') {
+                push('range_high', 'Range High', barrierMap.rangeHigh, 'Range');
+                push('swing_high', 'Swing High 4H', barrierMap.swingHigh, 'Structure');
+                push('pwh', 'PWH', barrierMap.pwh, 'Major HTF');
+                push('dch20', 'DCH20', barrierMap.dch20, 'Indicator');
+            } else {
+                push('swing_high', 'Swing High 4H', barrierMap.swingHigh, 'Structure');
+                push('pwh', 'PWH', barrierMap.pwh, 'Major HTF');
+                push('dch20', 'DCH20', barrierMap.dch20, 'Indicator');
+                push('range_high', 'Range High', barrierMap.rangeHigh, 'Range');
+            }
+            if (!hasModern) push('resistance_legacy', 'Resistance (legacy)', barrierMap.resistanceLegacy, 'Legacy');
+        } else {
+            if (setupType === 'range_play') {
+                push('range_low', 'Range Low', barrierMap.rangeLow, 'Range');
+                push('swing_low', 'Swing Low 4H', barrierMap.swingLow, 'Structure');
+                push('pwl', 'PWL', barrierMap.pwl, 'Major HTF');
+                push('dcl20', 'DCL20', barrierMap.dcl20, 'Indicator');
+            } else {
+                push('swing_low', 'Swing Low 4H', barrierMap.swingLow, 'Structure');
+                push('pwl', 'PWL', barrierMap.pwl, 'Major HTF');
+                push('dcl20', 'DCL20', barrierMap.dcl20, 'Indicator');
+                push('range_low', 'Range Low', barrierMap.rangeLow, 'Range');
+            }
+            if (!hasModern) push('support_legacy', 'Support (legacy)', barrierMap.supportLegacy, 'Legacy');
+        }
+        return out;
+    };
+
     const pick4HRoomBarrier = ({
         setupType,
         planDirection,
         entry,
-        support,
-        resistance,
-        pwh,
-        pwl
+        atr,
+        barrierMap,
+        barrierChoice,
+        noiseAtr,
+        roomMinAtr
     }) => {
-        const isBull = planDirection === 'bullish';
-        const isBear = planDirection === 'bearish';
-        if (!isBull && !isBear) return null;
-
-        const above = (v) => Number.isFinite(v) && v >= entry;
-        const below = (v) => Number.isFinite(v) && v <= entry;
-
-        if (setupType === 'range_play') {
-            if (isBull && above(resistance)) return resistance;
-            if (isBear && below(support)) return support;
+        const candidates = get4HBarrierCandidates(setupType, planDirection, entry, barrierMap);
+        if (!candidates.length || !Number.isFinite(entry) || !Number.isFinite(atr) || atr <= 0) {
+            return {
+                barrier: null,
+                key: '',
+                label: '',
+                quality: '',
+                distAtr: null,
+                skippedNoise: 0,
+                skippedTooClose: 0,
+                forcedLimited: false,
+                levelsSource: 'unknown'
+            };
         }
 
-        if (isBull) {
-            const candidates = [resistance, pwh].filter(above);
-            if (candidates.length) return Math.min(...candidates);
-        } else {
-            const candidates = [support, pwl].filter(below);
-            if (candidates.length) return Math.max(...candidates);
+        let ordered = candidates;
+        const choice = String(barrierChoice || 'auto');
+        if (choice !== 'auto') {
+            const chosen = candidates.find((c) => c.key === choice);
+            if (chosen) {
+                ordered = [chosen, ...candidates.filter((c) => c.key !== choice)];
+            }
         }
 
-        const fallback = [support, resistance, pwh, pwl]
-            .filter(Number.isFinite)
-            .map((v) => ({ value: v, dist: Math.abs(v - entry) }))
-            .sort((a, b) => a.dist - b.dist);
-        return fallback.length ? fallback[0].value : null;
+        const minNoiseAtr = Number.isFinite(noiseAtr) && noiseAtr >= 0 ? noiseAtr : 0.3;
+        const minRoomAtr = Number.isFinite(roomMinAtr) && roomMinAtr >= 0 ? roomMinAtr : 0.8;
+        let skippedNoise = 0;
+        let skippedTooClose = 0;
+        for (const c of ordered) {
+            const distAtr = Math.abs(c.value - entry) / atr;
+            if (distAtr < minNoiseAtr) {
+                skippedNoise += 1;
+                continue;
+            }
+            if (distAtr < minRoomAtr) {
+                skippedTooClose += 1;
+                continue;
+            }
+            return {
+                barrier: c.value,
+                key: c.key,
+                label: c.label,
+                quality: c.quality,
+                distAtr,
+                skippedNoise,
+                skippedTooClose,
+                forcedLimited: false,
+                levelsSource: c.quality === 'Legacy' ? 'legacy' : 'candidates'
+            };
+        }
+
+        const firstBeyondNoise = ordered.find((c) => (Math.abs(c.value - entry) / atr) >= minNoiseAtr) || null;
+        const first = firstBeyondNoise || ordered[0];
+        return first
+            ? {
+                barrier: first.value,
+                key: first.key,
+                label: first.label,
+                quality: first.quality,
+                distAtr: Math.abs(first.value - entry) / atr,
+                skippedNoise,
+                skippedTooClose,
+                forcedLimited: true,
+                levelsSource: first.quality === 'Legacy' ? 'legacy' : 'candidates'
+            }
+            : {
+                barrier: null,
+                key: '',
+                label: '',
+                quality: '',
+                distAtr: null,
+                skippedNoise,
+                skippedTooClose,
+                forcedLimited: false,
+                levelsSource: 'unknown'
+            };
     };
 
     const derive15mTargetCandidates = ({
@@ -1299,10 +1719,12 @@ function initScoreGatekeeper() {
         else if (values.locationHint === 'at_4h_resistance') invalidation = 'above_4h_resistance';
         else invalidation = biasForPlan === 'bearish' ? 'above_4h_resistance' : 'below_4h_support';
 
-        const supportNum = parseLevel(values.supportAuto);
-        const resistanceNum = parseLevel(values.resistanceAuto);
-        const pwhNum = parseLevel(values.pwh);
-        const pwlNum = parseLevel(values.pwl);
+        const barrierMap = build4HBarrierMap(values);
+        const majorSR = deriveMajorSupportResistance(barrierMap, parseLevel(values.close));
+        const supportNum = majorSR.support;
+        const resistanceNum = majorSR.resistance;
+        const pwhNum = barrierMap.pwh;
+        const pwlNum = barrierMap.pwl;
         const closeNum = parseLevel(values.close);
         const atrNum = parseLevel(values.atr14);
         const stopBuffer = Number.isFinite(atrNum) ? atrNum * 0.2 : 0;
@@ -1312,8 +1734,21 @@ function initScoreGatekeeper() {
         let stopValue = '';
         let targetValue = '';
         const breakBuf = Number.isFinite(atrNum) ? atrNum * 0.05 : 0;
-        const bullishLevel = Number.isFinite(resistanceNum) ? resistanceNum : Number.isFinite(pwhNum) ? pwhNum : closeNum;
-        const bearishLevel = Number.isFinite(supportNum) ? supportNum : Number.isFinite(pwlNum) ? pwlNum : closeNum;
+        const entryRef = Number.isFinite(closeNum) ? closeNum : 0;
+        const bullishCandidatesRaw = setup === 'range_play'
+            ? [barrierMap.rangeHigh, barrierMap.swingHigh, pwhNum, barrierMap.dch20]
+            : [barrierMap.swingHigh, pwhNum, barrierMap.dch20, barrierMap.rangeHigh];
+        const bearishCandidatesRaw = setup === 'range_play'
+            ? [barrierMap.rangeLow, barrierMap.swingLow, pwlNum, barrierMap.dcl20]
+            : [barrierMap.swingLow, pwlNum, barrierMap.dcl20, barrierMap.rangeLow];
+        const bullishCandidates = [...bullishCandidatesRaw, resistanceNum]
+            .filter((v) => Number.isFinite(v) && v >= entryRef)
+            .sort((a, b) => a - b);
+        const bearishCandidates = [...bearishCandidatesRaw, supportNum]
+            .filter((v) => Number.isFinite(v) && v <= entryRef)
+            .sort((a, b) => b - a);
+        const bullishLevel = bullishCandidates.length ? bullishCandidates[0] : closeNum;
+        const bearishLevel = bearishCandidates.length ? bearishCandidates[0] : closeNum;
         if (Number.isFinite(closeNum)) entryValue = round2(closeNum);
 
         if (biasForPlan === 'bullish') {
@@ -1369,14 +1804,20 @@ function initScoreGatekeeper() {
     const calculateStock4H = (values, stock1dResult) => {
         const closeNum = parseLevel(values.close);
         const atrNumBase = parseLevel(values.atr14);
-        const supportNumBase = parseLevel(values.supportAuto);
-        const resistanceNumBase = parseLevel(values.resistanceAuto);
-        const pwhNumBase = parseLevel(values.pwh);
-        const pwlNumBase = parseLevel(values.pwl);
+        const barrierMapBase = build4HBarrierMap(values);
+        const majorSRBase = deriveMajorSupportResistance(barrierMapBase, closeNum);
+        const supportNumBase = majorSRBase.support;
+        const resistanceNumBase = majorSRBase.resistance;
+        const pwhNumBase = barrierMapBase.pwh;
+        const pwlNumBase = barrierMapBase.pwl;
+        const hasAnyMajorBarrier = [
+            barrierMapBase.swingHigh, barrierMapBase.swingLow, barrierMapBase.pwh, barrierMapBase.pwl,
+            barrierMapBase.dch20, barrierMapBase.dcl20, barrierMapBase.rangeHigh, barrierMapBase.rangeLow
+        ].some(Number.isFinite);
         const hasCoreData = Number.isFinite(closeNum) &&
             Number.isFinite(atrNumBase) &&
             atrNumBase > 0 &&
-            (Number.isFinite(supportNumBase) || Number.isFinite(resistanceNumBase) || Number.isFinite(pwhNumBase) || Number.isFinite(pwlNumBase));
+            hasAnyMajorBarrier;
         if (!hasCoreData) {
             return {
                 score20: 0,
@@ -1391,6 +1832,12 @@ function initScoreGatekeeper() {
                 setupScore: 0,
                 riskScore: 0,
                 penalties: 0,
+                setupType: '',
+                roomForcedLimited: false,
+                roomLevelsSource: 'unknown',
+                roomBarrierUsed: '',
+                roomSkippedNoiseCount: 0,
+                roomSkippedTooCloseCount: 0,
                 levels: {
                     support: supportNumBase,
                     resistance: resistanceNumBase,
@@ -1439,7 +1886,12 @@ function initScoreGatekeeper() {
         const levelBasedConfirmation = effectiveValues.confirmation === 'close_above_level' ||
             effectiveValues.confirmation === 'reclaim_level' ||
             effectiveValues.confirmation === 'break_hold';
-        const hasAnyLevel = Number.isFinite(resistanceNumBase) || Number.isFinite(supportNumBase) || Number.isFinite(pwhNumBase) || Number.isFinite(pwlNumBase);
+        const barrierMap = build4HBarrierMap(effectiveValues);
+        const majorSR = deriveMajorSupportResistance(barrierMap, closeNum);
+        const hasAnyLevel = [
+            barrierMap.swingHigh, barrierMap.swingLow, barrierMap.pwh, barrierMap.pwl,
+            barrierMap.dch20, barrierMap.dcl20, barrierMap.rangeHigh, barrierMap.rangeLow
+        ].some(Number.isFinite);
         let levelFallbackUsed = false;
         if (levelBasedConfirmation && !hasAnyLevel) {
             warnings.push('Level-based confirmation without valid levels, fallback entry=close');
@@ -1452,28 +1904,47 @@ function initScoreGatekeeper() {
         const rrInfo = calculateRR(effectiveValues.entry, effectiveValues.stop, effectiveValues.target, planDirection);
         const entryNum = parseLevel(effectiveValues.entry);
         const atrNum = parseLevel(effectiveValues.atr14);
-        const supportNum = parseLevel(effectiveValues.supportAuto);
-        const resistanceNum = parseLevel(effectiveValues.resistanceAuto);
-        const pwhNum = parseLevel(effectiveValues.pwh);
-        const pwlNum = parseLevel(effectiveValues.pwl);
+        const supportNum = majorSR.support;
+        const resistanceNum = majorSR.resistance;
+        const pwhNum = barrierMap.pwh;
+        const pwlNum = barrierMap.pwl;
         let roomClass = '';
         let roomText = 'No data';
         let roomBarrier = null;
+        let roomLevelsSource = 'unknown';
+        let roomForcedLimited = false;
+        let roomBarrierLabel = '';
+        let roomSkippedNoiseCount = 0;
+        let roomSkippedTooCloseCount = 0;
         if (Number.isFinite(entryNum) && Number.isFinite(atrNum) && atrNum > 0) {
-            roomBarrier = pick4HRoomBarrier({
+            const roomPick = pick4HRoomBarrier({
                 setupType: effectiveValues.setupType,
                 planDirection,
                 entry: entryNum,
-                support: supportNum,
-                resistance: resistanceNum,
-                pwh: pwhNum,
-                pwl: pwlNum
+                atr: atrNum,
+                barrierMap,
+                barrierChoice: effectiveValues.roomBarrierChoice,
+                noiseAtr: parseLevel(effectiveValues.roomNoiseAtr),
+                roomMinAtr: parseLevel(effectiveValues.roomMinAtr)
             });
-            const dist = Number.isFinite(roomBarrier) ? Math.abs(roomBarrier - entryNum) : null;
-            if (Number.isFinite(dist) && dist >= 0) {
-                const distAtr = dist / atrNum;
-                roomClass = classifyRoomFromAtr(distAtr) || '';
-                if (roomClass) roomText = `${roomClass} (${distAtr.toFixed(2)} ATR, barrier ${roomBarrier.toFixed(2)})`;
+            roomBarrier = roomPick.barrier;
+            roomLevelsSource = roomPick.levelsSource || 'unknown';
+            roomForcedLimited = Boolean(roomPick.forcedLimited);
+            roomBarrierLabel = roomPick.label || '';
+            roomSkippedNoiseCount = Number(roomPick.skippedNoise || 0);
+            roomSkippedTooCloseCount = Number(roomPick.skippedTooClose || 0);
+            if (Number.isFinite(roomPick.distAtr)) {
+                roomClass = roomForcedLimited ? 'limited' : (classifyRoomFromAtr(roomPick.distAtr) || '');
+                if (roomClass) {
+                    const details = [];
+                    if (roomPick.quality) details.push(`type ${roomPick.quality}`);
+                    if (roomPick.levelsSource) details.push(`source ${roomPick.levelsSource}`);
+                    if (roomForcedLimited) details.push('forced limited');
+                    if (roomPick.skippedNoise > 0) details.push(`skipped ${roomPick.skippedNoise} noise`);
+                    if (roomPick.skippedTooClose > 0) details.push(`skipped ${roomPick.skippedTooClose} too-close`);
+                    const suffix = details.length ? `, ${details.join(', ')}` : '';
+                    roomText = `${roomClass} (${roomPick.distAtr.toFixed(2)} ATR, barrier ${roomPick.label || 'N/A'} ${roomBarrier.toFixed(2)}${suffix})`;
+                }
             }
         }
 
@@ -1610,6 +2081,23 @@ function initScoreGatekeeper() {
             status = 'No-trade';
             capReasons.push('Blocked by 1D: Permission = No-trade');
         }
+        if (roomLevelsSource === 'legacy' && status === 'Allowed') {
+            status = 'Reduced';
+            capReasons.push('Cap Reduced: room barrier from legacy fallback');
+        }
+        if (roomForcedLimited && status === 'Allowed') {
+            const isContinuationSetup = effectiveValues.setupType === 'pullback_continuation' ||
+                effectiveValues.setupType === 'breakout_continuation' ||
+                effectiveValues.setupType === 'breakdown_continuation';
+            const isRangeOrReversal = effectiveValues.setupType === 'range_play' || effectiveValues.setupType === 'reversal_attempt';
+            if (isContinuationSetup) {
+                status = 'Reduced';
+                capReasons.push('Cap Reduced: forced limited room on continuation setup');
+            } else if (isRangeOrReversal && (rrInfo.rr === null || rrInfo.rr < 2.0)) {
+                status = 'Reduced';
+                capReasons.push('Cap Reduced: forced limited room on range/reversal requires >=2R');
+            }
+        }
 
         let grade = 'Invalid';
         if (qualityScore >= 16) grade = 'A-Grade';
@@ -1635,6 +2123,12 @@ function initScoreGatekeeper() {
             setupScore,
             riskScore,
             penalties,
+            setupType: effectiveValues.setupType || '',
+            roomForcedLimited,
+            roomLevelsSource,
+            roomBarrierUsed: roomBarrierLabel || '',
+            roomSkippedNoiseCount,
+            roomSkippedTooCloseCount,
             levels: {
                 support: supportNum,
                 resistance: resistanceNum,
@@ -1665,8 +2159,17 @@ function initScoreGatekeeper() {
             atr14: safeInputs.score_stk4h_atr14,
             supportAuto: safeInputs.score_stk4h_support_auto,
             resistanceAuto: safeInputs.score_stk4h_resistance_auto,
+            swingHigh: safeInputs.score_stk4h_swing_high,
+            swingLow: safeInputs.score_stk4h_swing_low,
             pwh: safeInputs.score_stk4h_pwh,
             pwl: safeInputs.score_stk4h_pwl,
+            dch20: safeInputs.score_stk4h_dch20,
+            dcl20: safeInputs.score_stk4h_dcl20,
+            rangeHigh: safeInputs.score_stk4h_range_high,
+            rangeLow: safeInputs.score_stk4h_range_low,
+            roomBarrierChoice: String(safeInputs.score_stk4h_room_barrier_choice || 'auto'),
+            roomNoiseAtr: safeInputs.score_stk4h_room_noise_atr,
+            roomMinAtr: safeInputs.score_stk4h_room_min_atr,
             entry: safeInputs.score_stk4h_entry,
             stop: safeInputs.score_stk4h_stop,
             target: safeInputs.score_stk4h_target
@@ -2092,6 +2595,16 @@ function initScoreGatekeeper() {
             if (size === '1.0x') size = '0.5x';
             reasons.push('Hard rule: chop around MAs in middle of range');
         }
+        if (values.roomLevelsSource === 'legacy' && permission === 'Allowed') {
+            permission = 'Reduced';
+            if (size === '1.0x') size = '0.5x';
+            reasons.push('Cap Reduced: room barrier from legacy fallback');
+        }
+        if (values.roomForced && permission === 'Allowed') {
+            permission = 'Reduced';
+            if (size === '1.0x') size = '0.5x';
+            reasons.push('Cap Reduced: forced limited room fallback');
+        }
 
         let riskState = 'Neutral';
         const riskOff = (values.vixLevel === 'gt25' && values.vixTrend === 'rising') || values.trendStrength === 'below_key_mas' || values.qqq200 === 'below';
@@ -2126,7 +2639,8 @@ function initScoreGatekeeper() {
             macroMode,
             macroRequiredRr15,
             macroRequiredRr4h,
-            macroSizeCap
+            macroSizeCap,
+            roomLevelsSource: values.roomLevelsSource || 'unknown'
         };
     };
 
@@ -2283,10 +2797,28 @@ function initScoreGatekeeper() {
         if (!notMidday) modifierPenalty += 1;
         if (stock15mInputs.locationVs4h === 'late_extended') modifierPenalty += 1;
 
+        const setupTypeCurrent = String(stock4hResult.setupType || getChoiceValue('score_stk4h_setup_type') || '');
+        const continuationSetups = ['pullback_continuation', 'breakout_continuation', 'breakdown_continuation'];
+        const rangeReversalSetups = ['range_play', 'reversal_attempt'];
+        const isContinuationSetup = continuationSetups.includes(setupTypeCurrent);
+        const isRangeReversalSetup = rangeReversalSetups.includes(setupTypeCurrent);
+        const roomForced4h = Boolean(stock4hResult.roomForcedLimited);
+        const strong15mTrigger = triggerConfirmed &&
+            (stock15mInputs.volume === 'increasing_move' || stock15mInputs.volume === 'reduced_pullbacks' || stock15mInputs.volume === 'normal');
+
         let overall = 'No data';
         if (spyReady && oneDStatus !== 'No data' && fourHStatus !== 'No data' && fifteenStatus !== 'No data') {
             if (!edgeExists) overall = 'No-trade';
             else overall = modifierPenalty <= 1 ? 'Allowed' : 'Reduced';
+        }
+        if (overall === 'Allowed' && roomForced4h) {
+            if (isContinuationSetup) {
+                overall = 'Reduced';
+                notes.push('Forced limited room on continuation setup: max Reduced.');
+            } else if (isRangeReversalSetup && !(rr15 !== null && rr15 >= 2.0 && strong15mTrigger)) {
+                overall = 'Reduced';
+                notes.push('Forced limited room on range/reversal without RR>=2 + strong 15m trigger: max Reduced.');
+            }
         }
         const overallAllowed = overall === 'Allowed';
         const overallAllowedOrReduced = overall === 'Allowed' || overall === 'Reduced';
@@ -2294,8 +2826,6 @@ function initScoreGatekeeper() {
         const shortReady = edgeExists && shortStrictStatus && shortEntryTypeOk && rr4h15 && rr1520 && shortTimeOk && noChase && liqNotFailed && macroMode === 'Normal';
         const mediumReady = edgeExists && mediumStrictStatus && mediumEntryTypeOk && rr4h14 && rr1517 && mediumTimeOk && noChase && liqNotFailed && macroMode !== 'Defensive';
         const swingReady = edgeExists && swingStrictStatus && swingEntryTypeOk && rr4h13 && rr1515 && swingTimeOk;
-
-        const setupTypeCurrent = getChoiceValue('score_stk4h_setup_type');
         const entryStats = findPatternStat(patternStatsCache?.entry_type, entryType);
         const triggerStats = findPatternStat(patternStatsCache?.trigger_status, trigger);
         const setupStats = findPatternStat(patternStatsCache?.setup_type, setupTypeCurrent);
@@ -2603,8 +3133,17 @@ function initScoreGatekeeper() {
             atr14: getInput('score_stk4h_atr14'),
             supportAuto: getInput('score_stk4h_support_auto'),
             resistanceAuto: getInput('score_stk4h_resistance_auto'),
+            swingHigh: getInput('score_stk4h_swing_high'),
+            swingLow: getInput('score_stk4h_swing_low'),
             pwh: getInput('score_stk4h_pwh'),
             pwl: getInput('score_stk4h_pwl'),
+            dch20: getInput('score_stk4h_dch20'),
+            dcl20: getInput('score_stk4h_dcl20'),
+            rangeHigh: getInput('score_stk4h_range_high'),
+            rangeLow: getInput('score_stk4h_range_low'),
+            roomBarrierChoice: getInput('score_stk4h_room_barrier_choice'),
+            roomNoiseAtr: getInput('score_stk4h_room_noise_atr'),
+            roomMinAtr: getInput('score_stk4h_room_min_atr'),
             entry: getInput('score_stk4h_entry'),
             stop: getInput('score_stk4h_stop'),
             target: getInput('score_stk4h_target')
@@ -2629,13 +3168,16 @@ function initScoreGatekeeper() {
         stockValues.bias = effectiveStockBias;
         stockValues.biasMode = stockValues.biasManualOverride ? 'manual_override' : 'auto';
         stockValues.momentum = stockValues.momentumCondition;
-        const autoStockRoom = updateStockRoomSuggestionManual(effectiveStockBias);
+        const autoStockRoomOut = updateStockRoomSuggestionManual(effectiveStockBias);
+        const autoStockRoom = autoStockRoomOut ? autoStockRoomOut.room : null;
         const manualStockRoom = getRadio('score_stk1d_room_to_move');
-        const stockManualRoomOverride = isChecked('score_stk1d_room_manual_override');
+        const stockManualRoomOverride = isChecked('score_stk1d_bias_manual_override');
         stockValues.room = stockManualRoomOverride && manualStockRoom ? manualStockRoom : autoStockRoom;
+        stockValues.roomLevelsSource = stockManualRoomOverride ? 'manual' : (autoStockRoomOut ? autoStockRoomOut.levelsSource : 'unknown');
+        stockValues.roomForced = !stockManualRoomOverride && Boolean(autoStockRoomOut && autoStockRoomOut.forcedLimited);
         if (stk1dRoomEffectiveEl) {
             const modeLabel = stockManualRoomOverride ? 'Manual override' : 'Auto';
-            stk1dRoomEffectiveEl.textContent = `Auto room: ${roomLabel(autoStockRoom)} | Effective: ${roomLabel(stockValues.room)} (${modeLabel})`;
+            stk1dRoomEffectiveEl.textContent = `Auto room: ${roomLabel(autoStockRoom)} | Effective: ${roomLabel(stockValues.room)} (${modeLabel}, source ${stockValues.roomLevelsSource})`;
         }
 
         if (stk1dBiasAutoEl) {
@@ -2748,7 +3290,8 @@ function initScoreGatekeeper() {
             triggerStatus: getChoiceValue('score_stk15m_trigger_status'),
             entryType: getChoiceValue('score_stk15m_entry_type'),
             locationVs4h: getChoiceValue('score_stk15m_location_vs_4h'),
-            timeOfDay: getChoiceValue('score_stk15m_time_of_day')
+            timeOfDay: getChoiceValue('score_stk15m_time_of_day'),
+            volume: getChoiceValue('score_stk15m_volume')
         };
         if (stk15mScoreHeadEl) stk15mScoreHeadEl.textContent = stock15mResult.grade === 'No data' ? 'No data' : `${stock15mResult.score20} / 20`;
         if (stk15mGradeHeadEl) stk15mGradeHeadEl.textContent = stock15mResult.grade;
@@ -2765,13 +3308,20 @@ function initScoreGatekeeper() {
         const effectiveBias = values.biasManualOverride && values.manualBias ? values.manualBias : autoBias;
         values.bias = effectiveBias;
         values.biasMode = values.biasManualOverride ? 'manual_override' : 'auto';
-        values.roomSuggestion = updateRoomSuggestionManual(effectiveBias);
+        const roomSuggestionOut = updateRoomSuggestionManual(effectiveBias);
+        values.roomSuggestion = roomSuggestionOut ? roomSuggestionOut.room : null;
+        values.roomLevelsSource = roomSuggestionOut ? roomSuggestionOut.levelsSource : 'unknown';
+        values.roomForced = Boolean(roomSuggestionOut && roomSuggestionOut.forcedLimited);
         const manualRoom = getRadio('score_spy_room_to_move');
-        const manualRoomOverride = isChecked('score_spy_room_manual_override');
+        const manualRoomOverride = isChecked('score_spy_bias_manual_override');
         values.roomToMove = manualRoomOverride && manualRoom ? manualRoom : values.roomSuggestion;
+        if (manualRoomOverride) {
+            values.roomLevelsSource = 'manual';
+            values.roomForced = false;
+        }
         if (roomEffectiveEl) {
             const modeLabel = manualRoomOverride ? 'Manual override' : 'Auto';
-            roomEffectiveEl.textContent = `Auto room: ${roomLabel(values.roomSuggestion)} | Effective: ${roomLabel(values.roomToMove)} (${modeLabel})`;
+            roomEffectiveEl.textContent = `Auto room: ${roomLabel(values.roomSuggestion)} | Effective: ${roomLabel(values.roomToMove)} (${modeLabel}, source ${values.roomLevelsSource})`;
         }
 
         if (biasAutoEl) {
@@ -2831,6 +3381,21 @@ function initScoreGatekeeper() {
             stock15m_status: stock15mResult.status,
             stock15m_rr: stock15mResult.rrText,
             stock15m_breakdown: stock15mResult.breakdownText,
+            spy_room_levels_source: values.roomLevelsSource || 'unknown',
+            spy_room_forced_limited: Boolean(values.roomForced),
+            spy_room_barrier_used: roomSuggestionOut?.label || '',
+            spy_room_skipped_noise_count: Number(roomSuggestionOut?.skippedNoise || 0),
+            spy_room_skipped_too_close_count: Number(roomSuggestionOut?.skippedTooClose || 0),
+            stk1d_room_levels_source: stockValues.roomLevelsSource || 'unknown',
+            stk1d_room_forced_limited: Boolean(stockValues.roomForced),
+            stk1d_room_barrier_used: autoStockRoomOut?.label || '',
+            stk1d_room_skipped_noise_count: Number(autoStockRoomOut?.skippedNoise || 0),
+            stk1d_room_skipped_too_close_count: Number(autoStockRoomOut?.skippedTooClose || 0),
+            stk4h_room_levels_source: stock4hResult.roomLevelsSource || 'unknown',
+            stk4h_room_forced_limited: Boolean(stock4hResult.roomForcedLimited),
+            stk4h_room_barrier_used: stock4hResult.roomBarrierUsed || '',
+            stk4h_room_skipped_noise_count: Number(stock4hResult.roomSkippedNoiseCount || 0),
+            stk4h_room_skipped_too_close_count: Number(stock4hResult.roomSkippedTooCloseCount || 0),
         };
         scoreEl.textContent = `${result.rawScore} / 100`;
         permissionEl.textContent = result.permission;
@@ -2859,6 +3424,12 @@ function initScoreGatekeeper() {
             const totalScore = modules.reduce((sum, m) => sum + m.score, 0);
             const totalMax = modules.reduce((sum, m) => sum + m.max, 0);
             const totalText = modules.length ? `${totalScore} / ${totalMax}` : '-';
+            const inputs = item && item.inputs && typeof item.inputs === 'object' ? item.inputs : {};
+            const roomMeta = [
+                `SPY: ${inputs.score_meta_spy_room_levels_source || '-'}/${inputs.score_meta_spy_room_forced_limited ? 'forced' : 'normal'}`,
+                `1D: ${inputs.score_meta_stk1d_room_levels_source || '-'}/${inputs.score_meta_stk1d_room_forced_limited ? 'forced' : 'normal'}`,
+                `4H: ${inputs.score_meta_stk4h_room_levels_source || '-'}/${inputs.score_meta_stk4h_room_forced_limited ? 'forced' : 'normal'}`
+            ].join(' | ');
             const modulesText = modules.length
                 ? modules.map((m) => `${m.label}: ${m.score}/${m.max} (${m.permission})`).join('<br>')
                 : '-';
@@ -2866,7 +3437,7 @@ function initScoreGatekeeper() {
                 <tr data-id="${item.id}">
                     <td>${item.session_date || '-'}</td>
                     <td>${totalText}</td>
-                    <td>${modulesText}</td>
+                    <td>${modulesText}<br><small>Room source: ${roomMeta}</small></td>
                     <td>${item.size_modifier || '-'}</td>
                     <td>${item.risk_state || '-'}</td>
                     <td>
@@ -2914,8 +3485,28 @@ function initScoreGatekeeper() {
             return;
         }
 
+        const snapshotInputs = collectFormInputs();
+        snapshotInputs.score_meta_spy_room_levels_source = latestComputed.spy_room_levels_source || 'unknown';
+        snapshotInputs.score_meta_spy_room_forced_limited = Boolean(latestComputed.spy_room_forced_limited);
+        snapshotInputs.score_meta_spy_room_barrier_used = latestComputed.spy_room_barrier_used || '';
+        snapshotInputs.score_meta_spy_room_skipped_noise_count = Number(latestComputed.spy_room_skipped_noise_count || 0);
+        snapshotInputs.score_meta_spy_room_skipped_too_close_count = Number(latestComputed.spy_room_skipped_too_close_count || 0);
+        snapshotInputs.score_meta_stk1d_room_levels_source = latestComputed.stk1d_room_levels_source || 'unknown';
+        snapshotInputs.score_meta_stk1d_room_forced_limited = Boolean(latestComputed.stk1d_room_forced_limited);
+        snapshotInputs.score_meta_stk1d_room_barrier_used = latestComputed.stk1d_room_barrier_used || '';
+        snapshotInputs.score_meta_stk1d_room_skipped_noise_count = Number(latestComputed.stk1d_room_skipped_noise_count || 0);
+        snapshotInputs.score_meta_stk1d_room_skipped_too_close_count = Number(latestComputed.stk1d_room_skipped_too_close_count || 0);
+        snapshotInputs.score_meta_stk4h_room_levels_source = latestComputed.stk4h_room_levels_source || 'unknown';
+        snapshotInputs.score_meta_stk4h_room_forced_limited = Boolean(latestComputed.stk4h_room_forced_limited);
+        snapshotInputs.score_meta_stk4h_room_barrier_used = latestComputed.stk4h_room_barrier_used || '';
+        snapshotInputs.score_meta_stk4h_room_skipped_noise_count = Number(latestComputed.stk4h_room_skipped_noise_count || 0);
+        snapshotInputs.score_meta_stk4h_room_skipped_too_close_count = Number(latestComputed.stk4h_room_skipped_too_close_count || 0);
+
+        const snapshotTicker = String(snapshotInputs.score_stk1d_ticker || '').trim().toUpperCase();
+        const snapshotSymbol = snapshotTicker ? `SPY|${snapshotTicker}` : 'SPY';
+
         const payload = {
-            symbol: 'SPY',
+            symbol: snapshotSymbol,
             timeframe: '1D',
             session_date: sessionDate,
             score: latestComputed.score,
@@ -2931,7 +3522,7 @@ function initScoreGatekeeper() {
             stock15m_rr: latestComputed.stock15m_rr,
             stock15m_breakdown: latestComputed.stock15m_breakdown,
             warnings: latestWarnings,
-            inputs: collectFormInputs(),
+            inputs: snapshotInputs,
             overwrite,
         };
 
@@ -2974,8 +3565,10 @@ function initScoreGatekeeper() {
             const modulesText = modules.length
                 ? modules.map((m) => `${m.label} ${m.score}/${m.max} (${m.permission})`).join(' | ')
                 : 'No sector data';
+            const inputs = data && data.inputs && typeof data.inputs === 'object' ? data.inputs : {};
+            const roomMeta = `Room source SPY/1D/4H: ${inputs.score_meta_spy_room_levels_source || '-'} / ${inputs.score_meta_stk1d_room_levels_source || '-'} / ${inputs.score_meta_stk4h_room_levels_source || '-'} | forced: ${inputs.score_meta_spy_room_forced_limited ? 'Y' : 'N'}/${inputs.score_meta_stk1d_room_forced_limited ? 'Y' : 'N'}/${inputs.score_meta_stk4h_room_forced_limited ? 'Y' : 'N'}`;
             if (historyStatusEl) {
-                historyStatusEl.textContent = `View ${data.session_date}: Total ${totalScore}/${totalMax}, Modules: ${modulesText}. SPY Permission ${data.permission}, Size ${data.size_modifier}, Risk ${data.risk_state}${warnings ? `, Warnings: ${warnings}` : ''}`;
+                historyStatusEl.textContent = `View ${data.session_date}: Total ${totalScore}/${totalMax}, Modules: ${modulesText}. ${roomMeta}. SPY Permission ${data.permission}, Size ${data.size_modifier}, Risk ${data.risk_state}${warnings ? `, Warnings: ${warnings}` : ''}`;
             }
         } catch (err) {
             if (historyStatusEl) historyStatusEl.textContent = `View failed: ${String(err)}`;
@@ -2991,6 +3584,7 @@ function initScoreGatekeeper() {
             if (sessionDateEl) sessionDateEl.value = data.session_date || sessionDateEl.value;
             updateBiasOverrideUI();
             updateStockBiasOverrideUI();
+            updateRoomAtrLocks();
             updateRoomOverrideUI();
             updateStockRoomOverrideUI();
             updateStock4HPlanOverrideUI();
@@ -3014,6 +3608,7 @@ function initScoreGatekeeper() {
             applyFormInputs(spyOnlyInputs);
             if (sessionDateEl) sessionDateEl.value = data.session_date || sessionDateEl.value;
             updateBiasOverrideUI();
+            updateRoomAtrLocks();
             updateRoomOverrideUI();
             render();
             await fetchPatternStats();
@@ -3025,18 +3620,12 @@ function initScoreGatekeeper() {
 
     if (biasOverrideEl) biasOverrideEl.addEventListener('change', () => {
         updateBiasOverrideUI();
+        updateRoomAtrLocks();
         render();
     });
     if (stk1dBiasOverrideEl) stk1dBiasOverrideEl.addEventListener('change', () => {
         updateStockBiasOverrideUI();
-        render();
-    });
-    if (roomOverrideEl) roomOverrideEl.addEventListener('change', () => {
-        updateRoomOverrideUI();
-        render();
-    });
-    if (stk1dRoomOverrideEl) stk1dRoomOverrideEl.addEventListener('change', () => {
-        updateStockRoomOverrideUI();
+        updateRoomAtrLocks();
         render();
     });
     if (stk4hPlanOverrideEl) stk4hPlanOverrideEl.addEventListener('change', () => {
@@ -3062,6 +3651,7 @@ function initScoreGatekeeper() {
     setTodayDate();
     updateBiasOverrideUI();
     updateStockBiasOverrideUI();
+    updateRoomAtrLocks();
     updateRoomOverrideUI();
     updateStockRoomOverrideUI();
     updateStock4HPlanOverrideUI();

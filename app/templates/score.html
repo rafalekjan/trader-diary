@@ -1,4 +1,4 @@
-{% extends "base.html" %}
+﻿{% extends "base.html" %}
 {% block title %}Score{% endblock %}
 {% block content %}
 <div class="page-header">
@@ -20,11 +20,11 @@
             </div>
         </div>
 
-        <div class="analysis-subsection">
+        <div class="analysis-subsection score-section-a">
             <h4>A. Regime & Direction</h4>
             <div class="scoring-stage-grid">
                 <div class="form-group">
-                    <label>Market Regime <span class="help-icon" data-tooltip="Trend = HH/HL lub LL/LH + nachylone MA. Range = overlap świec + płaskie MA. Volatile = duże świece/ATR% wysokie, częste zwroty. Reżim steruje tym, czy swing ma edge.">?</span></label>
+                    <label>Market Regime <span class="help-icon" data-tooltip="Trend = HH/HL lub LL/LH + nachylone MA. Range = overlap Ĺ›wiec + pĹ‚askie MA. Volatile = duĹĽe Ĺ›wiece/ATR% wysokie, czÄ™ste zwroty. ReĹĽim steruje tym, czy swing ma edge.">?</span></label>
                     <div class="checkbox-group scoring-option-grid">
                         <label class="checkbox-label"><input type="radio" name="score_spy_regime" value="trend_up"><span class="checkbox-text">Trend Up</span></label>
                         <label class="checkbox-label"><input type="radio" name="score_spy_regime" value="trend_down"><span class="checkbox-text">Trend Down</span></label>
@@ -33,7 +33,7 @@
                     </div>
                 </div>
                 <div class="form-group">
-                    <label>Bias <span class="help-icon" data-tooltip="Preferowany kierunek zagrań na akcjach. Nie 'co może', tylko 'co ma statystycznie sens' w tym reżimie.">?</span></label>
+                    <label>Bias <span class="help-icon" data-tooltip="Preferowany kierunek zagraĹ„ na akcjach. Nie 'co moĹĽe', tylko 'co ma statystycznie sens' w tym reĹĽimie.">?</span></label>
                     <div class="checkbox-group scoring-option-grid">
                         <label class="checkbox-label"><input type="radio" name="score_spy_bias" value="bullish"><span class="checkbox-text">Bullish</span></label>
                         <label class="checkbox-label"><input type="radio" name="score_spy_bias" value="bearish"><span class="checkbox-text">Bearish</span></label>
@@ -46,7 +46,7 @@
                     <div id="score-bias-auto" class="scoring-readonly-value">Auto bias: No data</div>
                 </div>
                 <div class="form-group">
-                    <label>Structure <span class="help-icon" data-tooltip="Układ swingów na D1: HH/HL (bull), LL/LH (bear), Mixed/Range (ostrożnie).">?</span></label>
+                    <label>Structure <span class="help-icon" data-tooltip="UkĹ‚ad swingĂłw na D1: HH/HL (bull), LL/LH (bear), Mixed/Range (ostroĹĽnie).">?</span></label>
                     <div class="checkbox-group scoring-option-grid">
                         <label class="checkbox-label"><input type="radio" name="score_spy_structure" value="hh_hl"><span class="checkbox-text">HH/HL</span></label>
                         <label class="checkbox-label"><input type="radio" name="score_spy_structure" value="ll_lh"><span class="checkbox-text">LL/LH</span></label>
@@ -55,7 +55,7 @@
                     </div>
                 </div>
                 <div class="form-group">
-                    <label>Trend Strength <span class="help-icon" data-tooltip="Położenie vs 20EMA/50MA/200SMA jako filtr reżimu: powyżej = long-friendly, poniżej = short-friendly, wokół = ostrożność.">?</span></label>
+                    <label>Trend Strength <span class="help-icon" data-tooltip="PoĹ‚oĹĽenie vs 20EMA/50MA/200SMA jako filtr reĹĽimu: powyĹĽej = long-friendly, poniĹĽej = short-friendly, wokĂłĹ‚ = ostroĹĽnoĹ›Ä‡.">?</span></label>
                     <div class="checkbox-group scoring-option-grid">
                         <label class="checkbox-label"><input type="radio" name="score_spy_trend_strength" value="above_key_mas"><span class="checkbox-text">Above key MAs</span></label>
                         <label class="checkbox-label"><input type="radio" name="score_spy_trend_strength" value="below_key_mas"><span class="checkbox-text">Below key MAs</span></label>
@@ -71,7 +71,7 @@
                     </div>
                 </div>
                 <div class="form-group">
-                    <label>Momentum Condition (1D) <span class="help-icon" data-tooltip="Expanding: range rośnie i zamknięcia wspierają kierunek; Stable: trend trwa bez przyspieszenia; Diverging: cena idzie dalej, ale momentum nie potwierdza; Exhausted: po długim ruchu impet gaśnie i rośnie ryzyko mean reversion.">?</span></label>
+                    <label>Momentum Condition (1D) <span class="help-icon" data-tooltip="Expanding: range roĹ›nie i zamkniÄ™cia wspierajÄ… kierunek; Stable: trend trwa bez przyspieszenia; Diverging: cena idzie dalej, ale momentum nie potwierdza; Exhausted: po dĹ‚ugim ruchu impet gaĹ›nie i roĹ›nie ryzyko mean reversion.">?</span></label>
                     <div class="checkbox-group scoring-option-grid">
                         <label class="checkbox-label"><input type="radio" name="score_spy_momentum_condition" value="expanding"><span class="checkbox-text">Expanding</span></label>
                         <label class="checkbox-label"><input type="radio" name="score_spy_momentum_condition" value="stable"><span class="checkbox-text">Stable</span></label>
@@ -87,7 +87,7 @@
             <h4>B. Location & Blocks</h4>
             <div class="scoring-stage-grid">
                 <div class="form-group">
-                    <label>Location <span class="help-icon" data-tooltip="Gdzie jest cena względem leveli: edge (wsparcie/opór) daje plan; środek range = brak przewagi.">?</span></label>
+                    <label>Location <span class="help-icon" data-tooltip="Gdzie jest cena wzglÄ™dem leveli: edge (wsparcie/opĂłr) daje plan; Ĺ›rodek range = brak przewagi.">?</span></label>
                     <div class="checkbox-group scoring-option-grid">
                         <label class="checkbox-label"><input type="radio" name="score_spy_location" value="at_support"><span class="checkbox-text">At Support</span></label>
                         <label class="checkbox-label"><input type="radio" name="score_spy_location" value="at_resistance"><span class="checkbox-text">At Resistance</span></label>
@@ -118,31 +118,87 @@
                     </div>
                 </div>
                 <div class="form-group score-b-room-to-move">
-                    <label>Room to Move <span class="help-icon" data-tooltip="Ile miejsca jest do kolejnego poziomu. Małe room = słaby R/R dla swing.">?</span></label>
+                    <label>Room to Move <span class="help-icon" data-tooltip="Ile miejsca jest do kolejnego poziomu. MaĹ‚e room = sĹ‚aby R/R dla swing.">?</span></label>
                     <div class="checkbox-group scoring-option-grid">
                         <label class="checkbox-label"><input type="radio" name="score_spy_room_to_move" value="large"><span class="checkbox-text">Large</span></label>
                         <label class="checkbox-label"><input type="radio" name="score_spy_room_to_move" value="medium"><span class="checkbox-text">Medium</span></label>
                         <label class="checkbox-label"><input type="radio" name="score_spy_room_to_move" value="limited"><span class="checkbox-text">Limited</span></label>
                         <label class="checkbox-label"><input type="radio" name="score_spy_room_to_move" value="none"><span class="checkbox-text">None</span></label>
                     </div>
-                    <label class="checkbox-label" style="margin-top:8px;">
-                        <input type="checkbox" name="score_spy_room_manual_override">
-                        <span class="checkbox-text">Manual override</span>
-                    </label>
                     <div id="score-room-effective" class="scoring-readonly-value">Auto room: No data | Effective: No data</div>
                 </div>
                 <div class="form-group score-b-manual-values">
-                    <label>Close i ATR <span class="help-icon" data-tooltip="Wpisz dokladnie wartosci: Close i ATR(14) z tabeli TV.">?</span></label>
                     <div class="timeframe-row-2cols">
-                        <input name="score_spy_manual_close" type="text" placeholder="Close">
-                        <input name="score_spy_manual_atr" type="text" placeholder="ATR (14)">
+                        <div>
+                            <label>Close</label>
+                            <input name="score_spy_manual_close" type="text" placeholder="">
+                        </div>
+                        <div>
+                            <label>ATR (14)</label>
+                            <input name="score_spy_manual_atr" type="text" placeholder="">
+                        </div>
                     </div>
                 </div>
-                <div class="form-group score-b-key-levels">
-                    <label>Support i Resistance <span class="help-icon" data-tooltip="Major swing levels (1D/weekly): PDH/PDL, PWH/PWL, swing high/low, 20/50/200. Nie uzywaj intraday mikro-poziomow. Te poziomy definiuja room i invalidation.">?</span></label>
-                    <div class="timeframe-row-2cols">
-                        <input id="score_spy_key_support" name="score_spy_key_support" type="text" placeholder="Support">
-                        <input id="score_spy_key_resistance" name="score_spy_key_resistance" type="text" placeholder="Resistance">
+                <div class="form-group score-b-key-levels" style="grid-column: 1 / -1;">
+                    <label>Key Levels <span class="help-icon" data-tooltip="Major swing levels (1D/weekly): PDH/PDL, PWH/PWL, swing high/low, 20/50/200. Nie uzywaj intraday mikro-poziomow. Te poziomy definiuja room i invalidation.">?</span></label>
+                    <div style="display:grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap:8px;">
+                        <div>
+                            <label>Support (Legacy)</label>
+                            <input id="score_spy_key_support" name="score_spy_key_support" type="text" placeholder="">
+                            <label style="margin-top:6px;">Resistance (Legacy)</label>
+                            <input id="score_spy_key_resistance" name="score_spy_key_resistance" type="text" placeholder="" style="margin-top:6px;">
+                        </div>
+                        <div>
+                            <label>MajorSwingHigh 1D</label>
+                            <input name="score_spy_swing_high" type="text" placeholder="">
+                            <label style="margin-top:6px;">MajorSwingLow 1D</label>
+                            <input name="score_spy_swing_low" type="text" placeholder="" style="margin-top:6px;">
+                        </div>
+                        <div>
+                            <label>PWH</label>
+                            <input name="score_spy_pwh" type="text" placeholder="">
+                            <label style="margin-top:6px;">PWL</label>
+                            <input name="score_spy_pwl" type="text" placeholder="" style="margin-top:6px;">
+                        </div>
+                        <div>
+                            <label>SMA200</label>
+                            <input name="score_spy_sma200" type="text" placeholder="">
+                        </div>
+                    </div>
+                    <div style="display:grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap:8px; margin-top:8px;">
+                        <div>
+                            <label>DCH20</label>
+                            <input name="score_spy_dch20" type="text" placeholder="">
+                            <label style="margin-top:6px;">DCL20</label>
+                            <input name="score_spy_dcl20" type="text" placeholder="" style="margin-top:6px;">
+                        </div>
+                        <div>
+                            <label>DCH55</label>
+                            <input name="score_spy_dch55" type="text" placeholder="">
+                            <label>DCL55</label>
+                            <input name="score_spy_dcl55" type="text" placeholder="" style="margin-top:6px;">
+                        </div>
+                        <div>
+                            <label>Room Barrier</label>
+                            <select name="score_spy_room_barrier_choice">
+                                <option value="auto">Auto</option>
+                                <option value="swing_high">Swing High</option>
+                                <option value="swing_low">Swing Low</option>
+                                <option value="pwh">PWH</option>
+                                <option value="pwl">PWL</option>
+                                <option value="dch20">DCH20</option>
+                                <option value="dcl20">DCL20</option>
+                                <option value="dch55">DCH55</option>
+                                <option value="dcl55">DCL55</option>
+                                <option value="sma200">SMA200</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label>Noise ATR</label>
+                            <input name="score_spy_room_noise_atr" type="text" placeholder="" value="0.30" disabled>
+                            <label style="margin-top:6px;">Room Min ATR</label>
+                            <input name="score_spy_room_min_atr" type="text" placeholder="" value="0.80" disabled style="margin-top:6px;">
+                        </div>
                     </div>
                 </div>
             </div>
@@ -152,7 +208,7 @@
             <h4>C. Risk Conditions</h4>
             <div class="scoring-stage-grid">
                 <div class="form-group">
-                    <label>VIX Level <span class="help-icon" data-tooltip="VIX wysoki i rosnący = większe ryzyko whipsaw; niski i spadający = stabilniej.">?</span></label>
+                    <label>VIX Level <span class="help-icon" data-tooltip="VIX wysoki i rosnÄ…cy = wiÄ™ksze ryzyko whipsaw; niski i spadajÄ…cy = stabilniej.">?</span></label>
                     <div class="checkbox-group scoring-option-grid">
                         <label class="checkbox-label"><input type="radio" name="score_spy_vix_level" value="lt20"><span class="checkbox-text">&lt;20</span></label>
                         <label class="checkbox-label"><input type="radio" name="score_spy_vix_level" value="20_25"><span class="checkbox-text">20-25</span></label>
@@ -160,7 +216,7 @@
                     </div>
                 </div>
                 <div class="form-group">
-                    <label>VIX Trend <span class="help-icon" data-tooltip="Rising VIX zwykle pogarsza warunki dla spokojnych swingów; falling VIX sprzyja stabilniejszym trendom.">?</span></label>
+                    <label>VIX Trend <span class="help-icon" data-tooltip="Rising VIX zwykle pogarsza warunki dla spokojnych swingĂłw; falling VIX sprzyja stabilniejszym trendom.">?</span></label>
                     <div class="checkbox-group scoring-option-grid">
                         <label class="checkbox-label"><input type="radio" name="score_spy_vix_trend" value="rising"><span class="checkbox-text">Rising</span></label>
                         <label class="checkbox-label"><input type="radio" name="score_spy_vix_trend" value="falling"><span class="checkbox-text">Falling</span></label>
@@ -168,7 +224,7 @@
                     </div>
                 </div>
                 <div class="form-group">
-                    <label>ATR% Environment <span class="help-icon" data-tooltip="ATR% = typowa dzienna zmienność. Urealnia stop i targety.">?</span></label>
+                    <label>ATR% Environment <span class="help-icon" data-tooltip="ATR% = typowa dzienna zmiennoĹ›Ä‡. Urealnia stop i targety.">?</span></label>
                     <div class="checkbox-group scoring-option-grid">
                         <label class="checkbox-label"><input type="radio" name="score_spy_atr_env" value="low"><span class="checkbox-text">Low</span></label>
                         <label class="checkbox-label"><input type="radio" name="score_spy_atr_env" value="normal"><span class="checkbox-text">Normal</span></label>
@@ -176,7 +232,7 @@
                     </div>
                 </div>
                 <div class="form-group">
-                    <label>Breadth <span class="help-icon" data-tooltip="Breadth = czy rynek niesie wiele spółek czy tylko kilka. Słaby breadth = większe ryzyko fałszywych ruchów.">?</span></label>
+                    <label>Breadth <span class="help-icon" data-tooltip="Breadth = czy rynek niesie wiele spĂłĹ‚ek czy tylko kilka. SĹ‚aby breadth = wiÄ™ksze ryzyko faĹ‚szywych ruchĂłw.">?</span></label>
                     <div class="checkbox-group scoring-option-grid">
                         <label class="checkbox-label"><input type="radio" name="score_spy_breadth" value="strong"><span class="checkbox-text">Strong</span></label>
                         <label class="checkbox-label"><input type="radio" name="score_spy_breadth" value="neutral"><span class="checkbox-text">Neutral</span></label>
@@ -192,7 +248,7 @@
                     </div>
                 </div>
                 <div class="form-group">
-                    <label>Event Risk <span class="help-icon" data-tooltip="Dni eventowe zwiększają ryzyko skoków i odwróceń. Swing options: mniejszy size albo czekanie po evencie.">?</span></label>
+                    <label>Event Risk <span class="help-icon" data-tooltip="Dni eventowe zwiÄ™kszajÄ… ryzyko skokĂłw i odwrĂłceĹ„. Swing options: mniejszy size albo czekanie po evencie.">?</span></label>
                     <div class="checkbox-group scoring-option-grid scoring-option-grid-2">
                         <label class="checkbox-label"><input type="checkbox" name="score_spy_event_cpi"><span class="checkbox-text">CPI</span></label>
                         <label class="checkbox-label"><input type="checkbox" name="score_spy_event_fomc"><span class="checkbox-text">FOMC</span></label>
@@ -251,7 +307,7 @@
                     <input id="score_stk1d_ticker" name="score_stk1d_ticker" type="text" placeholder="NVDA">
                 </div>
                 <div class="form-group">
-                    <label>Market Regime <span class="help-icon" data-tooltip="Trend = HH/HL lub LL/LH + nachylone MA. Range = overlap świec + płaskie MA. Volatile = duże świece/ATR% wysokie, częste zwroty.">?</span></label>
+                    <label>Market Regime <span class="help-icon" data-tooltip="Trend = HH/HL lub LL/LH + nachylone MA. Range = overlap Ĺ›wiec + pĹ‚askie MA. Volatile = duĹĽe Ĺ›wiece/ATR% wysokie, czÄ™ste zwroty.">?</span></label>
                     <div class="checkbox-group scoring-option-grid">
                         <label class="checkbox-label"><input type="radio" name="score_stk1d_regime" value="trend_up"><span class="checkbox-text">Trend Up</span></label>
                         <label class="checkbox-label"><input type="radio" name="score_stk1d_regime" value="trend_down"><span class="checkbox-text">Trend Down</span></label>
@@ -260,7 +316,7 @@
                     </div>
                 </div>
                 <div class="form-group">
-                    <label>Bias <span class="help-icon" data-tooltip="Preferowany kierunek zagrań na tickerze. Domyślnie liczony automatycznie z Regime + Structure + Trend Strength + Momentum.">?</span></label>
+                    <label>Bias <span class="help-icon" data-tooltip="Preferowany kierunek zagraĹ„ na tickerze. DomyĹ›lnie liczony automatycznie z Regime + Structure + Trend Strength + Momentum.">?</span></label>
                     <div class="checkbox-group scoring-option-grid">
                         <label class="checkbox-label"><input type="radio" name="score_stk1d_bias" value="bullish"><span class="checkbox-text">Bullish</span></label>
                         <label class="checkbox-label"><input type="radio" name="score_stk1d_bias" value="bearish"><span class="checkbox-text">Bearish</span></label>
@@ -273,7 +329,7 @@
                     <div id="score-stk1d-bias-auto" class="scoring-readonly-value">Auto bias: No data</div>
                 </div>
                 <div class="form-group">
-                    <label>Structure <span class="help-icon" data-tooltip="Układ swingów na D1: HH/HL (bull), LL/LH (bear), Mixed/Range (ostrożnie).">?</span></label>
+                    <label>Structure <span class="help-icon" data-tooltip="UkĹ‚ad swingĂłw na D1: HH/HL (bull), LL/LH (bear), Mixed/Range (ostroĹĽnie).">?</span></label>
                     <div class="checkbox-group scoring-option-grid">
                         <label class="checkbox-label"><input type="radio" name="score_stk1d_structure" value="hh_hl"><span class="checkbox-text">HH/HL</span></label>
                         <label class="checkbox-label"><input type="radio" name="score_stk1d_structure" value="ll_lh"><span class="checkbox-text">LL/LH</span></label>
@@ -282,7 +338,7 @@
                     </div>
                 </div>
                 <div class="form-group">
-                    <label>Trend Strength <span class="help-icon" data-tooltip="Położenie vs 20EMA/50MA/200SMA: powyżej = long-friendly, poniżej = short-friendly, wokół = chop/ostrożność.">?</span></label>
+                    <label>Trend Strength <span class="help-icon" data-tooltip="PoĹ‚oĹĽenie vs 20EMA/50MA/200SMA: powyĹĽej = long-friendly, poniĹĽej = short-friendly, wokĂłĹ‚ = chop/ostroĹĽnoĹ›Ä‡.">?</span></label>
                     <div class="checkbox-group scoring-option-grid">
                         <label class="checkbox-label"><input type="radio" name="score_stk1d_trend_strength" value="above_key_mas"><span class="checkbox-text">Above key MAs</span></label>
                         <label class="checkbox-label"><input type="radio" name="score_stk1d_trend_strength" value="below_key_mas"><span class="checkbox-text">Below key MAs</span></label>
@@ -298,7 +354,7 @@
                     </div>
                 </div>
                 <div class="form-group">
-                    <label>Momentum Condition (1D) <span class="help-icon" data-tooltip="Expanding = impet rośnie; Stable = trend trwa; Diverging = impet nie potwierdza ceny; Exhausted = rośnie ryzyko cofnięcia.">?</span></label>
+                    <label>Momentum Condition (1D) <span class="help-icon" data-tooltip="Expanding = impet roĹ›nie; Stable = trend trwa; Diverging = impet nie potwierdza ceny; Exhausted = roĹ›nie ryzyko cofniÄ™cia.">?</span></label>
                     <div class="checkbox-group scoring-option-grid">
                         <label class="checkbox-label"><input type="radio" name="score_stk1d_momentum" value="expanding"><span class="checkbox-text">Expanding</span></label>
                         <label class="checkbox-label"><input type="radio" name="score_stk1d_momentum" value="stable"><span class="checkbox-text">Stable</span></label>
@@ -307,7 +363,7 @@
                     </div>
                 </div>
                 <div class="form-group">
-                    <label>Market Alignment (vs SPY) <span class="help-icon" data-tooltip="Aligned/Mixed/Contra: zgodność tickera z kierunkiem SPY.">?</span></label>
+                    <label>Market Alignment (vs SPY) <span class="help-icon" data-tooltip="Aligned/Mixed/Contra: zgodnoĹ›Ä‡ tickera z kierunkiem SPY.">?</span></label>
                     <div class="checkbox-group scoring-option-grid">
                         <label class="checkbox-label"><input type="radio" name="score_stk1d_alignment" value="aligned"><span class="checkbox-text">Aligned</span></label>
                         <label class="checkbox-label"><input type="radio" name="score_stk1d_alignment" value="mixed"><span class="checkbox-text">Mixed</span></label>
@@ -315,7 +371,7 @@
                     </div>
                 </div>
                 <div class="form-group">
-                    <label>RS state vs SPY <span class="help-icon" data-tooltip="Relative strength względem SPY: Strong/Neutral/Weak.">?</span></label>
+                    <label>RS state vs SPY <span class="help-icon" data-tooltip="Relative strength wzglÄ™dem SPY: Strong/Neutral/Weak.">?</span></label>
                     <div class="checkbox-group scoring-option-grid">
                         <label class="checkbox-label"><input type="radio" name="score_stk1d_rs_state" value="strong"><span class="checkbox-text">Strong</span></label>
                         <label class="checkbox-label"><input type="radio" name="score_stk1d_rs_state" value="neutral"><span class="checkbox-text">Neutral</span></label>
@@ -331,17 +387,56 @@
                     </div>
                 </div>
                 <div class="form-group stk1d-manual-values">
-                    <label>Close i ATR <span class="help-icon" data-tooltip="Wpisz dokladnie wartosci: Close i ATR(14) z tabeli TV.">?</span></label>
                     <div class="timeframe-row-2cols">
-                        <input name="score_stk1d_close" type="text" placeholder="Close">
-                        <input name="score_stk1d_atr" type="text" placeholder="ATR (14)">
+                        <div>
+                            <label>Close</label>
+                            <input name="score_stk1d_close" type="text" placeholder="">
+                        </div>
+                        <div>
+                            <label>ATR (14)</label>
+                            <input name="score_stk1d_atr" type="text" placeholder="">
+                        </div>
                     </div>
                 </div>
                 <div class="form-group stk1d-key-levels">
-                    <label>Support i Resistance <span class="help-icon" data-tooltip="Major swing levels (1D/weekly): PDH/PDL, PWH/PWL, swing high/low, 20/50/200. Nie uzywaj intraday mikro-poziomow. Te poziomy definiuja room i invalidation.">?</span></label>
+                    <label>Key Levels <span class="help-icon" data-tooltip="Major swing levels (1D/weekly): PDH/PDL, PWH/PWL, swing high/low, 20/50/200. Nie uzywaj intraday mikro-poziomow. Te poziomy definiuja room i invalidation.">?</span></label>
                     <div class="timeframe-row-2cols">
-                        <input name="score_stk1d_support" type="text" placeholder="Support">
-                        <input name="score_stk1d_resistance" type="text" placeholder="Resistance">
+                        <input name="score_stk1d_support" type="text" placeholder="Support (legacy)">
+                        <input name="score_stk1d_resistance" type="text" placeholder="Resistance (legacy)">
+                    </div>
+                    <div style="display:grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap:8px; margin-top:8px;">
+                        <div>
+                            <label>MajorSwingHigh 1D</label>
+                            <input name="score_stk1d_swing_high" type="text" placeholder="">
+                            <label style="margin-top:6px;">MajorSwingLow 1D</label>
+                            <input name="score_stk1d_swing_low" type="text" placeholder="" style="margin-top:6px;">
+                        </div>
+                        <div>
+                            <label>SMA200</label>
+                            <input name="score_stk1d_sma200" type="text" placeholder="">
+                        </div>
+                    </div>
+                    <div style="display:grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap:8px; margin-top:8px;">
+                        <input name="score_stk1d_pwh" type="text" placeholder="PWH">
+                        <input name="score_stk1d_pwl" type="text" placeholder="PWL">
+                        <input name="score_stk1d_dch20" type="text" placeholder="DCH20">
+                    </div>
+                    <div style="display:grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap:8px; margin-top:8px;">
+                        <input name="score_stk1d_dcl20" type="text" placeholder="DCL20">
+                        <select name="score_stk1d_room_barrier_choice">
+                            <option value="auto">Room Barrier: Auto</option>
+                            <option value="swing_high">Swing High</option>
+                            <option value="swing_low">Swing Low</option>
+                            <option value="pwh">PWH</option>
+                            <option value="pwl">PWL</option>
+                            <option value="dch20">DCH20</option>
+                            <option value="dcl20">DCL20</option>
+                            <option value="sma200">SMA200</option>
+                        </select>
+                        <input name="score_stk1d_room_noise_atr" type="text" placeholder="Noise ATR (0.30)" value="0.30" disabled>
+                    </div>
+                    <div style="display:grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap:8px; margin-top:8px;">
+                        <input name="score_stk1d_room_min_atr" type="text" placeholder="Room Min ATR (0.60)" value="0.60" disabled>
                     </div>
                 </div>
                 <div class="form-group stk1d-room-to-move">
@@ -352,10 +447,6 @@
                         <label class="checkbox-label"><input type="radio" name="score_stk1d_room_to_move" value="limited"><span class="checkbox-text">Limited</span></label>
                         <label class="checkbox-label"><input type="radio" name="score_stk1d_room_to_move" value="none"><span class="checkbox-text">None</span></label>
                     </div>
-                    <label class="checkbox-label" style="margin-top:8px;">
-                        <input type="checkbox" name="score_stk1d_room_manual_override">
-                        <span class="checkbox-text">Manual override</span>
-                    </label>
                     <div id="score-stk1d-room-effective" class="scoring-readonly-value">Auto room: No data | Effective: No data</div>
                 </div>
                 <div class="analysis-subsection" style="grid-column: 1 / -1;">
@@ -366,7 +457,7 @@
                     <div id="score-stk1d-permission" class="scoring-readonly-value">No data</div>
                 </div>
                 <div class="form-group stk1d-invalidation-box">
-                    <label>Invalidation tomorrow (auto) <span class="help-icon" data-tooltip="Warunek unieważnienia setupu na kolejnej sesji (kontekst 1D).">?</span></label>
+                    <label>Invalidation tomorrow (auto) <span class="help-icon" data-tooltip="Warunek uniewaĹĽnienia setupu na kolejnej sesji (kontekst 1D).">?</span></label>
                     <div id="score-stk1d-invalidation" class="scoring-readonly-value">No data</div>
                 </div>
             </div>
@@ -385,7 +476,7 @@
         <div class="analysis-subsection">
             <div class="scoring-stage-grid">
                 <div class="form-group">
-                    <label>Bias vs 1D <span class="help-icon" data-tooltip="Relacja kierunku 4H do 1D. In direction of 1D = najbezpieczniej, Counter-trend = przeciw 1D, Neutral = brak zgodności/chop.">?</span></label>
+                    <label>Bias vs 1D <span class="help-icon" data-tooltip="Relacja kierunku 4H do 1D. In direction of 1D = najbezpieczniej, Counter-trend = przeciw 1D, Neutral = brak zgodnoĹ›ci/chop.">?</span></label>
                     <div class="checkbox-group scoring-option-grid">
                         <label class="checkbox-label"><input type="radio" name="score_stk4h_bias_vs_1d_hint" value="in_direction_1d"><span class="checkbox-text">In direction of 1D</span></label>
                         <label class="checkbox-label"><input type="radio" name="score_stk4h_bias_vs_1d_hint" value="counter_trend"><span class="checkbox-text">Counter-trend</span></label>
@@ -393,7 +484,7 @@
                     </div>
                 </div>
                 <div class="form-group">
-                    <label>Bias 1D <span class="help-icon" data-tooltip="Automatyczny kierunek na 1D. To kierunek nadrzędny dla planu 4H.">?</span></label>
+                    <label>Bias 1D <span class="help-icon" data-tooltip="Automatyczny kierunek na 1D. To kierunek nadrzÄ™dny dla planu 4H.">?</span></label>
                     <div class="checkbox-group scoring-option-grid">
                         <label class="checkbox-label"><input type="radio" name="score_stk4h_bias_1d_auto" value="bullish"><span class="checkbox-text">Bullish</span></label>
                         <label class="checkbox-label"><input type="radio" name="score_stk4h_bias_1d_auto" value="bearish"><span class="checkbox-text">Bearish</span></label>
@@ -419,7 +510,7 @@
                     </div>
                 </div>
                 <div class="form-group">
-                    <label>Trend Strength <span class="help-icon" data-tooltip="Pozycja ceny względem EMA20/SMA50/SMA200: Above/Below/Chop around MAs.">?</span></label>
+                    <label>Trend Strength <span class="help-icon" data-tooltip="Pozycja ceny wzglÄ™dem EMA20/SMA50/SMA200: Above/Below/Chop around MAs.">?</span></label>
                     <div class="checkbox-group scoring-option-grid">
                         <label class="checkbox-label"><input type="radio" name="score_stk4h_trend_strength_auto" value="above_key_mas"><span class="checkbox-text">Above key MAs</span></label>
                         <label class="checkbox-label"><input type="radio" name="score_stk4h_trend_strength_auto" value="below_key_mas"><span class="checkbox-text">Below key MAs</span></label>
@@ -427,7 +518,7 @@
                     </div>
                 </div>
                 <div class="form-group">
-                    <label>Trend Quality <span class="help-icon" data-tooltip="Jakość ruchu: Clean trend, Overlapping/messy lub Exhausted. Messy wymaga twardszego potwierdzenia.">?</span></label>
+                    <label>Trend Quality <span class="help-icon" data-tooltip="JakoĹ›Ä‡ ruchu: Clean trend, Overlapping/messy lub Exhausted. Messy wymaga twardszego potwierdzenia.">?</span></label>
                     <div class="checkbox-group scoring-option-grid">
                         <label class="checkbox-label"><input type="radio" name="score_stk4h_trend_quality_auto" value="clean_trend"><span class="checkbox-text">Clean trend</span></label>
                         <label class="checkbox-label"><input type="radio" name="score_stk4h_trend_quality_auto" value="overlapping_messy"><span class="checkbox-text">Overlapping / messy</span></label>
@@ -435,7 +526,7 @@
                     </div>
                 </div>
                 <div class="form-group">
-                    <label>Regime <span class="help-icon" data-tooltip="Środowisko 4H: Trend Up/Trend Down/Range/Volatile. Pomaga dobrać typ setupu.">?</span></label>
+                    <label>Regime <span class="help-icon" data-tooltip="Ĺšrodowisko 4H: Trend Up/Trend Down/Range/Volatile. Pomaga dobraÄ‡ typ setupu.">?</span></label>
                     <div class="checkbox-group scoring-option-grid">
                         <label class="checkbox-label"><input type="radio" name="score_stk4h_regime_auto" value="trend_up"><span class="checkbox-text">Trend Up</span></label>
                         <label class="checkbox-label"><input type="radio" name="score_stk4h_regime_auto" value="trend_down"><span class="checkbox-text">Trend Down</span></label>
@@ -444,7 +535,7 @@
                     </div>
                 </div>
                 <div class="form-group">
-                    <label>VWAP state <span class="help-icon" data-tooltip="Pozycja ceny względem VWAP (kontekst pomocniczy): Above/Below/Around/N/A.">?</span></label>
+                    <label>VWAP state <span class="help-icon" data-tooltip="Pozycja ceny wzglÄ™dem VWAP (kontekst pomocniczy): Above/Below/Around/N/A.">?</span></label>
                     <div class="checkbox-group scoring-option-grid">
                         <label class="checkbox-label"><input type="radio" name="score_stk4h_vwap_state_auto" value="above"><span class="checkbox-text">Above</span></label>
                         <label class="checkbox-label"><input type="radio" name="score_stk4h_vwap_state_auto" value="below"><span class="checkbox-text">Below</span></label>
@@ -453,7 +544,7 @@
                     </div>
                 </div>
                 <div class="form-group">
-                    <label>Location <span class="help-icon" data-tooltip="Pozycja ceny na strukturze: przy wsparciu/oporze 4H, przy poziomie HTF (1D) lub w środku struktury.">?</span></label>
+                    <label>Location <span class="help-icon" data-tooltip="Pozycja ceny na strukturze: przy wsparciu/oporze 4H, przy poziomie HTF (1D) lub w Ĺ›rodku struktury.">?</span></label>
                     <div class="checkbox-group scoring-option-grid">
                         <label class="checkbox-label"><input type="radio" name="score_stk4h_location_hint" value="at_4h_support"><span class="checkbox-text">At 4H support</span></label>
                         <label class="checkbox-label"><input type="radio" name="score_stk4h_location_hint" value="at_4h_resistance"><span class="checkbox-text">At 4H resistance</span></label>
@@ -462,7 +553,7 @@
                     </div>
                 </div>
                 <div class="form-group">
-                    <label>Liquidity <span class="help-icon" data-tooltip="Sygnały płynności/pułapki: sweep low/high, inside bar compression lub brak sygnału.">?</span></label>
+                    <label>Liquidity <span class="help-icon" data-tooltip="SygnaĹ‚y pĹ‚ynnoĹ›ci/puĹ‚apki: sweep low/high, inside bar compression lub brak sygnaĹ‚u.">?</span></label>
                     <div class="checkbox-group scoring-option-grid">
                         <label class="checkbox-label"><input type="radio" name="score_stk4h_liquidity_hint" value="sweep_low"><span class="checkbox-text">Sweep of low</span></label>
                         <label class="checkbox-label"><input type="radio" name="score_stk4h_liquidity_hint" value="sweep_high"><span class="checkbox-text">Sweep of high</span></label>
@@ -471,19 +562,19 @@
                     </div>
                 </div>
                 <div class="form-group" style="grid-column: 1 / -1;">
-                    <label>Auto Values <span class="help-icon" data-tooltip="Wartości referencyjne z Pine (Close, ATR, Support/Resistance, PWH/PWL) używane do RR, room i planu ryzyka.">?</span></label>
+                    <label>Auto Values <span class="help-icon" data-tooltip="WartoĹ›ci referencyjne z Pine (Close, ATR, Support/Resistance, PWH/PWL) uĹĽywane do RR, room i planu ryzyka.">?</span></label>
                     <div class="timeframe-row-3cols">
                         <div>
-                            <label>Close <span class="help-icon" data-tooltip="Aktualna cena zamknięcia 4H.">?</span></label>
+                            <label>Close <span class="help-icon" data-tooltip="Aktualna cena zamkniÄ™cia 4H.">?</span></label>
                             <input name="score_stk4h_close" type="text" placeholder="Close">
-                            <label style="margin-top:6px;">ATR(14) <span class="help-icon" data-tooltip="ATR 14 na 4H, baza do room i buforów stopa.">?</span></label>
+                            <label style="margin-top:6px;">ATR(14) <span class="help-icon" data-tooltip="ATR 14 na 4H, baza do room i buforĂłw stopa.">?</span></label>
                             <input name="score_stk4h_atr14" type="text" placeholder="ATR(14)" style="margin-top:6px;">
                         </div>
                         <div>
-                            <label>Support <span class="help-icon" data-tooltip="Najbliższe wsparcie auto z kluczowych poziomów 4H/HTF.">?</span></label>
-                            <input name="score_stk4h_support_auto" type="text" placeholder="Support">
-                            <label style="margin-top:6px;">Resistance <span class="help-icon" data-tooltip="Najbliższy opór auto z kluczowych poziomów 4H/HTF.">?</span></label>
-                            <input name="score_stk4h_resistance_auto" type="text" placeholder="Resistance" style="margin-top:6px;">
+                            <label>Support (Legacy)</label>
+                            <input name="score_stk4h_support_auto" type="text" placeholder="Legacy support (fallback)">
+                            <label style="margin-top:6px;">Resistance (Legacy)</label>
+                            <input name="score_stk4h_resistance_auto" type="text" placeholder="Legacy resistance (fallback)" style="margin-top:6px;">
                         </div>
                         <div>
                             <label>PWH <span class="help-icon" data-tooltip="Previous Week High (HTF bariera).">?</span></label>
@@ -492,10 +583,58 @@
                             <input name="score_stk4h_pwl" type="text" placeholder="PWL" style="margin-top:6px;">
                         </div>
                     </div>
+                    <div style="display:grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap:10px; margin-top:8px;">
+                        <div>
+                            <label>Swing High 4H</label>
+                            <input name="score_stk4h_swing_high" type="text" placeholder="Swing High 4H">
+                            <label style="margin-top:6px;">Swing Low 4H</label>
+                            <input name="score_stk4h_swing_low" type="text" placeholder="Swing Low 4H" style="margin-top:6px;">
+                        </div>
+                        <div>
+                            <label>DCH20</label>
+                            <input name="score_stk4h_dch20" type="text" placeholder="DCH20">
+                        </div>
+                        <div>
+                            <label>DCL20</label>
+                            <input name="score_stk4h_dcl20" type="text" placeholder="DCL20">
+                        </div>
+                    </div>
+                    <div style="display:grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap:10px; margin-top:8px;">
+                        <div>
+                            <label>Range High</label>
+                            <input name="score_stk4h_range_high" type="text" placeholder="Range High">
+                            <label style="margin-top:6px;">Range Low</label>
+                            <input name="score_stk4h_range_low" type="text" placeholder="Range Low" style="margin-top:6px;">
+                        </div>
+                        <div>
+                            <label>Room Barrier</label>
+                            <select name="score_stk4h_room_barrier_choice">
+                                <option value="auto">Auto (recommended)</option>
+                                <option value="swing_high">Swing High 4H</option>
+                                <option value="swing_low">Swing Low 4H</option>
+                                <option value="pwh">PWH</option>
+                                <option value="pwl">PWL</option>
+                                <option value="dch20">DCH20</option>
+                                <option value="dcl20">DCL20</option>
+                                <option value="range_high">Range High</option>
+                                <option value="range_low">Range Low</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label>Noise Filter (ATR)</label>
+                            <input name="score_stk4h_room_noise_atr" type="text" placeholder="0.30" value="0.30">
+                        </div>
+                    </div>
+                    <div style="display:grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap:10px; margin-top:8px;">
+                        <div>
+                            <label>Room Min (ATR)</label>
+                            <input name="score_stk4h_room_min_atr" type="text" placeholder="0.80" value="0.80">
+                        </div>
+                    </div>
                 </div>
                 <div class="analysis-subsection" style="grid-column: 1 / -1;"></div>
                 <div class="form-group">
-                    <label>Setup Type <span class="help-icon" data-tooltip="Typ scenariusza 4H (pullback/breakout/range/breakdown/reversal). Definiuje kierunek planu i logikę invalidacji.">?</span></label>
+                    <label>Setup Type <span class="help-icon" data-tooltip="Typ scenariusza 4H (pullback/breakout/range/breakdown/reversal). Definiuje kierunek planu i logikÄ™ invalidacji.">?</span></label>
                     <div class="checkbox-group scoring-option-grid">
                         <label class="checkbox-label"><input type="radio" name="score_stk4h_setup_type" value="pullback_continuation"><span class="checkbox-text">Pullback continuation</span></label>
                         <label class="checkbox-label"><input type="radio" name="score_stk4h_setup_type" value="breakout_continuation"><span class="checkbox-text">Breakout continuation</span></label>
@@ -505,7 +644,7 @@
                     </div>
                 </div>
                 <div class="form-group">
-                    <label>Confirmation condition <span class="help-icon" data-tooltip="Obiektywny trigger wejścia (close above level, strong candle, reclaim, break+hold).">?</span></label>
+                    <label>Confirmation condition <span class="help-icon" data-tooltip="Obiektywny trigger wejĹ›cia (close above level, strong candle, reclaim, break+hold).">?</span></label>
                     <div class="checkbox-group scoring-option-grid">
                         <label class="checkbox-label"><input type="radio" name="score_stk4h_confirmation" value="close_above_level"><span class="checkbox-text">4H close above level</span></label>
                         <label class="checkbox-label"><input type="radio" name="score_stk4h_confirmation" value="strong_bull_candle"><span class="checkbox-text">Strong bull candle</span></label>
@@ -514,7 +653,7 @@
                     </div>
                 </div>
                 <div class="form-group">
-                    <label>Invalidation logic <span class="help-icon" data-tooltip="Warunek unieważnienia tezy. Powinien wynikać z Setup Type i Location, nie być losowym stopem.">?</span></label>
+                    <label>Invalidation logic <span class="help-icon" data-tooltip="Warunek uniewaĹĽnienia tezy. Powinien wynikaÄ‡ z Setup Type i Location, nie byÄ‡ losowym stopem.">?</span></label>
                     <div class="checkbox-group scoring-option-grid">
                         <label class="checkbox-label"><input type="radio" name="score_stk4h_invalidation_logic" value="below_last_hl"><span class="checkbox-text">Below last HL</span></label>
                         <label class="checkbox-label"><input type="radio" name="score_stk4h_invalidation_logic" value="above_last_lh"><span class="checkbox-text">Above last LH</span></label>
@@ -524,9 +663,9 @@
                     </div>
                 </div>
                 <div class="form-group">
-                    <label>Entry <span class="help-icon" data-tooltip="Poziom wejścia zgodny z triggerem (confirmation).">?</span></label>
+                    <label>Entry <span class="help-icon" data-tooltip="Poziom wejĹ›cia zgodny z triggerem (confirmation).">?</span></label>
                     <input name="score_stk4h_entry" type="text" placeholder="Entry">
-                    <label style="margin-top:6px;">Stop <span class="help-icon" data-tooltip="Poziom obrony zgodny z invalidation (gdzie teza przestaje działać).">?</span></label>
+                    <label style="margin-top:6px;">Stop <span class="help-icon" data-tooltip="Poziom obrony zgodny z invalidation (gdzie teza przestaje dziaĹ‚aÄ‡).">?</span></label>
                     <input name="score_stk4h_stop" type="text" placeholder="Stop" style="margin-top:6px;">
                     <label style="margin-top:6px;">Target <span class="help-icon" data-tooltip="Docelowy poziom na kolejnej logicznej barierze (S/R lub HTF).">?</span></label>
                     <input name="score_stk4h_target" type="text" placeholder="Target" style="margin-top:6px;">
@@ -534,7 +673,7 @@
                 <div class="form-group">
                     <label class="checkbox-label" style="margin-top:8px;">
                         <input type="checkbox" name="score_stk4h_plan_manual_override">
-                        <span class="checkbox-text">Manual override <span class="help-icon" data-tooltip="ON: tylko ręczne wartości. OFF: system auto-uzupełnia brakujące pola Part 2 heurystyką.">?</span></span>
+                        <span class="checkbox-text">Manual override <span class="help-icon" data-tooltip="ON: tylko rÄ™czne wartoĹ›ci. OFF: system auto-uzupeĹ‚nia brakujÄ…ce pola Part 2 heurystykÄ….">?</span></span>
                     </label>
                 </div>
                 <div class="analysis-subsection" style="grid-column: 1 / -1;">
@@ -543,11 +682,11 @@
                 <div class="form-group" style="grid-column: 1 / -1;">
                     <div style="display:grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap:6px;">
                         <div id="score-stk4h-rr" class="scoring-readonly-value" title="R:R = reward/risk. <1.3 zwykle No-trade, 1.3-1.5 maks Reduced, >=1.5 akceptowalne.">R:R: No data</div>
-                        <div id="score-stk4h-room" class="scoring-readonly-value" title="Room = miejsce do najbliższej bariery liczone w ATR. None zwykle obniża status.">Room: No data</div>
-                        <div id="score-stk4h-plan-direction" class="scoring-readonly-value" title="Kierunek planu wyliczony z Setup Type + biasów. Używany do sanity-check RR.">Plan direction: No data</div>
-                        <div id="score-stk4h-plan-source" class="scoring-readonly-value" title="Źródło pól planu: auto/manual dla Setup, Confirmation, Invalidation i Risk levels.">Plan source: No data</div>
-                        <div id="score-stk4h-breakdown" class="scoring-readonly-value" title="Składowe jakości: Structure + Setup + Risk + Penalties (0-20).">Structure: 0/8 | Setup: 0/6 | Risk: 0/6 | Penalties: 0</div>
-                        <div id="score-stk4h-status" class="scoring-readonly-value" title="Finalny status i ostrzeżenia hard-cap (Allowed/Reduced/No-trade).">Status: No data | Warnings: none</div>
+                        <div id="score-stk4h-room" class="scoring-readonly-value" title="Room = miejsce do najbliĹĽszej bariery liczone w ATR. None zwykle obniĹĽa status.">Room: No data</div>
+                        <div id="score-stk4h-plan-direction" class="scoring-readonly-value" title="Kierunek planu wyliczony z Setup Type + biasĂłw. UĹĽywany do sanity-check RR.">Plan direction: No data</div>
+                        <div id="score-stk4h-plan-source" class="scoring-readonly-value" title="ĹąrĂłdĹ‚o pĂłl planu: auto/manual dla Setup, Confirmation, Invalidation i Risk levels.">Plan source: No data</div>
+                        <div id="score-stk4h-breakdown" class="scoring-readonly-value" title="SkĹ‚adowe jakoĹ›ci: Structure + Setup + Risk + Penalties (0-20).">Structure: 0/8 | Setup: 0/6 | Risk: 0/6 | Penalties: 0</div>
+                        <div id="score-stk4h-status" class="scoring-readonly-value" title="Finalny status i ostrzeĹĽenia hard-cap (Allowed/Reduced/No-trade).">Status: No data | Warnings: none</div>
                     </div>
                 </div>
             </div>
@@ -771,6 +910,7 @@
     </div>
 </form>
 {% endblock %}
+
 
 
 

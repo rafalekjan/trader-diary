@@ -16,7 +16,7 @@ import urllib.request
 import urllib.error
 import re
 import os
-from sqlalchemy import inspect, text
+from sqlalchemy import inspect, text, or_
 from sqlalchemy.exc import IntegrityError
 from dotenv import load_dotenv
 
@@ -1319,6 +1319,14 @@ def _score_snapshot_to_dict(snapshot: models.ScoreSnapshot) -> dict[str, Any]:
     }
 
 
+def _score_symbol_filter_expr(symbol_raw: str):
+    base = (symbol_raw or "SPY").strip().upper()
+    return or_(
+        models.ScoreSnapshot.symbol == base,
+        models.ScoreSnapshot.symbol.like(f"{base}|%")
+    )
+
+
 @app.get("/api/score/snapshots")
 async def api_list_score_snapshots(
     symbol: str = "SPY",
@@ -1328,7 +1336,7 @@ async def api_list_score_snapshots(
 ):
     query = (
         db.query(models.ScoreSnapshot)
-        .filter(models.ScoreSnapshot.symbol == symbol.upper())
+        .filter(_score_symbol_filter_expr(symbol))
         .filter(models.ScoreSnapshot.timeframe == timeframe.upper())
         .order_by(models.ScoreSnapshot.session_date.desc(), models.ScoreSnapshot.id.desc())
         .limit(max(1, min(limit, 1000)))
@@ -1407,7 +1415,7 @@ async def api_export_score_snapshots_csv(
 ):
     rows = (
         db.query(models.ScoreSnapshot)
-        .filter(models.ScoreSnapshot.symbol == symbol.upper())
+        .filter(_score_symbol_filter_expr(symbol))
         .filter(models.ScoreSnapshot.timeframe == timeframe.upper())
         .order_by(models.ScoreSnapshot.session_date.desc(), models.ScoreSnapshot.id.desc())
         .all()
@@ -1462,7 +1470,7 @@ async def api_score_pattern_stats(
 ):
     snapshots = (
         db.query(models.ScoreSnapshot)
-        .filter(models.ScoreSnapshot.symbol == symbol.upper())
+        .filter(_score_symbol_filter_expr(symbol))
         .filter(models.ScoreSnapshot.timeframe == timeframe.upper())
         .order_by(models.ScoreSnapshot.session_date.desc(), models.ScoreSnapshot.id.desc())
         .limit(max(1, min(limit, 2000)))

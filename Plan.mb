@@ -1,0 +1,471 @@
+Poniżej masz kompletny przepływ systemu zgodnie z **Blueprint ModMarka**, od rynku do review.
+Każdy punkt max 2 zdania.
+Jesli czegos brakuje uzupelnij liste.
+
+---
+
+0️⃣ Weekly Preparation (Type of Week)
+
+Przed rozpoczęciem tygodnia określany jest dominujący charakter rynku: trend, range lub high volatility.
+To ustala agresję, maksymalny risk oraz preferowany typ setupów na cały tydzień.
+
+---
+
+### 0️⃣A Pre-Market Planning Session
+
+Każdego dnia przed otwarciem tworzony jest plan scenariuszy (bull / bear / no-trade).
+Bez planu przed sesją system nie dopuszcza aktywnego tradingu.
+---
+
+### 0️⃣B Core Watchlist Maintenance
+
+Core lista jest regularnie aktualizowana: dodajesz liderów i usuwasz tickery o pogorszonej jakości zachowania/płynności.
+System działa na stałej bazie “najlepszych nazw”, nie na losowych okazjach.
+
+---
+
+### 0️⃣C Levels & Alerts Preparation
+
+Dla shortlisty ustawiane są kluczowe poziomy i alerty (wejściowe, invalidation, targety), żeby egzekucja była reakcyjna, nie “na oko”.
+Bez przygotowanych poziomów setup pozostaje tylko ideą.
+
+---
+
+### 1️⃣ Market Filter (SPY First)
+
+Najpierw oceniany jest SPY: bias, reżim, struktura, VIX, breadth, location i room.
+Jeśli środowisko nie daje edge, system blokuje lub redukuje agresję.
+
+---
+
+### 1️⃣B “Top Setups Only” Daily Limit
+
+System ogranicza liczbę aktywowanych setupów do kilku najwyżej ocenionych w danym dniu/tygodniu.
+To wymusza selektywność i zapobiega handlowaniu “bo coś się rusza”.
+
+---
+
+### 2️⃣ Market Permission
+
+Na podstawie kontekstu rynku system ustala: Full / Reduced / Observation.
+To automatycznie wpływa na maksymalny risk i dopuszczalny typ setupu.
+
+---
+
+Twoja lista jest bardzo kompletna i w pełni zgodna z Blueprint jako procesem strukturalnym.
+Brakuje tylko kilku elementów, które w Blueprint są implikowane, ale nie zostały nazwane wprost.
+
+Uzupełniam brakujące punkty (maks. 2 zdania każdy):
+
+---
+
+### 2️⃣A Intraday Environment Check
+
+Przed aktywacją setupu oceniany jest bieżący charakter dnia (trend day / range day / choppy day).
+Środowisko dnia nie może stać w sprzeczności z planowanym typem setupu.
+
+---
+
+### 2️⃣B Environment Conflict Check
+
+System sprawdza, czy nie występuje konflikt między Weekly Mode, Daily Context i Intraday Environment.
+Jeśli warstwy rynku są niespójne, agresja zostaje automatycznie obniżona.
+Twoja lista jest **bardzo bliska pełnej zgodności z Blueprint jako systemem operacyjnym**.
+Brakuje już tylko kilku elementów, które w Blueprint są częścią dyscypliny procesu i kontroli jakości środowiska, a nie zostały nazwane wprost.
+
+Uzupełniam brakujące punkty (max 2 zdania każdy):
+
+---
+
+### 2️⃣C News & Catalyst Awareness
+
+System sprawdza, czy w najbliższym czasie nie występują istotne wydarzenia makro lub earnings wpływające na środowisko.
+Trade nie powinien być aktywowany tuż przed znanym katalizatorem zmieniającym strukturę rynku.
+
+---
+
+### 2️⃣D Volatility Regime Awareness
+
+Sprawdzane jest, czy obecny poziom zmienności wspiera wybrany typ setupu (np. breakout w niskiej zmienności vs mean reversion w wysokiej).
+Niewłaściwy reżim zmienności obniża probability edge.
+
+---
+
+### 3️⃣ Universe Selection
+
+Handlowane są tylko płynne spółki z core listy.
+Brak płynności = automatyczne odrzucenie bez dalszej analizy.
+
+---
+
+### 3️⃣A Sector & Index Alignment
+
+Oprócz zgodności ze SPY sprawdzana jest zgodność z sektorem i innymi indeksami (np. QQQ/IWM).
+Najlepsze setupy występują, gdy stock + sektor + rynek są w tej samej fazie.
+
+---
+
+### 4️⃣ Stock Alignment
+
+Ticker musi być zgodny z kierunkiem rynku lub wykazywać wyraźną relative strength/weakness.
+Brak alignment = obniżenie grade albo skip.
+
+---
+
+### 4️⃣A Higher Timeframe Confirmation
+
+Kierunek i struktura z wyższego interwału (Daily/Weekly) muszą wspierać planowany trade.
+Konflikt HTF z planem obniża grade lub blokuje setup.
+
+---
+
+### 4️⃣B Relative Strength Continuity
+
+Sprawdzana jest nie tylko jednorazowa siła względna, ale jej ciągłość w czasie.
+Nagłe zanikanie relative strength obniża jakość setupu.
+
+---
+
+### 4️⃣C Behavior Consistency Check
+
+Analizowana jest powtarzalność zachowania tickera w danym środowisku (czy reaguje zgodnie z charakterem rynku).
+Spółki o niestabilnym, losowym zachowaniu są eliminowane z shortlisty.
+
+---
+
+### 4️⃣D Leader/Laggard Confirmation
+
+Analizowane jest, czy liderzy rynku potwierdzają kierunek (a nie tylko szeroki indeks).
+Brak potwierdzenia przez liderów obniża jakość środowiska.
+
+---
+
+### 5️⃣ Setup Type Identification
+
+System klasyfikuje strukturę jako: pullback, breakout, range play lub reversal attempt.
+Każdy typ ma inne wymagania środowiskowe i minimalne RR.
+
+---
+
+### 6️⃣ Location & Structure Quality
+
+Cena musi być przy kluczowym poziomie (wsparcie/opór/break), nie w środku zakresu.
+Struktura musi być czytelna i “clean”, bez chaosu.
+
+---
+
+### 7️⃣ Room to Move
+
+Musi istnieć przestrzeń do kolejnego logicznego targetu HTF.
+Brak przestrzeni = brak edge nawet przy dobrym wejściu.
+
+---
+
+### 7️⃣A Overextension Check
+
+Sprawdzane jest, czy cena nie jest już nadmiernie rozciągnięta względem struktury HTF.
+Trade w fazie wyczerpania impulsu obniża probability edge.
+
+---
+
+### 7️⃣B Market Participation Quality
+
+Oceniane jest, czy ruch rynku jest wspierany przez szeroką partycypację, a nie pojedyncze liderujące spółki.
+Brak jakości partycypacji obniża jakość edge.
+
+---
+
+### 7️⃣C Reward Realism Check
+
+Oceniane jest, czy target jest realistyczny względem aktualnej struktury rynku i średniego zasięgu ruchów.
+Teoretyczny RR nie może być oderwany od realnej dynamiki rynku.
+
+---
+
+### 8️⃣ Thesis Definition
+
+Każdy setup musi mieć jasną tezę: co ma się wydarzyć i dlaczego.
+Bez tezy nie ma trade’u, nawet jeśli technicznie wygląda poprawnie.
+
+---
+
+### 8️⃣A Must-Happen Condition
+
+Oprócz tezy definiowane jest, co konkretnie musi się wydarzyć, aby trade został aktywowany.
+Jeśli warunek nie wystąpi, setup pozostaje w stanie “Needs Trigger”.
+
+---
+
+### 8️⃣B Clarity Filter
+
+Jeśli setup wymaga nadmiernego “interpretowania” lub nie jest oczywisty strukturalnie, jest pomijany.
+Blueprint zakłada, że najlepsze setupy są proste i klarowne.
+
+---
+
+### 9️⃣ Invalidation First
+
+Najpierw określany jest poziom, który unieważnia tezę.
+Stop wynika z invalidacji, nie z procenta czy emocji.
+
+---
+
+### 🔟 Risk–Reward Validation
+
+System sprawdza czy realistyczny target daje minimum 2R.
+Jeśli RR < 2, setup zostaje odrzucony lub obniżony do C-grade.
+
+---
+
+### 1️⃣1️⃣ Grading Engine
+
+Setup otrzymuje ocenę A/B/C/D na podstawie jakości rynku, struktury i klarowności ryzyka.
+Grade automatycznie ustala wielkość pozycji.
+
+---
+
+### 1️⃣1️⃣A Process Enforcement
+
+System nie pozwala przejść do kolejnego etapu bez spełnienia poprzedniego (market → stock → risk → contract).
+Brak invalidacji, RR lub triggera blokuje możliwość wejścia.
+
+---
+
+### 1️⃣1️⃣B Position Sizing Logic
+
+Wielkość pozycji wynika wyłącznie z grade i risk profile, nie z przekonania czy “pewności”.
+System eliminuje możliwość uznaniowego zwiększania wielkości pozycji.
+
+---
+
+### 1️⃣1️⃣C Edge Concentration Discipline
+
+System ogranicza handel do setupów, które historycznie mają dodatnią expectancy.
+Blueprint zakłada koncentrację na edge, nie na różnorodności.
+
+---
+
+### 1️⃣2️⃣ Options Contract Filter (dla swing options)
+
+Sprawdzane są DTE, płynność, spread i sensowność delty.
+Kontrakt nie spełnia warunków → trade nie może zostać aktywowany.
+
+---
+
+### 1️⃣2️⃣A Liquidity Discipline Rule
+
+System wymusza używanie zleceń limit oraz unikanie szerokich spreadów.
+Zła jakość wykonania jest traktowana jako naruszenie procesu.
+---
+
+### 1️⃣2️⃣B IV / Pricing Context Check (Options Environment)
+
+Przed wyborem kontraktu system ocenia, czy środowisko IV sprzyja strategii (np. long premium vs ryzyko IV crush).
+Jeśli IV/wycena nie wspiera edge, trade jest redukowany lub blokowany.
+
+---
+
+### 1️⃣3️⃣ Trigger Workflow
+
+Wejście następuje dopiero po spełnieniu warunku reakcji na poziomie.
+Dotknięcie poziomu ≠ wejście; musi być potwierdzenie struktury/momentum.
+
+---
+
+### 1️⃣3️⃣A Patience Filter
+
+System wymaga, aby cena rzeczywiście „zbudowała strukturę” przed wejściem, a nie tylko wykonała szybki ruch.
+Brak cierpliwości przed triggerem jest traktowany jako naruszenie procesu.
+
+---
+
+### 1️⃣4️⃣ Execution Snapshot
+
+W momencie wejścia zapisywany jest pełny kontekst rynku i setupu.
+To umożliwia późniejszą obiektywną ocenę.
+
+---
+
+### 1️⃣4️⃣A Context Freeze Discipline
+
+Po wejściu w trade teza i parametry nie mogą być modyfikowane bez strukturalnego powodu.
+Zmiana planu bez zmiany struktury jest traktowana jako naruszenie procesu.
+
+---
+
+### 1️⃣4️⃣B Evidence Capture (Chart Snapshot Discipline)
+
+Do setupu/trade’u zapisywany jest dowód kontekstu (screen/oznaczenia poziomów) w momencie planu i w momencie wejścia.
+Bez tego review traci obiektywność.
+
+---
+
+### 1️⃣5️⃣ Trade Management
+
+Z góry określony jest plan TP1, TP2 oraz zarządzania stopem.
+Zarządzanie odbywa się według struktury, nie według emocji.
+
+---
+
+### 1️⃣5️⃣A Early Exit Logic
+
+Z góry definiowane są warunki wcześniejszego wyjścia, jeśli rynek traci momentum lub zmienia charakter.
+Brak follow-through po wejściu może być sygnałem do redukcji lub zamknięcia pozycji.
+
+---
+
+### 1️⃣5️⃣B Partial Scaling Logic
+
+Częściowa realizacja zysku przy pierwszym logicznym targetcie jest częścią planu.
+Redukcja ryzyka po TP1 jest elementem ochrony kapitału.
+
+---
+
+### 1️⃣5️⃣C Time-Based Exit Awareness
+
+Jeżeli po określonym czasie trade nie wykazuje oczekiwanego follow-through, rozważane jest wyjście lub redukcja.
+Brak postępu jest informacją strukturalną, nie emocjonalną.
+
+---
+
+### 1️⃣5️⃣D “Do Not Touch” Rule (Hands-Off Management)
+
+Po wejściu nie wolno “mikrozarządzać” pozycją, jeśli struktura nie zmienia się zgodnie z planem.
+System wymusza zarządzanie tylko na triggerach strukturalnych (TP/invalidacja/planowane przesunięcia).
+
+---
+
+### 1️⃣6️⃣ Exposure Control
+
+System pilnuje łącznej ekspozycji i korelacji pozycji.
+Nawet dobry setup nie przejdzie, jeśli ryzyko portfela jest przekroczone.
+
+---
+
+### 1️⃣6️⃣A Drawdown & Capital Protection Mode
+
+Po określonym drawdownie lub serii strat system automatycznie redukuje risk.
+Ochrona kapitału ma priorytet nad poszukiwaniem nowych okazji.
+
+---
+
+### 1️⃣6️⃣B Correlation Awareness
+
+System ogranicza ekspozycję w silnie skorelowanych spółkach nawet przy dobrych setupach.
+Koncentracja ryzyka jest traktowana jako błąd procesu.
+
+---
+
+### 1️⃣6️⃣C Risk Concentration Check
+
+System sprawdza koncentrację ekspozycji względem jednego czynnika makro (np. wszystkie pozycje zależne od jednego indeksu).
+Nadmierna koncentracja obniża dopuszczalną agresję.
+
+---
+
+### 1️⃣6️⃣D Daily Risk Cap Enforcement
+
+Oprócz kontroli pozycji istnieje dzienny limit strat.
+Po jego osiągnięciu handel zostaje zakończony bez względu na nowe okazje.
+
+---
+
+### 1️⃣7️⃣ Post-Trade Review
+
+Każdy trade jest oceniany pod kątem wykonania planu i przestrzegania zasad.
+Wynik finansowy jest wtórny wobec jakości procesu.
+
+---
+
+### 1️⃣7️⃣A Process Score
+
+Po review oceniana jest jakość wykonania w skali procesowej (np. 1–10).
+System mierzy jakość decyzji, a nie tylko wynik finansowy.
+
+---
+
+### 1️⃣7️⃣B Loss Pattern Review
+
+Po serii strat analizowany jest wzorzec (środowisko, typ setupu, pora dnia).
+Celem jest identyfikacja strukturalnego problemu, a nie zwiększanie agresji.
+
+---
+
+### 1️⃣7️⃣C Best-Trade Pattern Recognition
+
+System identyfikuje wspólne cechy najlepszych trade’ów.
+Priorytet otrzymują setupy zbliżone do historycznych A+ konfiguracji.
+
+---
+
+### 1️⃣7️⃣D End-of-Day Debrief
+
+Po sesji wykonywany jest krótki przegląd: czy plan dnia był zgodny z tym, co zrobił rynek, i czy trzeba zaktualizować shortlistę/scenariusze.
+To zamyka pętlę “plan → execution → feedback” w rytmie dziennym.
+
+---
+
+### 1️⃣7️⃣E Screenshot at Exit + Reason Code
+
+Przy zamknięciu pozycji zapisywany jest snapshot oraz krótki kod powodu wyjścia (TP, stop, early-exit, time-exit).
+Bez tego analityka expectancy i review traci precyzję.
+
+---
+
+### 1️⃣8️⃣ Expectancy Tracking
+
+System mierzy skuteczność według typu setupu i grade.
+Decyzje są optymalizowane na podstawie danych, nie pojedynczych emocjonalnych wyników.
+
+---
+
+### 1️⃣8️⃣A Setup-Type Performance Breakdown
+
+Expectancy analizowane jest osobno dla każdego typu setupu (pullback, breakout, range).
+Pozwala to eliminować setupy bez edge.
+
+---
+
+### 1️⃣9️⃣ Rule Violation Tracking
+
+Każde wejście poza planem, zbyt wczesne lub bez triggera jest oznaczane jako naruszenie zasad.
+System mierzy jakość egzekucji niezależnie od wyniku finansowego.
+
+---
+
+### 2️⃣0️⃣ “No Trade” as Valid Outcome
+
+Jeśli warunki nie spełniają kryteriów edge, decyzją jest brak trade’u.
+Brak pozycji jest traktowany jako poprawna realizacja systemu.
+
+---
+
+### 2️⃣1️⃣ Continuous Refinement Loop
+
+Na podstawie danych expectancy i review system aktualizuje preferowane setupy.
+Proces jest iteracyjny i ewoluuje wraz z danymi.
+
+---
+
+### 2️⃣2️⃣ Psychological State Check
+
+Przed aktywacją trade’u oceniany jest stan mentalny (pośpiech, frustracja, FOMO).
+Jeśli stan jest niestabilny, system redukuje risk lub blokuje wejście.
+
+---
+
+### 2️⃣3️⃣ Capital Preservation Priority Rule
+
+Ochrona kapitału ma bezwzględny priorytet nad maksymalizacją zysku.
+Każda decyzja systemu (risk, sizing, skip) podporządkowana jest zasadzie przetrwania w długim horyzoncie.
+
+---
+
+### 2️⃣4️⃣ Simplicity & Selectivity Principle
+
+System preferuje nieliczne, oczywiste i wysokiej jakości konfiguracje zamiast częstego handlu.
+Jeżeli setup nie jest klarowny i powtarzalny, zostaje pominięty niezależnie od potencjalnego RR.
+
+
+
+
