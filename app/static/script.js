@@ -804,6 +804,9 @@ function initScoreGatekeeper() {
     const stk15mStatusEl = document.getElementById('score-stk15m-status');
     const stk15mRrEl = document.getElementById('score-stk15m-rr');
     const stk15mBreakdownEl = document.getElementById('score-stk15m-breakdown');
+    const decisionOverallHeadEl = document.getElementById('score-decision-overall-head');
+    const decisionTextEl = document.getElementById('score-decision-text');
+    const decisionChecklistBodyEl = document.getElementById('score-decision-checklist-body');
     const stk4hPlanOverrideEl = form.querySelector('input[name="score_stk4h_plan_manual_override"]');
     const stk4hSetupTypeInputs = Array.from(form.querySelectorAll('input[name="score_stk4h_setup_type"]'));
     const stk4hConfirmationInputs = Array.from(form.querySelectorAll('input[name="score_stk4h_confirmation"]'));
@@ -813,6 +816,7 @@ function initScoreGatekeeper() {
     const stk4hTargetEl = form.querySelector('input[name="score_stk4h_target"]');
     let latestComputed = null;
     let latestWarnings = [];
+    let patternStatsCache = null;
 
     const sessionDateEl = document.getElementById('score-session-date');
     const saveSnapshotBtn = document.getElementById('score-save-snapshot');
@@ -924,16 +928,41 @@ function initScoreGatekeeper() {
     const parseLevel = (raw) => {
         const text = String(raw || '').trim();
         if (!text) return null;
-        const rangeMatch = text.match(/(-?\d+(?:\.\d+)?)\s*[-:]\s*(-?\d+(?:\.\d+)?)/);
+
+        const parseNumericToken = (tokenRaw) => {
+            if (!tokenRaw) return null;
+            let token = String(tokenRaw).trim().replace(/\s+/g, '');
+            if (!token) return null;
+            token = token.replace(/[^0-9,.\-]/g, '');
+            if (!token) return null;
+
+            const lastComma = token.lastIndexOf(',');
+            const lastDot = token.lastIndexOf('.');
+            if (lastComma >= 0 && lastDot >= 0) {
+                if (lastComma > lastDot) {
+                    token = token.replace(/\./g, '');
+                    token = token.replace(',', '.');
+                } else {
+                    token = token.replace(/,/g, '');
+                }
+            } else if (lastComma >= 0) {
+                token = token.replace(',', '.');
+            }
+
+            const n = Number(token);
+            return Number.isFinite(n) ? n : null;
+        };
+
+        const rangeMatch = text.match(/(-?[\d.,]+)\s*[-:]\s*(-?[\d.,]+)/);
         if (rangeMatch) {
-            const a = Number(rangeMatch[1]);
-            const b = Number(rangeMatch[2]);
+            const a = parseNumericToken(rangeMatch[1]);
+            const b = parseNumericToken(rangeMatch[2]);
             if (Number.isFinite(a) && Number.isFinite(b)) return (a + b) / 2;
         }
-        const numMatch = text.match(/-?\d+(?:\.\d+)?/);
+
+        const numMatch = text.match(/-?[\d.,]+/);
         if (!numMatch) return null;
-        const n = Number(numMatch[0]);
-        return Number.isFinite(n) ? n : null;
+        return parseNumericToken(numMatch[0]);
     };
 
     const classifyRoomFromAtr = (distanceAtr) => {
@@ -1149,6 +1178,70 @@ function initScoreGatekeeper() {
         return { rr, label, validOrder: true };
     };
 
+    const pick4HRoomBarrier = ({
+        setupType,
+        planDirection,
+        entry,
+        support,
+        resistance,
+        pwh,
+        pwl
+    }) => {
+        const isBull = planDirection === 'bullish';
+        const isBear = planDirection === 'bearish';
+        if (!isBull && !isBear) return null;
+
+        const above = (v) => Number.isFinite(v) && v >= entry;
+        const below = (v) => Number.isFinite(v) && v <= entry;
+
+        if (setupType === 'range_play') {
+            if (isBull && above(resistance)) return resistance;
+            if (isBear && below(support)) return support;
+        }
+
+        if (isBull) {
+            const candidates = [resistance, pwh].filter(above);
+            if (candidates.length) return Math.min(...candidates);
+        } else {
+            const candidates = [support, pwl].filter(below);
+            if (candidates.length) return Math.max(...candidates);
+        }
+
+        const fallback = [support, resistance, pwh, pwl]
+            .filter(Number.isFinite)
+            .map((v) => ({ value: v, dist: Math.abs(v - entry) }))
+            .sort((a, b) => a.dist - b.dist);
+        return fallback.length ? fallback[0].value : null;
+    };
+
+    const derive15mTargetCandidates = ({
+        entry,
+        stop,
+        direction,
+        support4h,
+        resistance4h,
+        pwh4h,
+        pwl4h
+    }) => {
+        if (!Number.isFinite(entry) || !Number.isFinite(stop) || (direction !== 'bullish' && direction !== 'bearish')) {
+            return { t1: null, t2: null };
+        }
+        const risk = Math.abs(entry - stop);
+        if (!Number.isFinite(risk) || risk <= 0) return { t1: null, t2: null };
+
+        const t1 = direction === 'bullish' ? entry + (risk * 1.5) : entry - (risk * 1.5);
+
+        let t2 = null;
+        if (direction === 'bullish') {
+            const candidates = [resistance4h, pwh4h].filter((v) => Number.isFinite(v) && v > entry);
+            if (candidates.length) t2 = Math.min(...candidates);
+        } else {
+            const candidates = [support4h, pwl4h].filter((v) => Number.isFinite(v) && v < entry);
+            if (candidates.length) t2 = Math.max(...candidates);
+        }
+        return { t1, t2 };
+    };
+
     const deriveStock4HSuggestions = (values) => {
         const setupLabelMap = {
             pullback_continuation: 'Pullback continuation',
@@ -1297,7 +1390,13 @@ function initScoreGatekeeper() {
                 structureScore: 0,
                 setupScore: 0,
                 riskScore: 0,
-                penalties: 0
+                penalties: 0,
+                levels: {
+                    support: supportNumBase,
+                    resistance: resistanceNumBase,
+                    pwh: pwhNumBase,
+                    pwl: pwlNumBase
+                }
             };
         }
 
@@ -1358,27 +1457,23 @@ function initScoreGatekeeper() {
         const pwhNum = parseLevel(effectiveValues.pwh);
         const pwlNum = parseLevel(effectiveValues.pwl);
         let roomClass = '';
-        let roomText = 'Room: No data';
+        let roomText = 'No data';
+        let roomBarrier = null;
         if (Number.isFinite(entryNum) && Number.isFinite(atrNum) && atrNum > 0) {
-            let dist = null;
-            if (planDirection === 'bullish') {
-                const bullBarriers = [resistanceNum, pwhNum].filter(Number.isFinite).map((v) => v - entryNum).filter((d) => d >= 0);
-                if (bullBarriers.length) dist = Math.min(...bullBarriers);
-            } else if (planDirection === 'bearish') {
-                const bearBarriers = [supportNum, pwlNum].filter(Number.isFinite).map((v) => entryNum - v).filter((d) => d >= 0);
-                if (bearBarriers.length) dist = Math.min(...bearBarriers);
-            }
-            if (!Number.isFinite(dist)) {
-                const candidates = [];
-                if (Number.isFinite(supportNum)) candidates.push(Math.abs(entryNum - supportNum));
-                if (Number.isFinite(resistanceNum)) candidates.push(Math.abs(resistanceNum - entryNum));
-                if (Number.isFinite(pwhNum)) candidates.push(Math.abs(pwhNum - entryNum));
-                if (Number.isFinite(pwlNum)) candidates.push(Math.abs(entryNum - pwlNum));
-                if (candidates.length) dist = Math.min(...candidates);
-            }
+            roomBarrier = pick4HRoomBarrier({
+                setupType: effectiveValues.setupType,
+                planDirection,
+                entry: entryNum,
+                support: supportNum,
+                resistance: resistanceNum,
+                pwh: pwhNum,
+                pwl: pwlNum
+            });
+            const dist = Number.isFinite(roomBarrier) ? Math.abs(roomBarrier - entryNum) : null;
             if (Number.isFinite(dist) && dist >= 0) {
-                roomClass = classifyRoomFromAtr(dist / atrNum) || '';
-                if (roomClass) roomText = `${roomClass} (${(dist / atrNum).toFixed(2)} ATR)`;
+                const distAtr = dist / atrNum;
+                roomClass = classifyRoomFromAtr(distAtr) || '';
+                if (roomClass) roomText = `${roomClass} (${distAtr.toFixed(2)} ATR, barrier ${roomBarrier.toFixed(2)})`;
             }
         }
 
@@ -1480,6 +1575,17 @@ function initScoreGatekeeper() {
             }
         }
         if (
+            roomClass === 'limited' &&
+            effectiveValues.setupType !== 'range_play' &&
+            effectiveValues.setupType !== 'reversal_attempt' &&
+            rrInfo.rr !== null &&
+            rrInfo.rr < 2 &&
+            status === 'Allowed'
+        ) {
+            status = 'Reduced';
+            capReasons.push('Cap Reduced: limited room on continuation setup requires >=2R');
+        }
+        if (
             effectiveValues.regimeAuto === 'range' &&
             effectiveValues.confirmation === 'break_hold' &&
             effectiveValues.locationHint !== 'at_4h_support' &&
@@ -1528,7 +1634,13 @@ function initScoreGatekeeper() {
             structureScore,
             setupScore,
             riskScore,
-            penalties
+            penalties,
+            levels: {
+                support: supportNum,
+                resistance: resistanceNum,
+                pwh: pwhNum,
+                pwl: pwlNum
+            }
         };
     };
 
@@ -1578,8 +1690,7 @@ function initScoreGatekeeper() {
             values.bias &&
             values.triggerStatus &&
             parseLevel(values.entry) !== null &&
-            parseLevel(values.stop) !== null &&
-            parseLevel(values.target) !== null
+            parseLevel(values.stop) !== null
         );
         if (!hasMinimumData) {
             return {
@@ -1593,7 +1704,8 @@ function initScoreGatekeeper() {
                 triggerScore: 0,
                 entryScore: 0,
                 riskScore: 0,
-                penalties: 0
+                penalties: 0,
+                autoTargetUsed: false
             };
         }
 
@@ -1601,9 +1713,40 @@ function initScoreGatekeeper() {
         if (planDirection !== 'bullish' && planDirection !== 'bearish') {
             planDirection = values.bias === 'bullish' ? 'bullish' : values.bias === 'bearish' ? 'bearish' : '';
         }
-        const rrInfo = calculateRR(values.entry, values.stop, values.target, planDirection);
+
+        const entryNum = parseLevel(values.entry);
+        const stopNum = parseLevel(values.stop);
+        const userTargetNum = parseLevel(values.target);
+        const levels4h = stock4hResult && stock4hResult.levels ? stock4hResult.levels : {};
+        const support4h = parseLevel(levels4h.support);
+        const resistance4h = parseLevel(levels4h.resistance);
+        const pwh4h = parseLevel(levels4h.pwh);
+        const pwl4h = parseLevel(levels4h.pwl);
+        const targetCandidates = derive15mTargetCandidates({
+            entry: entryNum,
+            stop: stopNum,
+            direction: planDirection,
+            support4h,
+            resistance4h,
+            pwh4h,
+            pwl4h
+        });
+        const preferT1 = values.locationVs4h === 'late_extended' ||
+            values.locationVs4h === 'chasing_breakout' ||
+            values.volume === 'weak' ||
+            values.triggerStatus !== 'confirmed';
+        const autoTargetNum = preferT1
+            ? (Number.isFinite(targetCandidates.t1) ? targetCandidates.t1 : targetCandidates.t2)
+            : (Number.isFinite(targetCandidates.t2) ? targetCandidates.t2 : targetCandidates.t1);
+        const effectiveTargetNum = Number.isFinite(userTargetNum) ? userTargetNum : autoTargetNum;
+        const rrInfo = calculateRR(values.entry, values.stop, effectiveTargetNum, planDirection);
         const capReasons = [];
         const warnings = [];
+        let autoTargetUsed = false;
+        if (!Number.isFinite(userTargetNum) && Number.isFinite(effectiveTargetNum)) {
+            autoTargetUsed = true;
+            warnings.push(`Auto target (${preferT1 ? 'T1 local' : 'T2 HTF'}) used`);
+        }
         const counterTrend = Boolean(
             (planDirection === 'bullish' && values.bias === 'bearish') ||
             (planDirection === 'bearish' && values.bias === 'bullish')
@@ -1681,6 +1824,17 @@ function initScoreGatekeeper() {
             status = 'Reduced';
             capReasons.push('Cap Reduced: midday liquidity');
         }
+        if (Number.isFinite(entryNum) && Number.isFinite(stopNum) && Number.isFinite(effectiveTargetNum)) {
+            const riskDist = Math.abs(entryNum - stopNum);
+            const targetDist = Math.abs(effectiveTargetNum - entryNum);
+            if (riskDist > 0 && targetDist > riskDist * 3) {
+                warnings.push('Ambitious target: above 3R distance');
+                if (status === 'Allowed') {
+                    status = 'Reduced';
+                    capReasons.push('Cap Reduced: target too far (>3R)');
+                }
+            }
+        }
         if (counterTrend) warnings.push('15m counter-trend vs 4H');
         if (values.liquidityEvent === 'failed_breakout') warnings.push('Failed breakout liquidity event');
 
@@ -1703,7 +1857,8 @@ function initScoreGatekeeper() {
             triggerScore,
             entryScore,
             riskScore,
-            penalties
+            penalties,
+            autoTargetUsed
         };
     };
 
@@ -1944,12 +2099,35 @@ function initScoreGatekeeper() {
         if (riskOff) riskState = 'Risk-off';
         else if (riskOn) riskState = 'Risk-on';
 
+        let macroMode = 'Normal';
+        if (values.regime === 'volatile' || (values.vixLevel === 'gt25' && values.vixTrend === 'rising')) macroMode = 'Defensive';
+        else if ((values.vixLevel === '20_25' && values.vixTrend === 'rising') || values.vixLevel === 'gt25') macroMode = 'Cautious';
+        if (values.breadth === 'strong' && macroMode === 'Cautious') macroMode = 'Normal';
+
+        const macroRequiredRr15 = macroMode === 'Defensive' ? 2.2 : macroMode === 'Cautious' ? 1.8 : 1.5;
+        const macroRequiredRr4h = macroMode === 'Defensive' ? 1.6 : macroMode === 'Cautious' ? 1.4 : 1.3;
+        const macroSizeCap = macroMode === 'Defensive' ? '0.4x' : macroMode === 'Cautious' ? '0.7x' : '1.0x';
+
         let edgeType = 'No Clear Edge';
         if ((values.regime === 'trend_up' || values.regime === 'trend_down') && values.location === 'post_break_retest') edgeType = 'Trend Continuation';
         else if ((values.location === 'breakout_attempt' || values.location === 'breakdown_attempt') && values.momentumCondition === 'expanding') edgeType = 'Breakout Expansion';
         else if (values.momentumCondition === 'exhausted' && (values.location === 'at_support' || values.location === 'at_resistance')) edgeType = 'Mean Reversion';
 
-        return { rawScore, aScore, bScore, cScore, permission, size, reasons, riskState, edgeType };
+        return {
+            rawScore,
+            aScore,
+            bScore,
+            cScore,
+            permission,
+            size,
+            reasons,
+            riskState,
+            edgeType,
+            macroMode,
+            macroRequiredRr15,
+            macroRequiredRr4h,
+            macroSizeCap
+        };
     };
 
     const detectInconsistencies = (values) => {
@@ -1962,6 +2140,411 @@ function initScoreGatekeeper() {
         if (values.roomToMove === 'none' && (values.location === 'breakout_attempt' || values.location === 'breakdown_attempt')) warnings.push('No room to move with breakout/breakdown attempt.');
         if (values.momentumCondition === 'exhausted' && (values.location === 'breakout_attempt' || values.location === 'breakdown_attempt')) warnings.push('Exhausted momentum with breakout/breakdown attempt.');
         return warnings;
+    };
+
+    const parseRRNumber = (rrText) => {
+        const m = String(rrText || '').match(/([0-9]+(?:\.[0-9]+)?)R/);
+        if (!m) return null;
+        const n = Number(m[1]);
+        return Number.isFinite(n) ? n : null;
+    };
+
+    const findPatternStat = (rows, name) => {
+        const key = String(name || '').trim();
+        if (!key || !Array.isArray(rows)) return null;
+        return rows.find((r) => String(r?.name || '') === key) || null;
+    };
+
+    const renderDecisionChecklist = (rows) => {
+        if (!decisionChecklistBodyEl) return;
+        if (!Array.isArray(rows) || !rows.length) {
+            decisionChecklistBodyEl.innerHTML = '<tr><td colspan="5">No data</td></tr>';
+            return;
+        }
+        const mark = (ok) => ok
+            ? '<span class="decision-check-pass">✓</span>'
+            : '<span class="decision-check-fail">-</span>';
+        decisionChecklistBodyEl.innerHTML = rows.map((r) => `
+            <tr>
+                <td>${r.condition}</td>
+                <td>${r.current || '-'}</td>
+                <td>${mark(r.short)}</td>
+                <td>${mark(r.medium)}</td>
+                <td>${mark(r.swing)}</td>
+            </tr>
+        `).join('');
+    };
+
+    const renderDecision = ({
+        spyReady,
+        spyResult,
+        stockResult,
+        stock4hResult,
+        stock15mResult,
+        stock15mInputs
+    }) => {
+        const spyStatus = spyReady ? spyResult.permission : 'No data';
+        const oneDStatus = stockResult.permission || 'No data';
+        const fourHStatus = stock4hResult.status || 'No data';
+        const fifteenStatus = stock15mResult.status || 'No data';
+        const trigger = stock15mInputs.triggerStatus || '';
+        const entryType = stock15mInputs.entryType || '';
+
+        const spyLine = spyReady
+            ? `${spyResult.permission}, ${spyResult.riskState}, size ${spyResult.size}`
+            : 'No data';
+        const oneDLine = oneDStatus === 'No data' ? 'No data' : oneDStatus;
+        const fourHLine = fourHStatus === 'No data'
+            ? 'No data'
+            : `${fourHStatus}, direction ${stock4hResult.planDirectionText || 'No data'}, R:R ${stock4hResult.rrText}`;
+        const fifteenLine = fifteenStatus === 'No data'
+            ? 'No data'
+            : `${fifteenStatus}, trigger ${trigger || 'No data'}, location ${stock15mInputs.locationVs4h || 'No data'}, R:R ${stock15mResult.rrText}`;
+
+        const direction = (stock4hResult.planDirectionText || '').toLowerCase();
+        const rr15 = parseRRNumber(stock15mResult.rrText);
+        const rr4h = parseRRNumber(stock4hResult.rrText);
+        const macroMode = spyReady ? (spyResult.macroMode || 'Normal') : 'No data';
+        const macroRequiredRr15 = spyReady ? Number(spyResult.macroRequiredRr15 || 1.5) : null;
+        const macroRequiredRr4h = spyReady ? Number(spyResult.macroRequiredRr4h || 1.3) : null;
+        const macroSizeCap = spyReady ? (spyResult.macroSizeCap || '1.0x') : '-';
+
+        let setupSuggestion = 'No data';
+
+        const notes = [];
+        if (spyStatus === 'No-trade') notes.push('Blocked by SPY gatekeeper.');
+        if (oneDStatus === 'No-trade') notes.push('Blocked by Ticker 1D.');
+        if (fourHStatus === 'No-trade') notes.push('Blocked by Ticker 4H.');
+        if (fifteenStatus === 'No-trade') notes.push('Blocked by Ticker 15m.');
+        if (trigger === 'no_trigger') notes.push('15m trigger not confirmed.');
+        if (trigger === 'failed') notes.push('15m trigger failed.');
+        if (stock15mInputs.locationVs4h === 'chasing_breakout') notes.push('15m location is chasing breakout.');
+        if (stock4hResult.warningsText && stock4hResult.warningsText !== 'none') notes.push(`4H warnings: ${stock4hResult.warningsText}`);
+        if (stock15mResult.warningsText && stock15mResult.warningsText !== 'none') notes.push(`15m warnings: ${stock15mResult.warningsText}`);
+
+        let optionSide = 'No data';
+        const setupLc = String(setupSuggestion || '').toLowerCase();
+        if (setupLc.includes('call')) optionSide = 'CALL';
+        else if (setupLc.includes('put')) optionSide = 'PUT';
+        else if (direction === 'bullish') optionSide = 'CALL';
+        else if (direction === 'bearish') optionSide = 'PUT';
+
+        const spyOk = spyStatus !== 'No-trade' && spyStatus !== 'No data';
+        const oneDOk = oneDStatus !== 'No-trade' && oneDStatus !== 'No data';
+        const fourHOk = fourHStatus !== 'No-trade' && fourHStatus !== 'No data';
+        const fifteenOk = fifteenStatus !== 'No-trade' && fifteenStatus !== 'No data';
+        const triggerConfirmed = trigger === 'confirmed';
+        const directionDefined = direction === 'bullish' || direction === 'bearish';
+        const noChase = stock15mInputs.locationVs4h !== 'chasing_breakout' && Boolean(stock15mInputs.locationVs4h);
+        const goodLocation = stock15mInputs.locationVs4h === 'planned_zone' || stock15mInputs.locationVs4h === 'early';
+        const rr4h13 = rr4h !== null && rr4h >= 1.3;
+        const rr4h14 = rr4h !== null && rr4h >= 1.4;
+        const rr4h15 = rr4h !== null && rr4h >= 1.5;
+        const rr1515 = rr15 !== null && rr15 >= 1.5;
+        const rr1517 = rr15 !== null && rr15 >= 1.7;
+        const rr1520 = rr15 !== null && rr15 >= 2.0;
+        const notMidday = stock15mInputs.timeOfDay ? stock15mInputs.timeOfDay !== 'midday' : false;
+        const liqNotFailed = stock15mResult.warningsText ? !String(stock15mResult.warningsText).toLowerCase().includes('failed breakout') : true;
+        const shortEntryTypeOk = ['break_hold', 'range_breakout', 'sweep_reclaim'].includes(entryType);
+        const mediumEntryTypeOk = ['break_hold', 'reclaim_level', 'pullback_vwap', 'range_breakout', 'sweep_reclaim'].includes(entryType);
+        const swingEntryTypeOk = entryType !== '-' && Boolean(entryType);
+        const shortStrictStatus = (fourHStatus === 'Allowed') && (fifteenStatus === 'Allowed');
+        const mediumStrictStatus = (fourHStatus === 'Allowed' || fourHStatus === 'Reduced') && (fifteenStatus === 'Allowed' || fifteenStatus === 'Reduced');
+        const swingStrictStatus = fourHOk && fifteenOk;
+        const shortTimeOk = stock15mInputs.timeOfDay === 'open' || stock15mInputs.timeOfDay === 'power_hour';
+        const mediumTimeOk = stock15mInputs.timeOfDay !== 'midday' && Boolean(stock15mInputs.timeOfDay);
+        const swingTimeOk = Boolean(stock15mInputs.timeOfDay);
+
+        const rr4hMacroOk = rr4h !== null && macroRequiredRr4h !== null && rr4h >= macroRequiredRr4h;
+        const rr15MacroOk = rr15 !== null && macroRequiredRr15 !== null && rr15 >= macroRequiredRr15;
+        const macroLocationOk = macroMode !== 'Defensive' || goodLocation;
+        const spyVeto = spyStatus === 'No-trade' || spyStatus === 'No data';
+        // Overfitting guardrail:
+        // Keep one hard gate ("edge exists"), treat everything else as modifiers.
+        const edgeExists = !spyVeto &&
+            fourHOk &&
+            fifteenOk &&
+            directionDefined &&
+            triggerConfirmed &&
+            rr4hMacroOk &&
+            rr15MacroOk &&
+            macroLocationOk;
+
+        let modifierPenalty = 0;
+        if (macroMode === 'Cautious') modifierPenalty += 1;
+        if (macroMode === 'Defensive') modifierPenalty += 2;
+        if (spyStatus === 'Reduced') modifierPenalty += 1;
+        if (oneDStatus === 'Reduced') modifierPenalty += 1;
+        if (oneDStatus === 'No-trade') modifierPenalty += 2;
+        if (fourHStatus === 'Reduced') modifierPenalty += 1;
+        if (fifteenStatus === 'Reduced') modifierPenalty += 1;
+        if (!noChase) modifierPenalty += 1;
+        if (!liqNotFailed) modifierPenalty += 1;
+        if (!notMidday) modifierPenalty += 1;
+        if (stock15mInputs.locationVs4h === 'late_extended') modifierPenalty += 1;
+
+        let overall = 'No data';
+        if (spyReady && oneDStatus !== 'No data' && fourHStatus !== 'No data' && fifteenStatus !== 'No data') {
+            if (!edgeExists) overall = 'No-trade';
+            else overall = modifierPenalty <= 1 ? 'Allowed' : 'Reduced';
+        }
+        const overallAllowed = overall === 'Allowed';
+        const overallAllowedOrReduced = overall === 'Allowed' || overall === 'Reduced';
+
+        const shortReady = edgeExists && shortStrictStatus && shortEntryTypeOk && rr4h15 && rr1520 && shortTimeOk && noChase && liqNotFailed && macroMode === 'Normal';
+        const mediumReady = edgeExists && mediumStrictStatus && mediumEntryTypeOk && rr4h14 && rr1517 && mediumTimeOk && noChase && liqNotFailed && macroMode !== 'Defensive';
+        const swingReady = edgeExists && swingStrictStatus && swingEntryTypeOk && rr4h13 && rr1515 && swingTimeOk;
+
+        const setupTypeCurrent = getChoiceValue('score_stk4h_setup_type');
+        const entryStats = findPatternStat(patternStatsCache?.entry_type, entryType);
+        const triggerStats = findPatternStat(patternStatsCache?.trigger_status, trigger);
+        const setupStats = findPatternStat(patternStatsCache?.setup_type, setupTypeCurrent);
+        const winrates = [entryStats?.winrate, triggerStats?.winrate, setupStats?.winrate].filter((v) => Number.isFinite(v));
+        const resolvedCounts = [entryStats?.resolved, triggerStats?.resolved, setupStats?.resolved].filter((v) => Number.isFinite(v));
+        const avgWinrate = winrates.length ? (winrates.reduce((a, b) => a + b, 0) / winrates.length) : null;
+        const resolvedDepth = resolvedCounts.length ? Math.max(...resolvedCounts) : 0;
+
+        let confidence = 0;
+        if (!edgeExists) confidence = 20;
+        else {
+            confidence = 72 - (modifierPenalty * 8);
+            if (shortReady) confidence += 8;
+            else if (mediumReady) confidence += 4;
+            if (avgWinrate !== null && resolvedDepth >= 5) confidence += (avgWinrate - 50) * 0.25;
+            if (resolvedDepth < 5) confidence -= 6;
+            if (resolvedDepth >= 20) confidence += 4;
+        }
+        confidence = Math.max(5, Math.min(95, Math.round(confidence)));
+
+        let preferredDteNow = 'No clear DTE';
+        if (shortReady) preferredDteNow = '7-14 DTE';
+        else if (mediumReady) preferredDteNow = '15-30 DTE';
+        else if (swingReady) preferredDteNow = '30-60 DTE';
+
+        if (overall === 'No-trade') {
+            setupSuggestion = 'No setup: wait for alignment (SPY, 1D, 4H, 15m) and valid trigger.';
+        } else if (direction === 'bullish' || direction === 'bearish') {
+            const isBull = direction === 'bullish';
+            const triggerTxt = trigger === 'confirmed'
+                ? 'Entry allowed on confirmed 15m trigger'
+                : 'Wait for 15m confirmed trigger';
+            const entryTxt = entryType ? `Entry model: ${entryType}` : 'Entry model: n/a';
+            if (shortReady) {
+                setupSuggestion = `${isBull ? 'Short-term Bull Call' : 'Short-term Bear Call'} | 7-14 DTE | ${triggerTxt} | ${entryTxt}`;
+            } else if (mediumReady) {
+                setupSuggestion = `${isBull ? 'Bull Call' : 'Bear Put'} | 15-30 DTE | ${triggerTxt} | ${entryTxt}`;
+            } else if (swingReady) {
+                setupSuggestion = `${isBull ? 'Bull call debit spread' : 'Bear put debit spread'} | 30-60 DTE | ${triggerTxt} | ${entryTxt}`;
+            } else {
+                setupSuggestion = 'No setup: conditions are not met for any DTE bucket yet.';
+            }
+        } else {
+            setupSuggestion = 'No clear directional setup: prefer wait/no-trade for options.';
+        }
+
+        const checklistRows = [
+            {
+                condition: 'Horizon readiness (final gate)',
+                current: `Preferred now: ${preferredDteNow}`,
+                short: shortReady,
+                medium: mediumReady,
+                swing: swingReady
+            },
+            {
+                condition: 'EDGE EXISTS (main gate)',
+                current: edgeExists ? 'TRUE' : 'FALSE',
+                short: edgeExists,
+                medium: edgeExists,
+                swing: edgeExists
+            },
+            {
+                condition: 'Modifiers penalty (not a gate)',
+                current: `${modifierPenalty} (<=1 Allowed, >=2 Reduced)`,
+                short: modifierPenalty <= 1,
+                medium: modifierPenalty <= 3,
+                swing: true
+            },
+            {
+                condition: 'Macro mode',
+                current: `${macroMode} | RR15>=${macroRequiredRr15 ?? '-'} | RR4H>=${macroRequiredRr4h ?? '-'} | size cap ${macroSizeCap}`,
+                short: macroMode === 'Normal',
+                medium: macroMode === 'Normal' || macroMode === 'Cautious',
+                swing: macroMode !== 'No data'
+            },
+            {
+                condition: 'SPY gatekeeper active (not No-trade)',
+                current: spyStatus,
+                short: spyOk,
+                medium: spyOk,
+                swing: spyOk
+            },
+            {
+                condition: 'Ticker 1D active (not No-trade)',
+                current: oneDStatus,
+                short: oneDOk,
+                medium: oneDOk,
+                swing: oneDOk
+            },
+            {
+                condition: '4H status strictness',
+                current: fourHStatus,
+                short: fourHStatus === 'Allowed',
+                medium: fourHStatus === 'Allowed' || fourHStatus === 'Reduced',
+                swing: fourHOk
+            },
+            {
+                condition: '15m status strictness',
+                current: fifteenStatus,
+                short: fifteenStatus === 'Allowed',
+                medium: fifteenStatus === 'Allowed' || fifteenStatus === 'Reduced',
+                swing: fifteenOk
+            },
+            {
+                condition: 'Direction from 4H is defined',
+                current: direction || 'No data',
+                short: directionDefined,
+                medium: directionDefined,
+                swing: directionDefined
+            },
+            {
+                condition: '15m trigger confirmed',
+                current: trigger || 'No data',
+                short: triggerConfirmed,
+                medium: triggerConfirmed,
+                swing: triggerConfirmed
+            },
+            {
+                condition: '15m location requirement',
+                current: stock15mInputs.locationVs4h || 'No data',
+                short: goodLocation,
+                medium: goodLocation || noChase,
+                swing: noChase
+            },
+            {
+                condition: '15m entry model fit',
+                current: entryType || 'No data',
+                short: shortEntryTypeOk,
+                medium: mediumEntryTypeOk,
+                swing: swingEntryTypeOk
+            },
+            {
+                condition: '4H R:R threshold',
+                current: rr4h === null ? 'No data' : `${rr4h.toFixed(2)}R`,
+                short: rr4h15,
+                medium: rr4h14,
+                swing: rr4h13
+            },
+            {
+                condition: '15m R:R threshold',
+                current: rr15 === null ? 'No data' : `${rr15.toFixed(2)}R`,
+                short: rr1520,
+                medium: rr1517,
+                swing: rr1515
+            },
+            {
+                condition: 'Overall decision quality',
+                current: overall,
+                short: overallAllowed,
+                medium: overallAllowedOrReduced,
+                swing: overallAllowedOrReduced
+            },
+            {
+                condition: 'Time-of-day requirement',
+                current: stock15mInputs.timeOfDay || 'No data',
+                short: shortTimeOk,
+                medium: mediumTimeOk,
+                swing: swingTimeOk
+            },
+            {
+                condition: 'No failed-breakout warning',
+                current: stock15mResult.warningsText || 'none',
+                short: liqNotFailed,
+                medium: liqNotFailed,
+                swing: liqNotFailed
+            }
+        ];
+        renderDecisionChecklist(checklistRows);
+
+        const drivers = [];
+        if (edgeExists) drivers.push('Main edge gate is TRUE');
+        if (spyOk) drivers.push('SPY gatekeeper is active');
+        if (oneDOk) drivers.push('Ticker 1D is active');
+        if (fourHOk) drivers.push('Ticker 4H is active');
+        if (triggerConfirmed) drivers.push('15m trigger is confirmed');
+        if (goodLocation) drivers.push('15m entry location is planned/early');
+        if (rr4hMacroOk) drivers.push(`4H R:R meets macro threshold (${macroRequiredRr4h}R)`);
+        if (rr15MacroOk) drivers.push(`15m R:R meets macro threshold (${macroRequiredRr15}R)`);
+        if (noChase) drivers.push('15m is not chasing breakout');
+
+        const blockers = [];
+        if (!edgeExists) blockers.push('Main edge gate is FALSE');
+        if (spyVeto) blockers.push('SPY veto is active (No-trade or No data)');
+        if (!spyOk) blockers.push('SPY gatekeeper is not active');
+        if (!oneDOk) blockers.push('Ticker 1D is not active');
+        if (!fourHOk) blockers.push('Ticker 4H is not active');
+        if (!fifteenOk) blockers.push('Ticker 15m is not active');
+        if (!triggerConfirmed) blockers.push('15m trigger is not confirmed');
+        if (!directionDefined) blockers.push('4H plan direction is not defined');
+        if (!rr4hMacroOk) blockers.push(`4H R:R is below macro threshold (${macroRequiredRr4h}R)`);
+        if (!rr15MacroOk) blockers.push(`15m R:R is below macro threshold (${macroRequiredRr15}R)`);
+        if (!noChase) blockers.push('15m is chasing breakout');
+        if (!notMidday) blockers.push('Entry is in midday liquidity');
+        if (!liqNotFailed) blockers.push('Failed-breakout warning is present');
+        if (!macroLocationOk) blockers.push('Defensive macro mode requires planned/early location');
+        if (modifierPenalty >= 2) blockers.push(`Modifiers penalty is high (${modifierPenalty}), status downgraded to Reduced`);
+        if (notes.length) blockers.push(...notes);
+
+        const driverLines = (drivers.length ? drivers : ['No strong positive drivers yet'])
+            .slice(0, 6)
+            .map((x) => `- ${x}`)
+            .join('\n');
+        const blockerLines = (blockers.length ? blockers : ['No major blockers'])
+            .slice(0, 6)
+            .map((x) => `- ${x}`)
+            .join('\n');
+        const setupSuggestionLines = String(setupSuggestion || 'No data')
+            .split('|')
+            .map((s) => s.trim())
+            .filter(Boolean)
+            .map((s) => `- ${s}`)
+            .join('\n') || '- No data';
+
+        const unifiedDecision = [
+            `Decision: ${overall}`,
+            ``,
+            `Confidence: ${confidence}%`,
+            ``,
+            `Option side: ${optionSide}`,
+            ``,
+            `Suggested options setup`,
+            `${setupSuggestionLines}`,
+            ``,
+            `Macro risk modulator`,
+            `- Mode: ${macroMode}`,
+            `- Required RR (15m): >= ${macroRequiredRr15 ?? '-'}`,
+            `- Required RR (4H): >= ${macroRequiredRr4h ?? '-'}`,
+            `- Size cap: ${macroSizeCap}`,
+            `- Modifiers penalty: ${modifierPenalty} (<=1 Allowed, >=2 Reduced)`,
+            ``,
+            `Probabilistic pattern stats (realized)`,
+            `- Entry type (${entryType || 'n/a'}): ${entryStats && Number.isFinite(entryStats.winrate) ? `${entryStats.winrate}% winrate` : 'no resolved history yet'} | samples ${entryStats?.samples ?? 0}, resolved ${entryStats?.resolved ?? 0}`,
+            `- Trigger (${trigger || 'n/a'}): ${triggerStats && Number.isFinite(triggerStats.winrate) ? `${triggerStats.winrate}% winrate` : 'no resolved history yet'} | samples ${triggerStats?.samples ?? 0}, resolved ${triggerStats?.resolved ?? 0}`,
+            `- Setup (${setupTypeCurrent || 'n/a'}): ${setupStats && Number.isFinite(setupStats.winrate) ? `${setupStats.winrate}% winrate` : 'no resolved history yet'} | samples ${setupStats?.samples ?? 0}, resolved ${setupStats?.resolved ?? 0}`,
+            ``,
+            `Context`,
+            `- SPY: ${spyLine}`,
+            `- Ticker 1D: ${oneDLine}`,
+            `- Ticker 4H: ${fourHLine}`,
+            `- Ticker 15m: ${fifteenLine}`,
+            ``,
+            `Most Important Drivers`,
+            `${driverLines}`,
+            ``,
+            `Main Risks / Blockers`,
+            `${blockerLines}`
+        ].join('\n');
+        if (decisionOverallHeadEl) decisionOverallHeadEl.textContent = overall;
+        if (decisionTextEl) decisionTextEl.textContent = unifiedDecision;
     };
 
     const render = () => {
@@ -2117,6 +2700,34 @@ function initScoreGatekeeper() {
             : stock4hResult.planDirectionText === 'Bearish'
                 ? 'bearish'
                 : '';
+        const stk15mEntryRaw = getInput('score_stk15m_entry');
+        const stk15mStopRaw = getInput('score_stk15m_stop');
+        const stk15mTargetRaw = getInput('score_stk15m_target');
+        if (parseLevel(stk15mTargetRaw) === null && parseLevel(stk15mEntryRaw) !== null && parseLevel(stk15mStopRaw) !== null) {
+            const location15 = getChoiceValue('score_stk15m_location_vs_4h');
+            const volume15 = getChoiceValue('score_stk15m_volume');
+            const trigger15 = getChoiceValue('score_stk15m_trigger_status');
+            const candidates = derive15mTargetCandidates({
+                entry: parseLevel(stk15mEntryRaw),
+                stop: parseLevel(stk15mStopRaw),
+                direction: planDirection15m,
+                support4h: parseLevel(stock4hResult?.levels?.support),
+                resistance4h: parseLevel(stock4hResult?.levels?.resistance),
+                pwh4h: parseLevel(stock4hResult?.levels?.pwh),
+                pwl4h: parseLevel(stock4hResult?.levels?.pwl)
+            });
+            const preferT1 = location15 === 'late_extended' ||
+                location15 === 'chasing_breakout' ||
+                volume15 === 'weak' ||
+                trigger15 !== 'confirmed';
+            const chosen = preferT1
+                ? (Number.isFinite(candidates.t1) ? candidates.t1 : candidates.t2)
+                : (Number.isFinite(candidates.t2) ? candidates.t2 : candidates.t1);
+            if (Number.isFinite(chosen)) {
+                const targetInput = form.querySelector('[name="score_stk15m_target"]');
+                if (targetInput) targetInput.value = String(Math.round(chosen * 100) / 100);
+            }
+        }
         const stock15mResult = calculateStock15M({
             bias: getChoiceValue('score_stk15m_bias'),
             structure: getChoiceValue('score_stk15m_structure'),
@@ -2133,6 +2744,12 @@ function initScoreGatekeeper() {
             target: getInput('score_stk15m_target'),
             planDirection: planDirection15m
         }, stock4hResult);
+        const stock15mInputs = {
+            triggerStatus: getChoiceValue('score_stk15m_trigger_status'),
+            entryType: getChoiceValue('score_stk15m_entry_type'),
+            locationVs4h: getChoiceValue('score_stk15m_location_vs_4h'),
+            timeOfDay: getChoiceValue('score_stk15m_time_of_day')
+        };
         if (stk15mScoreHeadEl) stk15mScoreHeadEl.textContent = stock15mResult.grade === 'No data' ? 'No data' : `${stock15mResult.score20} / 20`;
         if (stk15mGradeHeadEl) stk15mGradeHeadEl.textContent = stock15mResult.grade;
         if (stk15mStatusHeadEl) stk15mStatusHeadEl.textContent = stock15mResult.status;
@@ -2163,6 +2780,14 @@ function initScoreGatekeeper() {
         }
 
         if (!hasMinimumData(values)) {
+            renderDecision({
+                spyReady: false,
+                spyResult: { permission: 'No data', rawScore: 0, riskState: 'No data', size: '-' },
+                stockResult,
+                stock4hResult,
+                stock15mResult,
+                stock15mInputs
+            });
             scoreEl.textContent = '0 / 100';
             permissionEl.textContent = 'No data';
             if (riskStateEl) riskStateEl.textContent = 'No data';
@@ -2182,6 +2807,14 @@ function initScoreGatekeeper() {
         if (inconsistencyEl) inconsistencyEl.textContent = warnings.length ? `Warnings: ${warnings.join(' | ')}` : '';
 
         const result = calculate(values);
+        renderDecision({
+            spyReady: true,
+            spyResult: result,
+            stockResult,
+            stock4hResult,
+            stock15mResult,
+            stock15mInputs
+        });
         latestComputed = {
             score: result.rawScore,
             permission: result.permission,
@@ -2236,7 +2869,10 @@ function initScoreGatekeeper() {
                     <td>${modulesText}</td>
                     <td>${item.size_modifier || '-'}</td>
                     <td>${item.risk_state || '-'}</td>
-                    <td><button type="button" class="btn btn-secondary btn-sm score-history-load" data-id="${item.id}">Load</button></td>
+                    <td>
+                        <button type="button" class="btn btn-secondary btn-sm score-history-load" data-id="${item.id}">Load all</button>
+                        <button type="button" class="btn btn-secondary btn-sm score-history-load-spy" data-id="${item.id}">Load SPY</button>
+                    </td>
                 </tr>
             `;
         }).join('');
@@ -2251,6 +2887,18 @@ function initScoreGatekeeper() {
             if (historyStatusEl) historyStatusEl.textContent = `Loaded ${items.length} snapshot(s).`;
         } catch (err) {
             if (historyStatusEl) historyStatusEl.textContent = `Failed to load history: ${String(err)}`;
+        }
+    };
+
+    const fetchPatternStats = async () => {
+        try {
+            const res = await fetch('/api/score/pattern-stats?symbol=SPY&timeframe=1D&limit=800');
+            const data = await res.json();
+            if (!res.ok) throw new Error(data?.detail || `HTTP ${res.status}`);
+            patternStatsCache = data;
+            render();
+        } catch (_) {
+            patternStatsCache = null;
         }
     };
 
@@ -2308,6 +2956,7 @@ function initScoreGatekeeper() {
             }
             if (historyStatusEl) historyStatusEl.textContent = `Snapshot saved: ${data.session_date} (${data.score}/100).`;
             await fetchHistory();
+            await fetchPatternStats();
         } catch (err) {
             if (historyStatusEl) historyStatusEl.textContent = `Save failed: ${String(err)}`;
         }
@@ -2346,9 +2995,31 @@ function initScoreGatekeeper() {
             updateStockRoomOverrideUI();
             updateStock4HPlanOverrideUI();
             render();
+            await fetchPatternStats();
             if (historyStatusEl) historyStatusEl.textContent = `Loaded snapshot ${data.session_date} into form.`;
         } catch (err) {
             if (historyStatusEl) historyStatusEl.textContent = `Load failed: ${String(err)}`;
+        }
+    };
+
+    const loadSnapshotSpyOnly = async (snapshotId) => {
+        try {
+            const res = await fetch(`/api/score/snapshots/${snapshotId}`);
+            const data = await res.json();
+            if (!res.ok) throw new Error(data?.detail || `HTTP ${res.status}`);
+            const rawInputs = data.inputs && typeof data.inputs === 'object' ? data.inputs : {};
+            const spyOnlyInputs = Object.fromEntries(
+                Object.entries(rawInputs).filter(([key]) => key.startsWith('score_spy_') || key === 'score_qqq_200_state')
+            );
+            applyFormInputs(spyOnlyInputs);
+            if (sessionDateEl) sessionDateEl.value = data.session_date || sessionDateEl.value;
+            updateBiasOverrideUI();
+            updateRoomOverrideUI();
+            render();
+            await fetchPatternStats();
+            if (historyStatusEl) historyStatusEl.textContent = `Loaded SPY only from snapshot ${data.session_date}.`;
+        } catch (err) {
+            if (historyStatusEl) historyStatusEl.textContent = `Load SPY failed: ${String(err)}`;
         }
     };
 
@@ -2382,6 +3053,8 @@ function initScoreGatekeeper() {
             if (!id) return;
             if (target.classList.contains('score-history-load')) {
                 loadSnapshot(id);
+            } else if (target.classList.contains('score-history-load-spy')) {
+                loadSnapshotSpyOnly(id);
             }
         });
     }
@@ -2396,6 +3069,7 @@ function initScoreGatekeeper() {
     form.addEventListener('input', render);
     render();
     fetchHistory();
+    fetchPatternStats();
 }
 
 const SPY_SCORING_FIELD_HELP = {

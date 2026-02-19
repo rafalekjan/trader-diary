@@ -1452,6 +1452,120 @@ async def api_export_score_snapshots_csv(
     headers = {"Content-Disposition": f"attachment; filename={filename}"}
     return Response(content=csv_body, media_type="text/csv; charset=utf-8", headers=headers)
 
+
+@app.get("/api/score/pattern-stats")
+async def api_score_pattern_stats(
+    symbol: str = "SPY",
+    timeframe: str = "1D",
+    limit: int = 500,
+    db: Session = Depends(get_db),
+):
+    snapshots = (
+        db.query(models.ScoreSnapshot)
+        .filter(models.ScoreSnapshot.symbol == symbol.upper())
+        .filter(models.ScoreSnapshot.timeframe == timeframe.upper())
+        .order_by(models.ScoreSnapshot.session_date.desc(), models.ScoreSnapshot.id.desc())
+        .limit(max(1, min(limit, 2000)))
+        .all()
+    )
+
+    # Build lightweight realized outcome index from closed option trades:
+    # key = (TICKER, YYYY-MM-DD created_at), value = sum pnl for that day.
+    trade_rows = (
+        db.query(models.Trade)
+        .filter(models.Trade.entered == True)  # noqa: E712
+        .filter(models.Trade.exit_price.isnot(None))
+        .filter(models.Trade.instrument_type == models.InstrumentType.OPTION)
+        .all()
+    )
+    trade_outcome_by_key: dict[tuple[str, str], float] = {}
+    for trade in trade_rows:
+        if crud.is_source_trade(trade):
+            continue
+        if not trade.created_at:
+            continue
+        ticker = (trade.ticker or "").strip().upper()
+        if not ticker:
+            continue
+        session_key = trade.created_at.date().isoformat()
+        pnl = crud.calculate_pnl(trade)
+        if pnl is None:
+            continue
+        key = (ticker, session_key)
+        trade_outcome_by_key[key] = trade_outcome_by_key.get(key, 0.0) + float(pnl)
+
+    def _new_bucket() -> dict[str, Any]:
+        return {"samples": 0, "resolved": 0, "wins": 0, "losses": 0}
+
+    entry_type_stats: dict[str, dict[str, Any]] = {}
+    trigger_stats: dict[str, dict[str, Any]] = {}
+    setup_stats: dict[str, dict[str, Any]] = {}
+
+    unresolved_count = 0
+    for snap in snapshots:
+        inputs = _safe_json_loads(snap.inputs_json, {})
+        if not isinstance(inputs, dict):
+            continue
+        ticker = str(inputs.get("score_stk1d_ticker") or "").strip().upper()
+        if not ticker:
+            continue
+        session_key = snap.session_date.isoformat()
+        outcome_key = (ticker, session_key)
+        day_pnl = trade_outcome_by_key.get(outcome_key)
+        has_resolved = day_pnl is not None
+        is_win = has_resolved and day_pnl > 0
+        is_loss = has_resolved and day_pnl < 0
+        if not has_resolved:
+            unresolved_count += 1
+
+        pairs = [
+            (entry_type_stats, str(inputs.get("score_stk15m_entry_type") or "").strip()),
+            (trigger_stats, str(inputs.get("score_stk15m_trigger_status") or "").strip()),
+            (setup_stats, str(inputs.get("score_stk4h_setup_type") or "").strip()),
+        ]
+        for bucket_map, key in pairs:
+            if not key:
+                continue
+            bucket = bucket_map.get(key)
+            if bucket is None:
+                bucket = _new_bucket()
+                bucket_map[key] = bucket
+            bucket["samples"] += 1
+            if has_resolved:
+                bucket["resolved"] += 1
+                if is_win:
+                    bucket["wins"] += 1
+                elif is_loss:
+                    bucket["losses"] += 1
+
+    def _to_rows(data: dict[str, dict[str, Any]]) -> list[dict[str, Any]]:
+        rows: list[dict[str, Any]] = []
+        for name, s in data.items():
+            resolved = int(s["resolved"])
+            wins = int(s["wins"])
+            losses = int(s["losses"])
+            winrate = round((wins / resolved) * 100.0, 2) if resolved > 0 else None
+            rows.append({
+                "name": name,
+                "samples": int(s["samples"]),
+                "resolved": resolved,
+                "wins": wins,
+                "losses": losses,
+                "winrate": winrate,
+            })
+        rows.sort(key=lambda x: (x["resolved"], x["samples"]), reverse=True)
+        return rows
+
+    return {
+        "symbol": symbol.upper(),
+        "timeframe": timeframe.upper(),
+        "snapshot_count": len(snapshots),
+        "unresolved_count": unresolved_count,
+        "entry_type": _to_rows(entry_type_stats),
+        "trigger_status": _to_rows(trigger_stats),
+        "setup_type": _to_rows(setup_stats),
+    }
+
 @app.get("/calendar", response_class=HTMLResponse)
 async def calendar_page(request: Request, db: Session = Depends(get_db)):
     """Calendar view with daily P&L."""

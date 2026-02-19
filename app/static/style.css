@@ -1566,6 +1566,72 @@ main {
     font-size: 0.86rem;
 }
 
+.score-decision-section #score-decision-text {
+    background: #ffffff;
+    color: #1f2937;
+    border-color: #d1d5db;
+    min-height: 280px;
+    padding: 0.8rem 0.9rem;
+    line-height: 1.45;
+    white-space: pre-line;
+}
+
+.score-decision-section details {
+    background: #ffffff;
+    border: 1px solid #d1d5db;
+    border-radius: 10px;
+    padding: 0.55rem 0.65rem;
+}
+
+.score-decision-section details > summary {
+    cursor: pointer;
+    font-weight: 600;
+    color: #111827;
+}
+
+.score-decision-section .table-wrap {
+    background: #ffffff;
+}
+
+.score-decision-section .score-result-table {
+    min-width: 0;
+    background: #ffffff;
+}
+
+.score-decision-section .score-result-table th:nth-child(3),
+.score-decision-section .score-result-table th:nth-child(4),
+.score-decision-section .score-result-table th:nth-child(5),
+.score-decision-section .score-result-table td:nth-child(3),
+.score-decision-section .score-result-table td:nth-child(4),
+.score-decision-section .score-result-table td:nth-child(5) {
+    text-align: center;
+    width: 110px;
+    min-width: 110px;
+    font-weight: 700;
+}
+
+.score-decision-section .score-result-table th:nth-child(2),
+.score-decision-section .score-result-table td:nth-child(2) {
+    min-width: 220px;
+}
+
+.score-decision-section .score-result-table td:nth-child(3),
+.score-decision-section .score-result-table td:nth-child(4),
+.score-decision-section .score-result-table td:nth-child(5) {
+    font-size: 1rem;
+}
+
+.score-decision-section .decision-check-pass {
+    color: #16a34a;
+    font-weight: 800;
+    font-size: 1.02rem;
+}
+
+.score-decision-section .decision-check-fail {
+    color: #9ca3af;
+    font-weight: 700;
+}
+
 #stk1d_pullback_group input[disabled] + .checkbox-text {
     opacity: 0.55;
 }
