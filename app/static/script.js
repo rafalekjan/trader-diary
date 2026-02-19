@@ -1617,8 +1617,9 @@ function initScoreGatekeeper() {
         contextScore = clamp(contextScore, 0, 5);
 
         let triggerScore = 0;
+        const hasEntryType = Boolean(values.entryType) && values.entryType !== '-';
         triggerScore += values.triggerStatus === 'confirmed' ? 2 : 0;
-        triggerScore += values.entryType ? 2 : 0;
+        triggerScore += hasEntryType ? 2 : 0;
         triggerScore += (values.volume === 'increasing_move' || values.volume === 'reduced_pullbacks') ? 1 : 0;
         triggerScore = clamp(triggerScore, 0, 5);
 

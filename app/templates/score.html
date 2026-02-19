@@ -131,18 +131,18 @@
                     </label>
                     <div id="score-room-effective" class="scoring-readonly-value">Auto room: No data | Effective: No data</div>
                 </div>
-                <div class="form-group score-b-key-levels">
-                    <label>Key Levels <span class="help-icon" data-tooltip="Major swing levels (1D/weekly): PDH/PDL, PWH/PWL, swing high/low, 20/50/200. Nie uzywaj intraday mikro-poziomow. Te poziomy definiuja room i invalidation.">?</span></label>
-                    <div class="timeframe-row-2cols">
-                        <input id="score_spy_key_support" name="score_spy_key_support" type="text" placeholder="Support">
-                        <input id="score_spy_key_resistance" name="score_spy_key_resistance" type="text" placeholder="Resistance">
-                    </div>
-                </div>
                 <div class="form-group score-b-manual-values">
-                    <label>Manual values <span class="help-icon" data-tooltip="Wpisz dokladnie wartosci: Close i ATR(14) z tabeli TV.">?</span></label>
+                    <label>Close i ATR <span class="help-icon" data-tooltip="Wpisz dokladnie wartosci: Close i ATR(14) z tabeli TV.">?</span></label>
                     <div class="timeframe-row-2cols">
                         <input name="score_spy_manual_close" type="text" placeholder="Close">
                         <input name="score_spy_manual_atr" type="text" placeholder="ATR (14)">
+                    </div>
+                </div>
+                <div class="form-group score-b-key-levels">
+                    <label>Support i Resistance <span class="help-icon" data-tooltip="Major swing levels (1D/weekly): PDH/PDL, PWH/PWL, swing high/low, 20/50/200. Nie uzywaj intraday mikro-poziomow. Te poziomy definiuja room i invalidation.">?</span></label>
+                    <div class="timeframe-row-2cols">
+                        <input id="score_spy_key_support" name="score_spy_key_support" type="text" placeholder="Support">
+                        <input id="score_spy_key_resistance" name="score_spy_key_resistance" type="text" placeholder="Resistance">
                     </div>
                 </div>
             </div>
@@ -227,7 +227,7 @@
                     <label>Edge Type</label>
                     <div id="score-edge-type-box" class="scoring-readonly-value">No data</div>
                 </div>
-                <div class="form-group">
+                <div class="form-group" style="grid-column: span 2;">
                     <label>Summary</label>
                     <div id="score-summary" class="scoring-readonly-value">Fill fields to evaluate market gatekeeper.</div>
                 </div>
@@ -331,14 +331,14 @@
                     </div>
                 </div>
                 <div class="form-group stk1d-manual-values">
-                    <label>Manual values <span class="help-icon" data-tooltip="Wpisz dokladnie wartosci: Close i ATR(14) z tabeli TV.">?</span></label>
+                    <label>Close i ATR <span class="help-icon" data-tooltip="Wpisz dokladnie wartosci: Close i ATR(14) z tabeli TV.">?</span></label>
                     <div class="timeframe-row-2cols">
                         <input name="score_stk1d_close" type="text" placeholder="Close">
                         <input name="score_stk1d_atr" type="text" placeholder="ATR (14)">
                     </div>
                 </div>
                 <div class="form-group stk1d-key-levels">
-                    <label>Key Levels <span class="help-icon" data-tooltip="Major swing levels (1D/weekly): PDH/PDL, PWH/PWL, swing high/low, 20/50/200. Nie uzywaj intraday mikro-poziomow. Te poziomy definiuja room i invalidation.">?</span></label>
+                    <label>Support i Resistance <span class="help-icon" data-tooltip="Major swing levels (1D/weekly): PDH/PDL, PWH/PWL, swing high/low, 20/50/200. Nie uzywaj intraday mikro-poziomow. Te poziomy definiuja room i invalidation.">?</span></label>
                     <div class="timeframe-row-2cols">
                         <input name="score_stk1d_support" type="text" placeholder="Support">
                         <input name="score_stk1d_resistance" type="text" placeholder="Resistance">
@@ -533,7 +533,7 @@
                 </div>
                 <div class="form-group">
                     <label class="checkbox-label" style="margin-top:8px;">
-                        <input type="checkbox" name="score_stk4h_plan_manual_override" checked>
+                        <input type="checkbox" name="score_stk4h_plan_manual_override">
                         <span class="checkbox-text">Manual override <span class="help-icon" data-tooltip="ON: tylko ręczne wartości. OFF: system auto-uzupełnia brakujące pola Part 2 heurystyką.">?</span></span>
                     </label>
                 </div>
@@ -607,6 +607,7 @@
                         <label class="checkbox-label"><input type="radio" name="score_stk15m_entry_type" value="first_hl"><span class="checkbox-text">First higher low (HL)</span></label>
                         <label class="checkbox-label"><input type="radio" name="score_stk15m_entry_type" value="range_breakout"><span class="checkbox-text">Range breakout</span></label>
                         <label class="checkbox-label"><input type="radio" name="score_stk15m_entry_type" value="sweep_reclaim"><span class="checkbox-text">Liquidity sweep reclaim</span></label>
+                        <label class="checkbox-label"><input type="radio" name="score_stk15m_entry_type" value="-"><span class="checkbox-text">-</span></label>
                     </div>
                 </div>
                 <div class="form-group">
